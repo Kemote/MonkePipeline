@@ -1,0 +1,9 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "fake_bpy",
+            "depth": 12
+        }
+    
+}
