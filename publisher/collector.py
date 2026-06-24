@@ -10,12 +10,12 @@ class CollectedItem():
         self.type = "BASE_ITEM"
 
     def __repr__(self):
-        return f"AssetItem(name={self.name!r}, outliner_path={self.outliner_path!r})"
+        return f"{self.type}(name={self.name!r}, outliner_path={self.outliner_path!r})"
 
 
 class CollectedAssetItem(CollectedItem):
-    def __init__(self, name, outliner_path, type):
-        super().__init__(name, outliner_path, type)
+    def __init__(self, name, outliner_path):
+        super().__init__(name, outliner_path)
         self.mesh_objects = {}
         self.type = "ASSET_ITEM"
 
@@ -29,6 +29,9 @@ class Collector(ABC):
         """
         method assets gathering data for publish purpose
         """
+        if not outliner_base_path.startswith("/"):
+            raise ValueError(f"Outliner base path: {outliner_base_path}, should starts with '/'")
+
         self.items = []     # reset items list so it will not duplicate elements in case user use it more than once
         assets_collection = self.find_collection(outliner_base_path)
         if assets_collection:
@@ -106,8 +109,3 @@ class LightCollector(Collector):
 
     def collect(self):
         return super().collect()
-
-
-if __name__ == "__main__":
-    collector = AssetsCollector()
-    collector.collect()
