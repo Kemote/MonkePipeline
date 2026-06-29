@@ -77,9 +77,21 @@ class MeshLayerExporter:
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
         base_prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
 
+        if not asset_item.variants:
+            for outliner_path in asset_item.base_objects:
+                mesh = asset_item.mesh_objects[outliner_path]
+                self._write_mesh(stage, base_prim_path, mesh)
+
+        else:
+            base_prim = stage.GetPrimAtPath(base_prim_path)
+            if not base_prim_path:
+                base_prim = stage.DefinePrim(base_prim_path)
+
+            variant_sets = base_prim.GetVariantSets()
+
 
         # TRZEBA TRO INACZEJ ZROBIC, MOZNA BY ZROBIA TAK ABY W RAZIE ZAISTNIENIA VARIANTOW AUTOMATYCZNIE NAZYWAL TEN VARIANT KTORY JEST PUYSTY?
-        
+
         # if not asset_item.has_variants():
         #     for outliner_path in asset_item.itter_base_objects():
         #         mesh = asset_item.mesh_objects[outliner_path]

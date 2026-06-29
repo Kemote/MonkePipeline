@@ -18,12 +18,6 @@ class CollectedItem():
         self.base_objects = []
         self.variants = {}
 
-    def has_variants(self):
-        if self.variants and len(self.variants) < 2:
-            return False
-        else:
-            return True
-
     def add_variant(self, variant_set_name, variant_name, oultiner_path):
         variant_set = self._variants.get(variant_set_name)
         if not variant_set:
