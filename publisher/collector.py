@@ -3,22 +3,60 @@ import bpy
 from abc import ABC, abstractmethod
 
 
+VARIANT_SEPARATOR = "_VAR_"
+
+
 class CollectedItem():
     def __init__(self, name, outliner_path):
+        """
+        self._base_objects: base objects of type scene outliner path
+        self._varaints: 
+        """
         self.name = name
         self.outliner_path = outliner_path
         self.type = "BASE_ITEM"
+        self.base_objects = []
+        self.variants = {}
 
-    def __repr__(self):
-        return f"{self.type}(name={self.name!r}, outliner_path={self.outliner_path!r})"
+    def has_variants(self):
+        if self.variants and len(self.variants) < 2:
+            return False
+        else:
+            return True
+
+    def add_variant(self, variant_set_name, variant_name, oultiner_path):
+        variant_set = self._variants.get(variant_set_name)
+        if not variant_set:
+            variant_set = self._variants[variant_set_name] = {}
+        
+        variant_objects = variant_set.get(variant_name)
+        if not variant_objects:
+            variant_objects = self._variants[variant_name] = []
+        
+        variant_objects.append(oultiner_path)
+
+    # def itter_variants(self):
+    #     for variant_set_name, variants_dict in self._variants.items():
+    #         if not variant_set_name:
+    #             continue
+    #         for variant_name, object_list in variants_dict.items():
+    #             if not variant_name:
+    #                 continue
+    #             yield variant_set_name, variant_name, object_list
+
+    # def __repr__(self):
+    #     return f"{self.type}(name={self.name!r}, outliner_path={self.outliner_path!r})"
 
 
 class CollectedAssetItem(CollectedItem):
+    """
+    mesh_objects list dict contain mesh data over outliner_path key
+    """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
         self.mesh_objects = {}
         self.type = "ASSET_ITEM"
-
+    
 
 class Collector(ABC):
     def __init__(self):
@@ -39,8 +77,18 @@ class Collector(ABC):
                 asset_name = asset_group.name
                 group_path = f"{outliner_base_path}/{asset_name}"
                 asset_item = CollectedAssetItem(asset_name,  group_path)
-                for mesh_obj, outliner_path in self.iter_object_type(asset_group, group_path, object_type):
+                for mesh_obj, outliner_path, in self.iter_object_type(asset_group, group_path, object_type):
                     asset_item.mesh_objects[outliner_path] = mesh_obj
+                    
+                    outliner_base_name = outliner_path.split("/")[-1]
+                    splited_base_name = outliner_base_name.split(VARIANT_SEPARATOR)
+                    if len(splited_base_name) > 1:
+                        variant_set_name = splited_base_name[0]
+                        variant_name = splited_base_name[-1]
+                        asset_item.add_variant(variant_set_name, variant_name, outliner_path)
+                    else:
+                        asset_item.base_objects.append(outliner_path)
+
                 self.items.append(asset_item)
         return
 
