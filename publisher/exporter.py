@@ -77,6 +77,7 @@ class MeshLayerExporter:
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
         base_prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
 
+        # maybe spp should ask user what to do in case booth normal and version data exists? Or add default name
         if not asset_item.variants:
             for outliner_path in asset_item.base_objects:
                 mesh = asset_item.mesh_objects[outliner_path]
@@ -88,6 +89,15 @@ class MeshLayerExporter:
                 base_prim = stage.DefinePrim(base_prim_path)
 
             variant_sets = base_prim.GetVariantSets()
+            for variants_set_name, variants_dict in asset_item.variants.items():
+                variant_set = variant_sets.AddVariantSet(variants_set_name)
+                for variant_name, outliner_paths in variants_dict.items():
+                    variant_set.AddVariant(variant_name)
+
+                    #TODO: wyeksportuj wszystko do osobnych layerow i dodaj je jako referencje dla poszczegolnych variantow
+                    # CLOUDE: here it should create new layer 
+
+
 
 
         # TRZEBA TRO INACZEJ ZROBIC, MOZNA BY ZROBIA TAK ABY W RAZIE ZAISTNIENIA VARIANTOW AUTOMATYCZNIE NAZYWAL TEN VARIANT KTORY JEST PUYSTY?
