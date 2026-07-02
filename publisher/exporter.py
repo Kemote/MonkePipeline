@@ -80,48 +80,68 @@ class MeshLayerExporter:
         UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
 
-        # maybe spp should ask user what to do in case booth normal and version data exists? Or add default name
-        if not asset_item.variants:
-            for outliner_path in asset_item.base_objects:
-                mesh = asset_item.mesh_objects[outliner_path]
-                prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
-                self._write_mesh(stage, prim_path, mesh)
+        root = asset_item.variant_root
+        # meshes with no variant belong to the asset itself, so they live directly
+        # in this layer and are shared by every variant selection
+        self._write_meshes(stage, asset_item, root.outliner_paths)
 
-        else:
-            base_prim_path = geom_scope_path(asset_item.name)
-            base_prim = stage.GetPrimAtPath(base_prim_path)
-            if not base_prim:
-                base_prim = stage.DefinePrim(base_prim_path)
-
+        if root.variant_sets:
+            asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name))
             variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
-            os.makedirs(variants_dir, exist_ok=True)
-            mesh_layer_dir = os.path.dirname(stage.GetRootLayer().realPath)
+            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, variants_dir)
 
-            variant_sets = base_prim.GetVariantSets()
-            for variants_set_name, variants_dict in asset_item.variants.items():
-                variant_set = variant_sets.AddVariantSet(variants_set_name)
-                for variant_name, outliner_paths in variants_dict.items():
-                    variant_set.AddVariant(variant_name)
-                    variant_layer_path = self._write_variant_layer(
-                        variants_dir, asset_item, variants_set_name, variant_name, outliner_paths
-                    )
-                    variant_set.SetVariantSelection(variant_name)
-                    
-                    with variant_set.GetVariantEditContext():
-                        reference_path = os.path.relpath(variant_layer_path, mesh_layer_dir)
-                        base_prim.GetReferences().AddReference(reference_path)
-
-    def _write_variant_layer(self, variants_dir, asset_item, variants_set_name, variant_name, outliner_paths):
-        layer_name = sanitize_name(f"{asset_item.name}_{variants_set_name}_{variant_name}")
-        variant_layer_path = os.path.join(variants_dir, f"{layer_name}.{self.extension}")
-
-        variant_stage = Usd.Stage.CreateNew(variant_layer_path)
+    def _write_meshes(self, stage, asset_item, outliner_paths):
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
             prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
-            self._write_mesh(variant_stage, prim_path, mesh)
-        variant_stage.GetRootLayer().Save()
+            self._write_mesh(stage, prim_path, mesh)
 
+    def _author_variant_sets(self, stage, asset_item, prim, variant_sets, variants_dir):
+        """
+        authors `variant_sets` onto `prim`. each variant's geometry - its own
+        meshes plus any deeper variant sets - is written to a standalone layer laid
+        out as <variants_dir>/<set>/<variant>.<ext>; a variant that nests further
+        variants recurses into <variants_dir>/<set>/<variant>/, mirroring the
+        collection hierarchy on disk. the layer is referenced back into the variant
+        """
+        os.makedirs(variants_dir, exist_ok=True)
+        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
+        variant_sets_api = prim.GetVariantSets()
+
+        for set_name, variants in variant_sets.items():
+            set_dir = os.path.join(variants_dir, sanitize_name(set_name))
+            os.makedirs(set_dir, exist_ok=True)
+
+            variant_set = variant_sets_api.AddVariantSet(set_name)
+            for variant_name, node in variants.items():
+                variant_set.AddVariant(variant_name)
+                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+
+                variant_set.SetVariantSelection(variant_name)
+                with variant_set.GetVariantEditContext():
+                    reference_path = os.path.relpath(variant_layer_path, stage_dir)
+                    prim.GetReferences().AddReference(reference_path)
+
+            # leave a deterministic default selection rather than the last authored one
+            variant_set.SetVariantSelection(next(iter(variants)))
+
+    def _write_variant_layer(self, asset_item, set_dir, variant_name, node):
+        variant_layer_path = os.path.join(set_dir, f"{sanitize_name(variant_name)}.{self.extension}")
+
+        variant_stage = Usd.Stage.CreateNew(variant_layer_path)
+        UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
+        UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
+
+        self._write_meshes(variant_stage, asset_item, node.outliner_paths)
+
+        if node.variant_sets:
+            asset_prim = variant_stage.GetPrimAtPath(asset_root_path(asset_item.name))
+            nested_dir = os.path.join(set_dir, sanitize_name(variant_name))
+            self._author_variant_sets(variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir)
+
+        # a defaultPrim lets the parent layer reference this file without naming a prim
+        variant_stage.GetRootLayer().defaultPrim = sanitize_name(asset_item.name)
+        variant_stage.GetRootLayer().Save()
         return variant_layer_path
 
     def _write_mesh(self, stage, prim_path, mesh_obj):
