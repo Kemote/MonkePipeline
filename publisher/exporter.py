@@ -72,64 +72,57 @@ class MeshLayerExporter:
     skipped here so the sublayer's timeSamples are free to take effect
     """
 
+    def __init__(self, output_dir, extension):
+        self.output_dir = output_dir
+        self.extension = extension
+
     def export(self, stage: Usd.Stage, asset_item):
         UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
-        base_prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
 
         # maybe spp should ask user what to do in case booth normal and version data exists? Or add default name
         if not asset_item.variants:
             for outliner_path in asset_item.base_objects:
                 mesh = asset_item.mesh_objects[outliner_path]
-                self._write_mesh(stage, base_prim_path, mesh)
+                prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
+                self._write_mesh(stage, prim_path, mesh)
 
         else:
+            base_prim_path = geom_scope_path(asset_item.name)
             base_prim = stage.GetPrimAtPath(base_prim_path)
-            if not base_prim_path:
+            if not base_prim:
                 base_prim = stage.DefinePrim(base_prim_path)
+
+            variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
+            os.makedirs(variants_dir, exist_ok=True)
+            mesh_layer_dir = os.path.dirname(stage.GetRootLayer().realPath)
 
             variant_sets = base_prim.GetVariantSets()
             for variants_set_name, variants_dict in asset_item.variants.items():
                 variant_set = variant_sets.AddVariantSet(variants_set_name)
                 for variant_name, outliner_paths in variants_dict.items():
                     variant_set.AddVariant(variant_name)
+                    variant_layer_path = self._write_variant_layer(
+                        variants_dir, asset_item, variants_set_name, variant_name, outliner_paths
+                    )
+                    variant_set.SetVariantSelection(variant_name)
+                    
+                    with variant_set.GetVariantEditContext():
+                        reference_path = os.path.relpath(variant_layer_path, mesh_layer_dir)
+                        base_prim.GetReferences().AddReference(reference_path)
 
-                    #TODO: wyeksportuj wszystko do osobnych layerow i dodaj je jako referencje dla poszczegolnych variantow
-                    # CLOUDE: here it should create new layer 
+    def _write_variant_layer(self, variants_dir, asset_item, variants_set_name, variant_name, outliner_paths):
+        layer_name = sanitize_name(f"{asset_item.name}_{variants_set_name}_{variant_name}")
+        variant_layer_path = os.path.join(variants_dir, f"{layer_name}.{self.extension}")
 
+        variant_stage = Usd.Stage.CreateNew(variant_layer_path)
+        for outliner_path in outliner_paths:
+            mesh = asset_item.mesh_objects[outliner_path]
+            prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
+            self._write_mesh(variant_stage, prim_path, mesh)
+        variant_stage.GetRootLayer().Save()
 
-
-
-        # TRZEBA TRO INACZEJ ZROBIC, MOZNA BY ZROBIA TAK ABY W RAZIE ZAISTNIENIA VARIANTOW AUTOMATYCZNIE NAZYWAL TEN VARIANT KTORY JEST PUYSTY?
-
-        # if not asset_item.has_variants():
-        #     for outliner_path in asset_item.itter_base_objects():
-        #         mesh = asset_item.mesh_objects[outliner_path]
-        #         self._write_mesh(stage, base_prim_path, mesh)
-
-        # else
-        #     base_prim = stage.GetPrimAtPath(base_prim_path)
-        #     if not base_prim_path:
-        #         base_prim = stage.DefinePrim(base_prim_path)
-
-        #     variant_sets = base_prim.GetVariantSets()
-        #     for variant_set_name, variant_name, object_list in asset_item.itter_variants():
-        #         variant_sets.AddVariantSet(variant_set_name)
-
-
-
-        # for variant_set_name, variant_name, variant_outlinier_paths in asset_item.itter_mesh_objects():
-        #     prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
-            
-        #     if not variant_name:
-        #         for outliner_path, mesh_obj in asset_item.mesh_objects.items():
-        #             self._write_mesh(stage, prim_path, mesh_obj)
-            
-        #     else: 
-        #          for outliner_path in variant_outlinier_paths:
-        #              mesh_obj = asset_item.mesh_objects[outliner_path]
-        #              self._write_mesh(stage, prim_path, mesh_obj, variant_name)
-
+        return variant_layer_path
 
     def _write_mesh(self, stage, prim_path, mesh_obj):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
@@ -339,7 +332,7 @@ class UsdExporter:
     def __init__(self, output_dir, extension="usda"):
         self.output_dir = output_dir
         self.extension = (extension or self.DEFAULT_EXTENSION).lstrip(".")
-        self.mesh_exporter = MeshLayerExporter()
+        self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension)
         self.materials_exporter = MaterialsLayerExporter()
         self.material_binding_exporter = MaterialBindingLayerExporter()
         self.animation_exporter = AnimationLayerExporter()

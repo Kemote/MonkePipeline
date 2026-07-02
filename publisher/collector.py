@@ -19,27 +19,15 @@ class CollectedItem():
         self.variants = {}
 
     def add_variant(self, variant_set_name, variant_name, oultiner_path):
-        variant_set = self._variants.get(variant_set_name)
+        variant_set = self.variants.get(variant_set_name)
         if not variant_set:
-            variant_set = self._variants[variant_set_name] = {}
+            variant_set = self.variants[variant_set_name] = {}
         
         variant_objects = variant_set.get(variant_name)
         if not variant_objects:
-            variant_objects = self._variants[variant_name] = []
+            variant_objects = variant_set[variant_name] = []
         
         variant_objects.append(oultiner_path)
-
-    # def itter_variants(self):
-    #     for variant_set_name, variants_dict in self._variants.items():
-    #         if not variant_set_name:
-    #             continue
-    #         for variant_name, object_list in variants_dict.items():
-    #             if not variant_name:
-    #                 continue
-    #             yield variant_set_name, variant_name, object_list
-
-    # def __repr__(self):
-    #     return f"{self.type}(name={self.name!r}, outliner_path={self.outliner_path!r})"
 
 
 class CollectedAssetItem(CollectedItem):
@@ -73,12 +61,8 @@ class Collector(ABC):
                 asset_item = CollectedAssetItem(asset_name,  group_path)
                 for mesh_obj, outliner_path, in self.iter_object_type(asset_group, group_path, object_type):
                     asset_item.mesh_objects[outliner_path] = mesh_obj
-                    
-                    outliner_base_name = outliner_path.split("/")[-1]
-                    splited_base_name = outliner_base_name.split(VARIANT_SEPARATOR)
-                    if len(splited_base_name) > 1:
-                        variant_set_name = splited_base_name[0]
-                        variant_name = splited_base_name[-1]
+                    variant_set_name, variant_name = self.get_variant_names(outliner_path)
+                    if variant_set_name:
                         asset_item.add_variant(variant_set_name, variant_name, outliner_path)
                     else:
                         asset_item.base_objects.append(outliner_path)
@@ -86,6 +70,21 @@ class Collector(ABC):
                 self.items.append(asset_item)
         return
 
+    @staticmethod
+    def get_variant_names(outliner_path):
+        """
+        method which get last variant collection name from outliner path
+        it's a str loking like {varaint_set_name}_{VARIANT_SEPARATOR}_{VARIANT_SEPARATOR}
+        method return varaint set and varaint names, or None if collection like that dont exists
+        """
+        splited_outliner_path = outliner_path.split("/") or []
+        splited_outliner_path.reverse()
+        for path_part in splited_outliner_path:
+            if VARIANT_SEPARATOR in path_part:
+                splited_name = path_part.split(VARIANT_SEPARATOR)
+                return splited_name[0], splited_name[1]
+        return None, None
+    
     def iter_object_type(self, collection: bpy.types.Collection, outliner_path: str, obj_type: str):
         """
         method which allwo to find all object of provided type iside outliner group, by path like: "/collectionName/collectionName2"
@@ -95,7 +94,7 @@ class Collector(ABC):
             if obj.type == obj_type:
                 yield obj, f"{outliner_path}/{obj.name}"
         for child in collection.children:
-            yield from self.iter_object_type(child, f"{outliner_path}/{child.name}")
+            yield from self.iter_object_type(child, f"{outliner_path}/{child.name}", obj_type)
 
     def find_collection(self, path: str):
         parts = [part for part in path.split("/") if part]
