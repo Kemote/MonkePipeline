@@ -3,17 +3,44 @@ import bpy
 from abc import ABC, abstractmethod
 
 
+VARIANT_SEPARATOR = "_VAR_"
+
+
+class VariantNode:
+    """
+    one level of an asset's variant hierarchy.
+
+    outliner_paths: outliner paths of the meshes that live directly at this level
+    variant_sets: {variant_set_name: {variant_name: VariantNode}} - a variant may
+                  itself own further variant sets, so the tree nests to any depth
+    """
+    def __init__(self):
+        self.outliner_paths = []
+        self.variant_sets = {}
+
+    def add_variant(self, variant_set_name, variant_name):
+        variant_set = self.variant_sets.setdefault(variant_set_name, {})
+        node = variant_set.get(variant_name)
+        if node is None:
+            node = variant_set[variant_name] = VariantNode()
+        return node
+
+
 class CollectedItem():
     def __init__(self, name, outliner_path):
         self.name = name
         self.outliner_path = outliner_path
         self.type = "BASE_ITEM"
-
-    def __repr__(self):
-        return f"{self.type}(name={self.name!r}, outliner_path={self.outliner_path!r})"
+        # root of the variant hierarchy; variant_root.outliner_paths are the meshes
+        # that belong to the asset regardless of any variant selection
+        self.variant_root = VariantNode()
 
 
 class CollectedAssetItem(CollectedItem):
+    """
+    mesh_objects: dict mapping a mesh's outliner path -> its Blender object, for
+    every mesh in the asset (across all variant levels)
+    """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
         self.mesh_objects = {}
@@ -38,22 +65,36 @@ class Collector(ABC):
             for asset_group in assets_collection.children:
                 asset_name = asset_group.name
                 group_path = f"{outliner_base_path}/{asset_name}"
-                asset_item = CollectedAssetItem(asset_name,  group_path)
-                for mesh_obj, outliner_path in self.iter_object_type(asset_group, group_path, object_type):
-                    asset_item.mesh_objects[outliner_path] = mesh_obj
+                asset_item = CollectedAssetItem(asset_name, group_path)
+                self.collect_variants(asset_group, group_path, object_type, asset_item, asset_item.variant_root)
                 self.items.append(asset_item)
         return
 
-    def iter_object_type(self, collection: bpy.types.Collection, outliner_path: str, obj_type: str):
+    def collect_variants(self, collection: bpy.types.Collection, outliner_path: str, obj_type: str, asset_item, node):
         """
-        method which allwo to find all object of provided type iside outliner group, by path like: "/collectionName/collectionName2"
-        it's yielding base group name and all objects of type inside of it
+        walks a collection subtree building the asset's variant hierarchy.
+
+        meshes sitting directly in `collection` belong to `node`. a child
+        collection named "setName{VARIANT_SEPARATOR}variantName" opens a nested
+        variant level and is recursed into on its own VariantNode, so nesting
+        (e.g. modelType_VAR_tree > lod_VAR_high) is preserved to any depth. any
+        other child collection is plain organisation and keeps the current node.
         """
         for obj in collection.objects:
             if obj.type == obj_type:
-                yield obj, f"{outliner_path}/{obj.name}"
+                obj_path = f"{outliner_path}/{obj.name}"
+                asset_item.mesh_objects[obj_path] = obj
+                node.outliner_paths.append(obj_path)
+
         for child in collection.children:
-            yield from self.iter_object_type(child, f"{outliner_path}/{child.name}")
+            child_path = f"{outliner_path}/{child.name}"
+            splited_name = child.name.split(VARIANT_SEPARATOR)
+            if len(splited_name) > 1:
+                variant_set_name, variant_name = splited_name[0], splited_name[-1]
+                child_node = node.add_variant(variant_set_name, variant_name)
+                self.collect_variants(child, child_path, obj_type, asset_item, child_node)
+            else:
+                self.collect_variants(child, child_path, obj_type, asset_item, node)
 
     def find_collection(self, path: str):
         parts = [part for part in path.split("/") if part]

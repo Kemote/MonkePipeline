@@ -20,9 +20,9 @@ class MonkePublisher:
     def publish(self):
         asset_collector = AssetsCollector()
         asset_collector.collect()
-        usd_exporter = UsdExporter()
+        usd_exporter = UsdExporter("/home/kemot/Documents/Dev/_TMP/TestMonkeOutput")
         for asset_item in asset_collector.items:
-
+            usd_exporter.export(asset_item)
     
 
 if __name__ == "__main__":
