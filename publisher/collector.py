@@ -150,3 +150,7 @@ class LightCollector(Collector):
 
     def collect(self):
         return super().collect()
+
+
+#TODO: DOROB WSZYSTKO CO TRZEBA ABY OBSLUGIWALO PRAWIDLOWO MATERIALY!!
+# ZOBACZ czy purpose mozna ustalić?

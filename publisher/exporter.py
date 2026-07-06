@@ -165,6 +165,9 @@ class MeshLayerExporter:
 
 
 class MaterialsLayerExporter:
+    # TODO: now its takes only bae color from BSDF, we need to get more data from materials,
+    # maybe it should be converted to MAterialSX
+    
     """collects every material used by the asset's meshes under /{asset_name}/Looks"""
 
     def export(self, stage, asset_item):
@@ -186,7 +189,7 @@ class MaterialsLayerExporter:
         shader = UsdShade.Shader.Define(stage, f"{material_path}/PreviewSurface")
         shader.CreateIdAttr("UsdPreviewSurface")
 
-        base_color = material.diffuse_color
+        base_color =  self._get_base_color(material)
         shader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(
             Gf.Vec3f(base_color[0], base_color[1], base_color[2])
         )
@@ -196,6 +199,15 @@ class MaterialsLayerExporter:
             self._connect_texture(stage, material_path, shader, texture_path)
 
         usd_material.CreateSurfaceOutput().ConnectToSource(shader.ConnectableAPI(), "surface")
+
+    @staticmethod
+    def _get_base_color(material):
+        rgba = [1.0, 0.0, 0.7]
+        if material.use_nodes:
+            for node in material.node_tree.nodes:
+                if node.type == "BSDF_PRINCIPLED":
+                    rgba = list(node.inputs[0].default_value)
+        return rgba
 
     @staticmethod
     def _find_base_color_texture(material):
