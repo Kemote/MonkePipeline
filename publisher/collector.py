@@ -40,11 +40,25 @@ class CollectedAssetItem(CollectedItem):
     """
     mesh_objects: dict mapping a mesh's outliner path -> its Blender object, for
     every mesh in the asset (across all variant levels)
+    materials: {material_name: material} for materials without variants
+    material_variants: {base_name: {variant_name: material}} for materials named
+                       "baseName{VARIANT_SEPARATOR}variantName" - unlike geometry,
+                       material variants are a single level, so no VariantNode tree
     """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
         self.mesh_objects = {}
+        self.materials = {}
+        self.material_variants = {}
         self.type = "ASSET_ITEM"
+
+    def add_material(self, material):
+        splited_name = material.name.split(VARIANT_SEPARATOR)
+        if len(splited_name) > 1:
+            base_name, variant_name = splited_name[0], splited_name[-1]
+            self.material_variants.setdefault(base_name, {})[variant_name] = material
+        else:
+            self.materials[material.name] = material
 
 
 class Collector(ABC):
@@ -85,6 +99,9 @@ class Collector(ABC):
                 obj_path = f"{outliner_path}/{obj.name}"
                 asset_item.mesh_objects[obj_path] = obj
                 node.outliner_paths.append(obj_path)
+                for slot in obj.material_slots:
+                    if slot.material:
+                        asset_item.add_material(slot.material)
 
         for child in collection.children:
             child_path = f"{outliner_path}/{child.name}"
@@ -152,5 +169,4 @@ class LightCollector(Collector):
         return super().collect()
 
 
-#TODO: DOROB WSZYSTKO CO TRZEBA ABY OBSLUGIWALO PRAWIDLOWO MATERIALY!!
 # ZOBACZ czy purpose mozna ustalić?

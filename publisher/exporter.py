@@ -5,6 +5,8 @@ import bpy
 
 from pxr import Usd, UsdGeom, UsdShade, Sdf, Gf
 
+from collector import VARIANT_SEPARATOR
+
 
 FPS = 30
 DEFORM_MODIFIER_TYPES = {"ARMATURE", "CLOTH", "SOFT_BODY", "SURFACE_DEFORM"}
@@ -34,6 +36,11 @@ def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
     relative = outliner_path[len(asset_outliner_path):].strip("/")
     parts = [sanitize_name(part) for part in relative.split("/") if part]
     return "/".join([geom_scope_path(asset_name)] + parts)
+
+
+def base_material_name(material_name):
+    """a material named "base{VARIANT_SEPARATOR}variant" composes into the base Material prim"""
+    return material_name.split(VARIANT_SEPARATOR)[0]
 
 
 def matrix_to_gf(matrix_world):
@@ -167,24 +174,26 @@ class MeshLayerExporter:
 class MaterialsLayerExporter:
     # TODO: now its takes only bae color from BSDF, we need to get more data from materials,
     # maybe it should be converted to MAterialSX
-    
-    """collects every material used by the asset's meshes under /{asset_name}/Looks"""
+
+    """
+    collects every material used by the asset's meshes under /{asset_name}/Looks -
+    including each variant material ("base_VAR_variant"), written as an ordinary
+    Material prim under its full name. switching between variant materials is done
+    by the binding variantSets authored in the material binding layer, not here
+    """
 
     def export(self, stage, asset_item):
         looks_path = looks_scope_path(asset_item.name)
         UsdGeom.Scope.Define(stage, looks_path)
-        written = set()
 
-        for mesh_obj in asset_item.mesh_objects.values():
-            for slot in mesh_obj.material_slots:
-                material = slot.material
-                if not material or material.name in written:
-                    continue
-                written.add(material.name)
-                self._write_material(stage, looks_path, material)
+        for material in asset_item.materials.values():
+            self._write_material(stage, f"{looks_path}/{sanitize_name(material.name)}", material)
 
-    def _write_material(self, stage, looks_path, material):
-        material_path = f"{looks_path}/{sanitize_name(material.name)}"
+        for variants in asset_item.material_variants.values():
+            for material in variants.values():
+                self._write_material(stage, f"{looks_path}/{sanitize_name(material.name)}", material)
+
+    def _write_material(self, stage, material_path, material):
         usd_material = UsdShade.Material.Define(stage, material_path)
         shader = UsdShade.Shader.Define(stage, f"{material_path}/PreviewSurface")
         shader.CreateIdAttr("UsdPreviewSurface")
@@ -231,12 +240,21 @@ class MaterialBindingLayerExporter:
     authors `over` prims, scoped under /{asset_name}/Geom, that bind each mesh to
     its material(s) under /{asset_name}/Looks. a mesh using a single material gets
     one whole-mesh binding; a mesh whose polygons reference more than one material
-    slot gets a face GeomSubset (by polygon.material_index) per material instead
+    slot gets a face GeomSubset (by polygon.material_index) per material instead.
+
+    a mesh using a variant material ("base_VAR_variant") is not bound directly:
+    its binding is authored inside a variantSet (named after the base material) on
+    the asset root prim, where each variant rebinds every such mesh/subset to the
+    matching "base_VAR_*" Material prim from the materials layer
     """
 
     def export(self, stage, asset_item):
         looks_path = looks_scope_path(asset_item.name)
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
+
+        # base material name -> paths of the prims (meshes or subsets) whose
+        # binding must switch with that material's variant selection
+        variant_bindings = {}
 
         for outliner_path, mesh_obj in asset_item.mesh_objects.items():
             materials = self._used_materials(mesh_obj)
@@ -249,9 +267,11 @@ class MaterialBindingLayerExporter:
 
             if len(materials) == 1:
                 _, material = materials[0]
-                self._bind(over_prim, looks_path, material)
+                self._add_binding(over_prim, looks_path, material, variant_bindings)
             else:
-                self._bind_subsets(binding_api, mesh_obj, materials, looks_path)
+                self._bind_subsets(binding_api, mesh_obj, materials, looks_path, variant_bindings)
+
+        self._author_variant_bindings(stage, asset_item, looks_path, variant_bindings)
 
     @staticmethod
     def _used_materials(mesh_obj):
@@ -262,7 +282,7 @@ class MaterialBindingLayerExporter:
                 materials.append((index, mesh_obj.material_slots[index].material))
         return materials
 
-    def _bind_subsets(self, binding_api, mesh_obj, materials, looks_path):
+    def _bind_subsets(self, binding_api, mesh_obj, materials, looks_path, variant_bindings):
         for material_index, material in materials:
             face_indices = [
                 i for i, polygon in enumerate(mesh_obj.data.polygons)
@@ -271,13 +291,45 @@ class MaterialBindingLayerExporter:
             if not face_indices:
                 continue
 
+            # the subset is named after the base material so it stays stable while
+            # the variant selection swaps which material it is bound to
             subset = binding_api.CreateMaterialBindSubset(
-                sanitize_name(material.name), face_indices, elementType="face"
+                sanitize_name(base_material_name(material.name)), face_indices, elementType="face"
             )
             UsdShade.MaterialBindingAPI.Apply(subset.GetPrim())
-            self._bind(subset.GetPrim(), looks_path, material)
+            self._add_binding(subset.GetPrim(), looks_path, material, variant_bindings)
 
         binding_api.SetMaterialBindSubsetsFamilyType(UsdGeom.Tokens.partition)
+
+    def _add_binding(self, prim, looks_path, material, variant_bindings):
+        base_name = base_material_name(material.name)
+        if base_name != material.name:
+            variant_bindings.setdefault(base_name, []).append(prim.GetPath())
+        else:
+            self._bind(prim, looks_path, material)
+
+    def _author_variant_bindings(self, stage, asset_item, looks_path, variant_bindings):
+        if not variant_bindings:
+            return
+
+        root_prim = stage.OverridePrim(asset_root_path(asset_item.name))
+        for base_name, prim_paths in variant_bindings.items():
+            variants = asset_item.material_variants.get(base_name)
+            if not variants:
+                continue
+
+            variant_set = root_prim.GetVariantSets().AddVariantSet(base_name)
+            for variant_name, material in variants.items():
+                variant_set.AddVariant(variant_name)
+                variant_set.SetVariantSelection(variant_name)
+                # prim_paths are descendants of the root prim, so the bindings
+                # authored here land inside this variant instead of on the prims
+                with variant_set.GetVariantEditContext():
+                    for prim_path in prim_paths:
+                        self._bind(stage.GetPrimAtPath(prim_path), looks_path, material)
+
+            # leave a deterministic default selection rather than the last authored one
+            variant_set.SetVariantSelection(next(iter(variants)))
 
     @staticmethod
     def _bind(prim, looks_path, material):
