@@ -4,6 +4,22 @@ from abc import ABC, abstractmethod
 
 
 VARIANT_SEPARATOR = "_VAR_"
+OUTLINER_ASSET_ROOT = "/Scene/Assets"
+
+
+class ObjectPath:
+    def __init__(self, outliner_path):
+        self.outliner_path = outliner_path
+        self.usd_path = self.get_usd_path(outliner_path)
+
+    @staticmethod
+    def _get_usd_path(outliner_path):
+        path_parts = []
+        for path_part in outliner_path.split("/"):
+            path_part = path_part.split(VARIANT_SEPARATOR)[-1]
+            path_parts.append(path_part)
+        usd_like_path = "/".join(path_parts)  
+        return usd_like_path.lstrip(OUTLINER_ASSET_ROOT)
 
 
 class VariantNode:
@@ -29,7 +45,7 @@ class VariantNode:
 class CollectedItem():
     def __init__(self, name, outliner_path):
         self.name = name
-        self.outliner_path = outliner_path
+        self.path = ObjectPath(outliner_path)
         self.type = "BASE_ITEM"
         # root of the variant hierarchy; variant_root.outliner_paths are the meshes
         # that belong to the asset regardless of any variant selection
@@ -132,7 +148,7 @@ class AssetsCollector(Collector):
     def __init__(self):
         super().__init__()
 
-    def collect(self, assets_path="/Scene/Assets"):
+    def collect(self, assets_path=OUTLINER_ASSET_ROOT):
         super().collect(assets_path, "MESH")
         return
 
@@ -167,6 +183,3 @@ class LightCollector(Collector):
 
     def collect(self):
         return super().collect()
-
-
-# ZOBACZ czy purpose mozna ustalić?

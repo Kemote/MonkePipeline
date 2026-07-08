@@ -1,10 +1,8 @@
 import os
 import math
-
 import bpy
 
 from pxr import Usd, UsdGeom, UsdShade, Sdf, Gf
-
 from collector import VARIANT_SEPARATOR
 
 
@@ -100,10 +98,10 @@ class MeshLayerExporter:
     def _write_meshes(self, stage, asset_item, outliner_paths):
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
-            prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
+            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
             self._write_mesh(stage, prim_path, mesh)
 
-    def _author_variant_sets(self, stage, asset_item, prim, variant_sets, variants_dir):
+    def _author_variant_sets(self, stage: Usd.Stage, asset_item, prim: Usd.Prim, variant_sets, variants_dir):
         """
         authors `variant_sets` onto `prim`. each variant's geometry - its own
         meshes plus any deeper variant sets - is written to a standalone layer laid
@@ -111,26 +109,44 @@ class MeshLayerExporter:
         variants recurses into <variants_dir>/<set>/<variant>/, mirroring the
         collection hierarchy on disk. the layer is referenced back into the variant
         """
+        root_layer = stage.GetRootLayer()
         os.makedirs(variants_dir, exist_ok=True)
-        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
+        stage_dir = os.path.dirname(root_layer.realPath)
         variant_sets_api = prim.GetVariantSets()
-
+        
         for set_name, variants in variant_sets.items():
             set_dir = os.path.join(variants_dir, sanitize_name(set_name))
             os.makedirs(set_dir, exist_ok=True)
+            # if variant set name is "lod" itt should be treatend as pupropse insteed regular variant set
+            if set_name.lower() != "lod":
+                variant_set = variant_sets_api.AddVariantSet(set_name)
+                for variant_name, node in variants.items():
+                    variant_set.AddVariant(variant_name)
+                    variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+                    variant_set.SetVariantSelection(variant_name)
+                    with variant_set.GetVariantEditContext():
+                        reference_path = os.path.relpath(variant_layer_path, stage_dir)
+                        prim.GetReferences().AddReference(reference_path)
+                # leave a deterministic default selection rather than the last authored one
+                variant_set.SetVariantSelection(next(iter(variants)))
 
-            variant_set = variant_sets_api.AddVariantSet(set_name)
-            for variant_name, node in variants.items():
-                variant_set.AddVariant(variant_name)
-                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+            # we treat lod set differently, it should be set as a set of prims with purpose
+            else:
+                for variant_name, node in variants.items():
+                    lod_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+                    geom_path = geom_scope_path(asset_item.name)
+                    lod_prim = stage.DefinePrim(f"{geom_path}/{variant_name}", "Scope")
+                    
+                    reference_path = os.path.relpath(lod_layer_path, stage_dir)
+                    lod_prim.GetReferences().AddReference(reference_path)
 
-                variant_set.SetVariantSelection(variant_name)
-                with variant_set.GetVariantEditContext():
-                    reference_path = os.path.relpath(variant_layer_path, stage_dir)
-                    prim.GetReferences().AddReference(reference_path)
-
-            # leave a deterministic default selection rather than the last authored one
-            variant_set.SetVariantSelection(next(iter(variants)))
+                    purpose_attr = lod_prim.GetAttribute("purpose")
+                    if variant_name.lower() in ["render", "high"]:
+                        purpose_attr.Set("render")
+                    elif variant_name.lower() in ["proxy", "low"]:
+                        purpose_attr.Set("proxy")
+                    else:
+                        purpose_attr.Set("guide")
 
     def _write_variant_layer(self, asset_item, set_dir, variant_name, node):
         variant_layer_path = os.path.join(set_dir, f"{sanitize_name(variant_name)}.{self.extension}")
@@ -261,7 +277,7 @@ class MaterialBindingLayerExporter:
             if not materials:
                 continue
 
-            prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
+            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
             over_prim = stage.OverridePrim(prim_path)
             binding_api = UsdShade.MaterialBindingAPI.Apply(over_prim)
 
@@ -340,76 +356,76 @@ class MaterialBindingLayerExporter:
         prim.CreateRelationship("material:binding", custom=False).SetTargets([Sdf.Path(material_path)])
 
 
-class AnimationLayerExporter:
-    """
-    authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
-    decomposed translate/rotate/scale ops for objects animated only by their
-    transform, and time-sampled `points` for meshes that are actually deformed
-    (shape keys, armature, cloth, etc.)
-    """
+# class AnimationLayerExporter:
+#     """
+#     authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
+#     decomposed translate/rotate/scale ops for objects animated only by their
+#     transform, and time-sampled `points` for meshes that are actually deformed
+#     (shape keys, armature, cloth, etc.)
+#     """
 
-    def export(self, stage, asset_item):
-        scene = bpy.context.scene
-        depsgraph = bpy.context.evaluated_depsgraph_get()
+#     def export(self, stage, asset_item):
+#         scene = bpy.context.scene
+#         depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
+#         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
 
-        deformed = {}
-        transform_animated = {}
-        for outliner_path, mesh_obj in asset_item.mesh_objects.items():
-            prim_path = mesh_prim_path(asset_item.name, asset_item.outliner_path, outliner_path)
-            if AnimationInspector.is_deformed(mesh_obj):
-                deformed[prim_path] = mesh_obj
-            if AnimationInspector.is_transform_animated(mesh_obj):
-                transform_animated[prim_path] = mesh_obj
+#         deformed = {}
+#         transform_animated = {}
+#         for outliner_path, mesh_obj in asset_item.mesh_objects.items():
+#             prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
+#             if AnimationInspector.is_deformed(mesh_obj):
+#                 deformed[prim_path] = mesh_obj
+#             if AnimationInspector.is_transform_animated(mesh_obj):
+#                 transform_animated[prim_path] = mesh_obj
 
-        if not deformed and not transform_animated:
-            return
+#         if not deformed and not transform_animated:
+#             return
 
-        points_attrs = {
-            prim_path: UsdGeom.Mesh(stage.OverridePrim(prim_path)).CreatePointsAttr()
-            for prim_path in deformed
-        }
-        xform_ops = {prim_path: self._add_transform_ops(stage, prim_path) for prim_path in transform_animated}
+#         points_attrs = {
+#             prim_path: UsdGeom.Mesh(stage.OverridePrim(prim_path)).CreatePointsAttr()
+#             for prim_path in deformed
+#         }
+#         xform_ops = {prim_path: self._add_transform_ops(stage, prim_path) for prim_path in transform_animated}
 
-        original_frame = scene.frame_current
-        try:
-            for frame in range(scene.frame_start, scene.frame_end + 1):
-                scene.frame_set(frame)
-                depsgraph.update()
-                time_code = Usd.TimeCode(frame)
+#         original_frame = scene.frame_current
+#         try:
+#             for frame in range(scene.frame_start, scene.frame_end + 1):
+#                 scene.frame_set(frame)
+#                 depsgraph.update()
+#                 time_code = Usd.TimeCode(frame)
 
-                for path, mesh_obj in deformed.items():
-                    self._sample_points(mesh_obj, depsgraph, points_attrs[path], time_code)
+#                 for path, mesh_obj in deformed.items():
+#                     self._sample_points(mesh_obj, depsgraph, points_attrs[path], time_code)
 
-                for path, mesh_obj in transform_animated.items():
-                    self._sample_transform(mesh_obj, xform_ops[path], time_code)
-        finally:
-            scene.frame_set(original_frame)
+#                 for path, mesh_obj in transform_animated.items():
+#                     self._sample_transform(mesh_obj, xform_ops[path], time_code)
+#         finally:
+#             scene.frame_set(original_frame)
 
-        stage.SetStartTimeCode(scene.frame_start)
-        stage.SetEndTimeCode(scene.frame_end)
+#         stage.SetStartTimeCode(scene.frame_start)
+#         stage.SetEndTimeCode(scene.frame_end)
 
-    def _add_transform_ops(self, stage, prim_path):
-        over_xform = UsdGeom.Xformable(stage.OverridePrim(prim_path))
-        return over_xform.AddTranslateOp(), over_xform.AddRotateXYZOp(), over_xform.AddScaleOp()
+#     def _add_transform_ops(self, stage, prim_path):
+#         over_xform = UsdGeom.Xformable(stage.OverridePrim(prim_path))
+#         return over_xform.AddTranslateOp(), over_xform.AddRotateXYZOp(), over_xform.AddScaleOp()
 
-    @staticmethod
-    def _sample_points(mesh_obj, depsgraph, points_attr, time_code):
-        evaluated_obj = mesh_obj.evaluated_get(depsgraph)
-        evaluated_mesh = evaluated_obj.to_mesh()
-        points_attr.Set([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in evaluated_mesh.vertices], time_code)
-        evaluated_obj.to_mesh_clear()
+#     @staticmethod
+#     def _sample_points(mesh_obj, depsgraph, points_attr, time_code):
+#         evaluated_obj = mesh_obj.evaluated_get(depsgraph)
+#         evaluated_mesh = evaluated_obj.to_mesh()
+#         points_attr.Set([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in evaluated_mesh.vertices], time_code)
+#         evaluated_obj.to_mesh_clear()
 
-    @staticmethod
-    def _sample_transform(mesh_obj, xform_ops, time_code):
-        translate_op, rotate_op, scale_op = xform_ops
-        translation, rotation, scale = mesh_obj.matrix_world.decompose()
-        euler = rotation.to_euler("XYZ")
+#     @staticmethod
+#     def _sample_transform(mesh_obj, xform_ops, time_code):
+#         translate_op, rotate_op, scale_op = xform_ops
+#         translation, rotation, scale = mesh_obj.matrix_world.decompose()
+#         euler = rotation.to_euler("XYZ")
 
-        translate_op.Set(Gf.Vec3d(translation.x, translation.y, translation.z), time_code)
-        rotate_op.Set(Gf.Vec3f(math.degrees(euler.x), math.degrees(euler.y), math.degrees(euler.z)), time_code)
-        scale_op.Set(Gf.Vec3f(scale.x, scale.y, scale.z), time_code)
+#         translate_op.Set(Gf.Vec3d(translation.x, translation.y, translation.z), time_code)
+#         rotate_op.Set(Gf.Vec3f(math.degrees(euler.x), math.degrees(euler.y), math.degrees(euler.z)), time_code)
+#         scale_op.Set(Gf.Vec3f(scale.x, scale.y, scale.z), time_code)
 
 
 class UsdExporter:
@@ -419,7 +435,7 @@ class UsdExporter:
         self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension)
         self.materials_exporter = MaterialsLayerExporter()
         self.material_binding_exporter = MaterialBindingLayerExporter()
-        self.animation_exporter = AnimationLayerExporter()
+        # self.animation_exporter = AnimationLayerExporter()
 
     def export(self, asset_item):
         asset_name = asset_item.name
@@ -435,7 +451,7 @@ class UsdExporter:
         self._write_layer(mesh_path, self.mesh_exporter, asset_item)
         self._write_layer(materials_path, self.materials_exporter, asset_item)
         self._write_layer(binding_path, self.material_binding_exporter, asset_item)
-        self._write_layer(animations_path, self.animation_exporter, asset_item)
+        # self._write_layer(animations_path, self.animation_exporter, asset_item)
 
         # the main file carries no content of its own, only composition arcs to the
         # layer files above, so it stays a thin, human-readable entry point for the asset
