@@ -4,22 +4,7 @@ from abc import ABC, abstractmethod
 
 
 VARIANT_SEPARATOR = "_VAR_"
-OUTLINER_ASSET_ROOT = "/Scene/Assets"
-
-
-class ObjectPath:
-    def __init__(self, outliner_path):
-        self.outliner_path = outliner_path
-        self.usd_path = self.get_usd_path(outliner_path)
-
-    @staticmethod
-    def _get_usd_path(outliner_path):
-        path_parts = []
-        for path_part in outliner_path.split("/"):
-            path_part = path_part.split(VARIANT_SEPARATOR)[-1]
-            path_parts.append(path_part)
-        usd_like_path = "/".join(path_parts)  
-        return usd_like_path.lstrip(OUTLINER_ASSET_ROOT)
+ASSETS_ROOT = "/Scene/Assets"
 
 
 class VariantNode:
@@ -45,7 +30,7 @@ class VariantNode:
 class CollectedItem():
     def __init__(self, name, outliner_path):
         self.name = name
-        self.path = ObjectPath(outliner_path)
+        self.path = outliner_path
         self.type = "BASE_ITEM"
         # root of the variant hierarchy; variant_root.outliner_paths are the meshes
         # that belong to the asset regardless of any variant selection
@@ -148,7 +133,7 @@ class AssetsCollector(Collector):
     def __init__(self):
         super().__init__()
 
-    def collect(self, assets_path=OUTLINER_ASSET_ROOT):
+    def collect(self, assets_path=ASSETS_ROOT):
         super().collect(assets_path, "MESH")
         return
 
@@ -161,7 +146,7 @@ class AssetsCollector(Collector):
         for asset_item in self.items:
             asset_export = {
                 "name": asset_item.name,
-                "outliner_path": asset_item.outliner_path,
+                "outliner_path": asset_item.path,
                 "meshes": [],
             }
             for outliner_path, mesh_obj in asset_item.mesh_objects.items():

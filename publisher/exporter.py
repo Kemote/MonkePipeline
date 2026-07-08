@@ -9,12 +9,36 @@ from collector import VARIANT_SEPARATOR
 FPS = 30
 DEFORM_MODIFIER_TYPES = {"ARMATURE", "CLOTH", "SOFT_BODY", "SURFACE_DEFORM"}
 
+LOD_VARIANT_SET = "lod"
+LOD_PURPOSES = {
+    "high": UsdGeom.Tokens.render,
+    "render": UsdGeom.Tokens.render,
+    "low": UsdGeom.Tokens.proxy,
+    "proxy": UsdGeom.Tokens.proxy,
+}
+
 
 def sanitize_name(name):
     sanitized = "".join(char if char.isalnum() or char == "_" else "_" for char in name)
     if sanitized[:1].isdigit():
         sanitized = f"_{sanitized}"
     return sanitized
+
+
+def split_variant(name):
+    """splits "set{VARIANT_SEPARATOR}variant" into (set_name, variant_name); (None, name) otherwise"""
+    parts = name.split(VARIANT_SEPARATOR)
+    if len(parts) > 1:
+        return parts[0], parts[-1]
+    return None, name
+
+
+def is_lod_set(variant_set_name):
+    return variant_set_name.lower() == LOD_VARIANT_SET
+
+
+def lod_purpose(variant_name):
+    return LOD_PURPOSES.get(variant_name.lower(), UsdGeom.Tokens.guide)
 
 
 def asset_root_path(asset_name):
@@ -30,15 +54,41 @@ def looks_scope_path(asset_name):
 
 
 def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
-    """maps a mesh's outliner path (relative to the asset group) onto /{asset_name}/Geom/..."""
+    """
+    maps a mesh's outliner path (relative to the asset group) onto
+    /{asset_name}/Geom/... - a variant collection ("set_VAR_variant") contributes
+    no path component, since the variantSet selection already encodes that choice;
+    the exception is a lod collection, whose meshes compose under a prim named
+    after the lod's purpose (render/proxy/guide) so every lod can coexist
+    """
     relative = outliner_path[len(asset_outliner_path):].strip("/")
-    parts = [sanitize_name(part) for part in relative.split("/") if part]
+    parts = []
+    for part in relative.split("/"):
+        if not part:
+            continue
+        set_name, variant_name = split_variant(part)
+        if set_name is None:
+            parts.append(sanitize_name(part))
+        elif is_lod_set(set_name):
+            parts.append(lod_purpose(variant_name))
     return "/".join([geom_scope_path(asset_name)] + parts)
 
 
 def base_material_name(material_name):
-    """a material named "base{VARIANT_SEPARATOR}variant" composes into the base Material prim"""
+    """a material named "base{VARIANT_SEPARATOR}variant" belongs to the "base" variant group"""
     return material_name.split(VARIANT_SEPARATOR)[0]
+
+
+def material_prim_name(material_name):
+    """
+    "base_VAR_variant" materials become "{base}_{variant}" prims - the separator is
+    dropped but both halves are kept, so names stay unique across variant groups
+    (unlike keeping just the variant, where wood_VAR_dark and metal_VAR_dark clash)
+    """
+    set_name, variant_name = split_variant(material_name)
+    if set_name is None:
+        return sanitize_name(material_name)
+    return f"{sanitize_name(set_name)}_{sanitize_name(variant_name)}"
 
 
 def matrix_to_gf(matrix_world):
@@ -80,6 +130,7 @@ class MeshLayerExporter:
     def __init__(self, output_dir, extension):
         self.output_dir = output_dir
         self.extension = extension
+        self.binding_exporter = MaterialBindingLayerExporter()
 
     def export(self, stage: Usd.Stage, asset_item):
         UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
@@ -89,6 +140,7 @@ class MeshLayerExporter:
         # meshes with no variant belong to the asset itself, so they live directly
         # in this layer and are shared by every variant selection
         self._write_meshes(stage, asset_item, root.outliner_paths)
+        self._attach_binding_layer(stage, asset_item, root.outliner_paths)
 
         if root.variant_sets:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name))
@@ -98,7 +150,7 @@ class MeshLayerExporter:
     def _write_meshes(self, stage, asset_item, outliner_paths):
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
-            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
+            prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path)
             self._write_mesh(stage, prim_path, mesh)
 
     def _author_variant_sets(self, stage: Usd.Stage, asset_item, prim: Usd.Prim, variant_sets, variants_dir):
@@ -107,55 +159,57 @@ class MeshLayerExporter:
         meshes plus any deeper variant sets - is written to a standalone layer laid
         out as <variants_dir>/<set>/<variant>.<ext>; a variant that nests further
         variants recurses into <variants_dir>/<set>/<variant>/, mirroring the
-        collection hierarchy on disk. the layer is referenced back into the variant
+        collection hierarchy on disk. the layer is referenced back into the variant.
+
+        the "lod" set is the exception: lods coexist instead of switching, so no
+        variantSet is authored - every lod layer is referenced unconditionally and
+        its meshes sit under a prim carrying the matching purpose (render/proxy/
+        guide), leaving the choice to the renderer
         """
-        root_layer = stage.GetRootLayer()
         os.makedirs(variants_dir, exist_ok=True)
-        stage_dir = os.path.dirname(root_layer.realPath)
+        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
         variant_sets_api = prim.GetVariantSets()
-        
+
         for set_name, variants in variant_sets.items():
             set_dir = os.path.join(variants_dir, sanitize_name(set_name))
             os.makedirs(set_dir, exist_ok=True)
-            # if variant set name is "lod" itt should be treatend as pupropse insteed regular variant set
-            if set_name.lower() != "lod":
-                variant_set = variant_sets_api.AddVariantSet(set_name)
+
+            if is_lod_set(set_name):
                 for variant_name, node in variants.items():
-                    variant_set.AddVariant(variant_name)
-                    variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
-                    variant_set.SetVariantSelection(variant_name)
-                    with variant_set.GetVariantEditContext():
-                        reference_path = os.path.relpath(variant_layer_path, stage_dir)
-                        prim.GetReferences().AddReference(reference_path)
-                # leave a deterministic default selection rather than the last authored one
-                variant_set.SetVariantSelection(next(iter(variants)))
+                    lod_layer_path = self._write_variant_layer(
+                        asset_item, set_dir, variant_name, node, purpose=lod_purpose(variant_name)
+                    )
+                    prim.GetReferences().AddReference(os.path.relpath(lod_layer_path, stage_dir))
+                continue
 
-            # we treat lod set differently, it should be set as a set of prims with purpose
-            else:
-                for variant_name, node in variants.items():
-                    lod_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
-                    geom_path = geom_scope_path(asset_item.name)
-                    lod_prim = stage.DefinePrim(f"{geom_path}/{variant_name}", "Scope")
-                    
-                    reference_path = os.path.relpath(lod_layer_path, stage_dir)
-                    lod_prim.GetReferences().AddReference(reference_path)
+            variant_set = variant_sets_api.AddVariantSet(set_name)
+            for variant_name, node in variants.items():
+                variant_set.AddVariant(variant_name)
+                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+                variant_set.SetVariantSelection(variant_name)
+                with variant_set.GetVariantEditContext():
+                    prim.GetReferences().AddReference(os.path.relpath(variant_layer_path, stage_dir))
 
-                    purpose_attr = lod_prim.GetAttribute("purpose")
-                    if variant_name.lower() in ["render", "high"]:
-                        purpose_attr.Set("render")
-                    elif variant_name.lower() in ["proxy", "low"]:
-                        purpose_attr.Set("proxy")
-                    else:
-                        purpose_attr.Set("guide")
+            # leave a deterministic default selection rather than the last authored one
+            variant_set.SetVariantSelection(next(iter(variants)))
 
-    def _write_variant_layer(self, asset_item, set_dir, variant_name, node):
+    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, purpose=None):
         variant_layer_path = os.path.join(set_dir, f"{sanitize_name(variant_name)}.{self.extension}")
 
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
         UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
 
+        if purpose:
+            # mesh_prim_path places this layer's meshes under the purpose prim, so
+            # the purpose authored here is inherited by everything in the layer
+            purpose_scope = UsdGeom.Scope.Define(
+                variant_stage, f"{geom_scope_path(asset_item.name)}/{purpose}"
+            )
+            purpose_scope.CreatePurposeAttr().Set(purpose)
+
         self._write_meshes(variant_stage, asset_item, node.outliner_paths)
+        self._attach_binding_layer(variant_stage, asset_item, node.outliner_paths)
 
         if node.variant_sets:
             asset_prim = variant_stage.GetPrimAtPath(asset_root_path(asset_item.name))
@@ -166,6 +220,19 @@ class MeshLayerExporter:
         variant_stage.GetRootLayer().defaultPrim = sanitize_name(asset_item.name)
         variant_stage.GetRootLayer().Save()
         return variant_layer_path
+
+    def _attach_binding_layer(self, stage, asset_item, outliner_paths):
+        """
+        writes the sibling "<layer name>_binding" file holding the material
+        bindings for the meshes of this geometry layer, and sublayers it so the
+        layer carries its own bindings wherever it is referenced
+        """
+        if not outliner_paths:
+            return
+        geo_layer = stage.GetRootLayer()
+        binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths)
+        # the binding file sits next to its geometry layer, so the relative path is just the name
+        geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
     def _write_mesh(self, stage, prim_path, mesh_obj):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
@@ -194,8 +261,8 @@ class MaterialsLayerExporter:
     """
     collects every material used by the asset's meshes under /{asset_name}/Looks -
     including each variant material ("base_VAR_variant"), written as an ordinary
-    Material prim under its full name. switching between variant materials is done
-    by the binding variantSets authored in the material binding layer, not here
+    Material prim named "{base}_{variant}". switching between variant materials is
+    done by the binding variantSets authored in the material binding layer, not here
     """
 
     def export(self, stage, asset_item):
@@ -203,11 +270,11 @@ class MaterialsLayerExporter:
         UsdGeom.Scope.Define(stage, looks_path)
 
         for material in asset_item.materials.values():
-            self._write_material(stage, f"{looks_path}/{sanitize_name(material.name)}", material)
+            self._write_material(stage, f"{looks_path}/{material_prim_name(material.name)}", material)
 
         for variants in asset_item.material_variants.values():
             for material in variants.values():
-                self._write_material(stage, f"{looks_path}/{sanitize_name(material.name)}", material)
+                self._write_material(stage, f"{looks_path}/{material_prim_name(material.name)}", material)
 
     def _write_material(self, stage, material_path, material):
         usd_material = UsdShade.Material.Define(stage, material_path)
@@ -253,31 +320,41 @@ class MaterialsLayerExporter:
 
 class MaterialBindingLayerExporter:
     """
-    authors `over` prims, scoped under /{asset_name}/Geom, that bind each mesh to
-    its material(s) under /{asset_name}/Looks. a mesh using a single material gets
-    one whole-mesh binding; a mesh whose polygons reference more than one material
-    slot gets a face GeomSubset (by polygon.material_index) per material instead.
+    writes, next to every geometry layer, its "<layer name>_binding" companion:
+    `over` prims that bind that layer's meshes to Materials under
+    /{asset_name}/Looks. a mesh using a single material gets one whole-mesh
+    binding; a mesh whose polygons reference more than one material slot gets a
+    face GeomSubset (by polygon.material_index) per material instead.
 
     a mesh using a variant material ("base_VAR_variant") is not bound directly:
     its binding is authored inside a variantSet (named after the base material) on
     the asset root prim, where each variant rebinds every such mesh/subset to the
-    matching "base_VAR_*" Material prim from the materials layer
+    matching "{base}_{variant}" Material prim from the materials layer
     """
 
-    def export(self, stage, asset_item):
+    def write_for_layer(self, geo_layer_path, asset_item, outliner_paths):
+        base_path, extension = os.path.splitext(geo_layer_path)
+        binding_layer_path = f"{base_path}_binding{extension}"
+
+        stage = Usd.Stage.CreateNew(binding_layer_path)
+        self.export(stage, asset_item, outliner_paths)
+        stage.GetRootLayer().Save()
+        return binding_layer_path
+
+    def export(self, stage, asset_item, outliner_paths):
         looks_path = looks_scope_path(asset_item.name)
-        UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
 
         # base material name -> paths of the prims (meshes or subsets) whose
         # binding must switch with that material's variant selection
         variant_bindings = {}
 
-        for outliner_path, mesh_obj in asset_item.mesh_objects.items():
+        for outliner_path in outliner_paths:
+            mesh_obj = asset_item.mesh_objects[outliner_path]
             materials = self._used_materials(mesh_obj)
             if not materials:
                 continue
 
-            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
+            prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path)
             over_prim = stage.OverridePrim(prim_path)
             binding_api = UsdShade.MaterialBindingAPI.Apply(over_prim)
 
@@ -352,7 +429,7 @@ class MaterialBindingLayerExporter:
         # Bind() needs a resolvable Material prim, but this layer is written
         # standalone with no sublayer that defines /{asset_name}/Looks, so author
         # the "material:binding" relationship directly instead
-        material_path = f"{looks_path}/{sanitize_name(material.name)}"
+        material_path = f"{looks_path}/{material_prim_name(material.name)}"
         prim.CreateRelationship("material:binding", custom=False).SetTargets([Sdf.Path(material_path)])
 
 
@@ -432,9 +509,11 @@ class UsdExporter:
     def __init__(self, output_dir, extension="usda"):
         self.output_dir = output_dir
         self.extension = (extension or self.DEFAULT_EXTENSION).lstrip(".")
+        # material bindings are not a standalone top-level layer anymore:
+        # MeshLayerExporter writes a "<name>_binding" companion file next to
+        # every geometry layer it creates (main geo, variants and lods)
         self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension)
         self.materials_exporter = MaterialsLayerExporter()
-        self.material_binding_exporter = MaterialBindingLayerExporter()
         # self.animation_exporter = AnimationLayerExporter()
 
     def export(self, asset_item):
@@ -444,13 +523,11 @@ class UsdExporter:
 
         mesh_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
         materials_path = os.path.join(layers_dir, f"{asset_name}_materials.{self.extension}")
-        binding_path = os.path.join(layers_dir, f"{asset_name}_material_binding.{self.extension}")
-        animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
+        # animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
         main_path = os.path.join(self.output_dir, f"{asset_name}.{self.extension}")
 
         self._write_layer(mesh_path, self.mesh_exporter, asset_item)
         self._write_layer(materials_path, self.materials_exporter, asset_item)
-        self._write_layer(binding_path, self.material_binding_exporter, asset_item)
         # self._write_layer(animations_path, self.animation_exporter, asset_item)
 
         # the main file carries no content of its own, only composition arcs to the
@@ -460,8 +537,9 @@ class UsdExporter:
         self._set_metadata(main_stage)
 
         main_layer = main_stage.GetRootLayer()
-        # strongest first: animation overrides win over bindings, materials, then base mesh data
-        for layer_path in (animations_path, binding_path, materials_path, mesh_path):
+        # strongest first: materials win over the base mesh data (whose geometry
+        # layers each carry their own "<name>_binding" sublayer)
+        for layer_path in (materials_path, mesh_path):  # animations_path,
             main_layer.subLayerPaths.append(os.path.relpath(layer_path, self.output_dir))
         main_layer.defaultPrim = sanitize_name(asset_name)
 
