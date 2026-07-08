@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 
 VARIANT_SEPARATOR = "_VAR_"
+ASSETS_ROOT = "/Scene/Assets"
 
 
 class VariantNode:
@@ -29,7 +30,7 @@ class VariantNode:
 class CollectedItem():
     def __init__(self, name, outliner_path):
         self.name = name
-        self.outliner_path = outliner_path
+        self.path = outliner_path
         self.type = "BASE_ITEM"
         # root of the variant hierarchy; variant_root.outliner_paths are the meshes
         # that belong to the asset regardless of any variant selection
@@ -40,11 +41,25 @@ class CollectedAssetItem(CollectedItem):
     """
     mesh_objects: dict mapping a mesh's outliner path -> its Blender object, for
     every mesh in the asset (across all variant levels)
+    materials: {material_name: material} for materials without variants
+    material_variants: {base_name: {variant_name: material}} for materials named
+                       "baseName{VARIANT_SEPARATOR}variantName" - unlike geometry,
+                       material variants are a single level, so no VariantNode tree
     """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
         self.mesh_objects = {}
+        self.materials = {}
+        self.material_variants = {}
         self.type = "ASSET_ITEM"
+
+    def add_material(self, material):
+        splited_name = material.name.split(VARIANT_SEPARATOR)
+        if len(splited_name) > 1:
+            base_name, variant_name = splited_name[0], splited_name[-1]
+            self.material_variants.setdefault(base_name, {})[variant_name] = material
+        else:
+            self.materials[material.name] = material
 
 
 class Collector(ABC):
@@ -85,6 +100,9 @@ class Collector(ABC):
                 obj_path = f"{outliner_path}/{obj.name}"
                 asset_item.mesh_objects[obj_path] = obj
                 node.outliner_paths.append(obj_path)
+                for slot in obj.material_slots:
+                    if slot.material:
+                        asset_item.add_material(slot.material)
 
         for child in collection.children:
             child_path = f"{outliner_path}/{child.name}"
@@ -115,7 +133,7 @@ class AssetsCollector(Collector):
     def __init__(self):
         super().__init__()
 
-    def collect(self, assets_path="/Scene/Assets"):
+    def collect(self, assets_path=ASSETS_ROOT):
         super().collect(assets_path, "MESH")
         return
 
@@ -128,7 +146,7 @@ class AssetsCollector(Collector):
         for asset_item in self.items:
             asset_export = {
                 "name": asset_item.name,
-                "outliner_path": asset_item.outliner_path,
+                "outliner_path": asset_item.path,
                 "meshes": [],
             }
             for outliner_path, mesh_obj in asset_item.mesh_objects.items():
