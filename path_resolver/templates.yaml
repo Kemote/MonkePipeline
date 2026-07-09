@@ -1,0 +1,20 @@
+# PROJECT ROOT should be set by some kind of luncher
+
+fields:
+    assets_root: 
+        template: "<PROJECT_ROOT>/assets/"
+        type: root
+
+    VER:
+        template: "%03d"
+        type: format
+
+templates:
+    
+    # ASSETS TEMPLATES:
+
+    asset_name_template:
+        template: "<NAME>_<STEP>_v<VER>"
+
+    asset_publish_root:
+        template: "<assets_root>/<NAME>/<STEP>/..."

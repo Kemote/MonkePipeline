@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('index') }}">
+  <input name="name" placeholder="filter by name" value="{{ filters.get('name', '') }}">
+  <input name="author" placeholder="filter by author" value="{{ filters.get('author', '') }}">
+  <select name="status">
+    <option value="">any status</option>
+    {% for status in statuses %}
+      <option value="{{ status }}" {% if filters.get('status') == status %}selected{% endif %}>{{ status }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <a class="btn" href="{{ url_for('index') }}">Reset</a>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th><th>Preview</th><th>Name</th><th>Author</th><th>Version</th>
+      <th>Status</th><th>Steps</th><th>Created</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for asset in assets %}
+    <tr>
+      <td>{{ asset.id }}</td>
+      <td>
+        {% if asset.preview_img %}
+          <img class="thumb" src="{{ asset.preview_img }}" alt="{{ asset.name }}">
+        {% else %}
+          <div class="noimg">no img</div>
+        {% endif %}
+      </td>
+      <td><b>{{ asset.name }}</b></td>
+      <td>{{ asset.author }}</td>
+      <td>{{ asset.version }}</td>
+      <td><span class="badge {{ asset.status }}">{{ asset.status }}</span></td>
+      <td class="steps">
+        {% for key, detail in asset.steps_detail.items() %}
+          <span title="status: {{ detail.status }} | by {{ detail.modified_by }} @ {{ detail.modified_date }}">
+            {{ key }}: <b>{{ detail.value }}</b> ({{ detail.status }})
+          </span>
+        {% else %}
+          <span class="muted">—</span>
+        {% endfor %}
+      </td>
+      <td class="muted">{{ asset.created_date[:10] if asset.created_date else '' }}</td>
+      <td style="white-space: nowrap;">
+        <a class="btn" href="{{ url_for('edit_asset', asset_id=asset.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_asset', asset_id=asset.id) }}"
+              style="display:inline" onsubmit="return confirm('Delete asset {{ asset.id }}?');">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="muted">No assets yet — add the first one.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

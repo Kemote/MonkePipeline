@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Studio Asset DB{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #16181d; --panel: #1f232b; --line: #30343d;
+      --text: #e6e8ec; --muted: #9aa0ab; --accent: #6aa7ff;
+      --stable: #3fa66a; --wip: #d9a13b; --canceled: #c25555;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+           font: 14px/1.5 system-ui, sans-serif; }
+    header { display: flex; align-items: center; gap: 16px;
+             padding: 14px 24px; background: var(--panel);
+             border-bottom: 1px solid var(--line); }
+    header h1 { font-size: 17px; margin: 0; }
+    header a.btn { margin-left: auto; }
+    main { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+    a { color: var(--accent); text-decoration: none; }
+    .btn { display: inline-block; padding: 7px 14px; border-radius: 6px;
+           border: 1px solid var(--line); background: var(--panel);
+           color: var(--text); cursor: pointer; font-size: 13px; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #10131a; }
+    .btn.danger { color: var(--canceled); }
+    table { width: 100%; border-collapse: collapse; background: var(--panel);
+            border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line);
+             text-align: left; vertical-align: middle; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px;
+         text-transform: uppercase; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: none; }
+    .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px;
+             background: #0d0f13; border: 1px solid var(--line); }
+    .noimg { display: flex; align-items: center; justify-content: center;
+             width: 56px; height: 56px; border-radius: 6px; color: var(--muted);
+             background: #0d0f13; border: 1px dashed var(--line); font-size: 11px; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px;
+             font-size: 12px; font-weight: 600; }
+    .badge.stable { background: color-mix(in srgb, var(--stable) 22%, transparent); color: var(--stable); }
+    .badge.wip { background: color-mix(in srgb, var(--wip) 22%, transparent); color: var(--wip); }
+    .badge.canceled { background: color-mix(in srgb, var(--canceled) 22%, transparent); color: var(--canceled); }
+    .steps span { display: inline-block; margin: 1px 6px 1px 0; padding: 1px 8px;
+                  border-radius: 5px; background: #0d0f13; border: 1px solid var(--line);
+                  font-size: 12px; color: var(--muted); }
+    .steps b { color: var(--text); }
+    .flash { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+    .flash.ok { background: color-mix(in srgb, var(--stable) 18%, transparent); color: var(--stable); }
+    .flash.error { background: color-mix(in srgb, var(--canceled) 18%, transparent); color: var(--canceled); }
+    form.filters { display: flex; gap: 8px; margin-bottom: 16px; }
+    input, select { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line);
+                    background: #0d0f13; color: var(--text); font: inherit; }
+    label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><a href="{{ url_for('index') }}">🐒 Studio Asset DB</a></h1>
+    <span class="muted">API: <code>/api/assets</code></span>
+    <a class="btn primary" href="{{ url_for('add_asset') }}">+ Add asset</a>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
