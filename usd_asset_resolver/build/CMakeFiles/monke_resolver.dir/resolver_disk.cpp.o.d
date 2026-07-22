@@ -1,7 +1,7 @@
-CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
- /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/monke_resolver.cpp \
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
+ /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.cpp \
  /usr/include/stdc-predef.h \
- /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.h \
+ /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.h \
  /home/kemot/USD/include/pxr/pxr.h \
  /home/kemot/USD/include/pxr/usd/ar/resolver.h \
  /home/kemot/USD/include/pxr/usd/ar/api.h \
@@ -444,12 +444,4 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/c++/14/bits/uniform_int_dist.h \
  /usr/include/c++/14/pstl/glue_algorithm_defs.h \
  /home/kemot/USD/include/pxr/usd/ar/timestamp.h \
- /home/kemot/USD/include/pxr/base/arch/hints.h \
- /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.h \
- /home/kemot/USD/include/pxr/usd/ar/defineResolver.h \
- /home/kemot/USD/include/pxr/base/tf/registryManager.h \
- /home/kemot/USD/include/pxr/base/arch/attributes.h \
- /home/kemot/USD/include/pxr/base/tf/preprocessorUtilsLite.h \
- /home/kemot/USD/include/pxr/base/tf/type.h \
- /home/kemot/USD/include/pxr/base/tf/typeFunctions.h \
- /home/kemot/USD/include/pxr/base/tf/type_Impl.h
+ /home/kemot/USD/include/pxr/base/arch/hints.h

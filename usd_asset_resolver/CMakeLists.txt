@@ -22,8 +22,11 @@ include_directories(${PXR_INCLUDE_DIRS})
 
 # 4. Define our dynamic library (.dll on Windows, .so on Linux, .dylib on macOS)
 add_library(monke_resolver SHARED
-    monke_resolver.h
     monke_resolver.cpp
+    resolver_db.h
+    resolver_db.cpp
+    resolver_disk.h
+    resolver_disk.cpp
 )
 
 # 5. Link against the necessary OpenUSD core libraries

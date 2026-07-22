@@ -86,14 +86,46 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/monke_resolver.dir/monke_resolver.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/monke_resolver.cpp -o CMakeFiles/monke_resolver.dir/monke_resolver.cpp.s
 
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.o: CMakeFiles/monke_resolver.dir/flags.make
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.o: /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.cpp
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.o: CMakeFiles/monke_resolver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/monke_resolver.dir/resolver_db.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/monke_resolver.dir/resolver_db.cpp.o -MF CMakeFiles/monke_resolver.dir/resolver_db.cpp.o.d -o CMakeFiles/monke_resolver.dir/resolver_db.cpp.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.cpp
+
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/monke_resolver.dir/resolver_db.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.cpp > CMakeFiles/monke_resolver.dir/resolver_db.cpp.i
+
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/monke_resolver.dir/resolver_db.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.cpp -o CMakeFiles/monke_resolver.dir/resolver_db.cpp.s
+
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: CMakeFiles/monke_resolver.dir/flags.make
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.cpp
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: CMakeFiles/monke_resolver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o -MF CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o.d -o CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.cpp
+
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/monke_resolver.dir/resolver_disk.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.cpp > CMakeFiles/monke_resolver.dir/resolver_disk.cpp.i
+
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/monke_resolver.dir/resolver_disk.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.cpp -o CMakeFiles/monke_resolver.dir/resolver_disk.cpp.s
+
 # Object files for target monke_resolver
 monke_resolver_OBJECTS = \
-"CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o"
+"CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o" \
+"CMakeFiles/monke_resolver.dir/resolver_db.cpp.o" \
+"CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o"
 
 # External object files for target monke_resolver
 monke_resolver_EXTERNAL_OBJECTS =
 
 libmonke_resolver.so: CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o
+libmonke_resolver.so: CMakeFiles/monke_resolver.dir/resolver_db.cpp.o
+libmonke_resolver.so: CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o
 libmonke_resolver.so: CMakeFiles/monke_resolver.dir/build.make
 libmonke_resolver.so: CMakeFiles/monke_resolver.dir/compiler_depend.ts
 libmonke_resolver.so: /home/kemot/USD/lib/libusd_usdMedia.so
@@ -193,7 +225,7 @@ libmonke_resolver.so: /usr/lib64/libX11.so
 libmonke_resolver.so: /usr/lib64/libICE.so
 libmonke_resolver.so: /usr/lib64/libSM.so
 libmonke_resolver.so: CMakeFiles/monke_resolver.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX shared library libmonke_resolver.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX shared library libmonke_resolver.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/monke_resolver.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

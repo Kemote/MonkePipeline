@@ -3,11 +3,11 @@
     {
       "Info": {
         "Types": {
-          "MonkeResolver": {
+          "MonkeDbResolver": {
             "bases": [ "ArResolver" ],
             "uriSchemes": [ "monkeDb" ]
           },
-          "MonkeDiskResolver":{
+          "MonkeDiskResolver": {
             "bases": [ "ArResolver" ],
             "uriSchemes": [ "monkeDisk" ]
           }

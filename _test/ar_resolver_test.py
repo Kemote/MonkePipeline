@@ -24,7 +24,7 @@ os.environ["MONKEDBTOKEN"] = token
 
 
 # test code
-test_path = "monkeDb://asset:monkeHero:Geom?version=2&status=hujowy"
+test_path = "monkeDisk://asset:monkeHero:Geom?version=2&status=hujowy"
 asset_resolver = Ar.GetResolver()
 resolved_path = asset_resolver.Resolve(test_path)
 str_path = resolved_path.GetPathString()

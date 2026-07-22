@@ -153,6 +153,54 @@ monke_resolver.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/monke_resolver.cpp.s
 .PHONY : monke_resolver.cpp.s
 
+resolver_db.o: resolver_db.cpp.o
+.PHONY : resolver_db.o
+
+# target to build an object file
+resolver_db.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_db.cpp.o
+.PHONY : resolver_db.cpp.o
+
+resolver_db.i: resolver_db.cpp.i
+.PHONY : resolver_db.i
+
+# target to preprocess a source file
+resolver_db.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_db.cpp.i
+.PHONY : resolver_db.cpp.i
+
+resolver_db.s: resolver_db.cpp.s
+.PHONY : resolver_db.s
+
+# target to generate assembly for a file
+resolver_db.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_db.cpp.s
+.PHONY : resolver_db.cpp.s
+
+resolver_disk.o: resolver_disk.cpp.o
+.PHONY : resolver_disk.o
+
+# target to build an object file
+resolver_disk.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o
+.PHONY : resolver_disk.cpp.o
+
+resolver_disk.i: resolver_disk.cpp.i
+.PHONY : resolver_disk.i
+
+# target to preprocess a source file
+resolver_disk.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_disk.cpp.i
+.PHONY : resolver_disk.cpp.i
+
+resolver_disk.s: resolver_disk.cpp.s
+.PHONY : resolver_disk.s
+
+# target to generate assembly for a file
+resolver_disk.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/monke_resolver.dir/build.make CMakeFiles/monke_resolver.dir/resolver_disk.cpp.s
+.PHONY : resolver_disk.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -165,6 +213,12 @@ help:
 	@echo "... monke_resolver.o"
 	@echo "... monke_resolver.i"
 	@echo "... monke_resolver.s"
+	@echo "... resolver_db.o"
+	@echo "... resolver_db.i"
+	@echo "... resolver_db.s"
+	@echo "... resolver_disk.o"
+	@echo "... resolver_disk.i"
+	@echo "... resolver_disk.s"
 .PHONY : help
 
 

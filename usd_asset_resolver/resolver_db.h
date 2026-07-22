@@ -9,18 +9,18 @@
 // to prevent code naming conflicts. This macro says "we are using the pxr folder".
 PXR_NAMESPACE_USING_DIRECTIVE
 
-// We define our own class "MonkeResolver" which inherits from "ArResolver".
+// We define our own class "MonkeDbResolver" which inherits from "ArResolver".
 // "public" means external USD code is allowed to treat us as an ArResolver.
-class MonkeResolver : public ArResolver {
+class MonkeDbResolver : public ArResolver {
     public:
         // Constructor: This is called when the class is first created.
         // "= default" tells the compiler to just generate the basic, standard initializer.
-        MonkeResolver() = default;
+        MonkeDbResolver() = default;
 
         // Destructor: This is called when the class is destroyed and cleaned up.
         // "virtual" ensures that when USD cleans up this object through a base pointer,
         // it correctly runs our cleanup code first, preventing memory leaks.
-        virtual ~MonkeResolver() = default;
+        virtual ~MonkeDbResolver() = default;
 
     protected: // "protected" means only this class (or classes that inherit from it) can run these functions.
         

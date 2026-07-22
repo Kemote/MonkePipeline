@@ -2,6 +2,8 @@ libmonke_resolver.so: \
   /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o \
   /usr/lib/gcc/x86_64-redhat-linux/14/crtbeginS.o \
   CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o \
+  CMakeFiles/monke_resolver.dir/resolver_db.cpp.o \
+  CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o \
   /home/kemot/USD/lib/libusd_usdMedia.so \
   /home/kemot/USD/lib/libusd_usdRi.so \
   /home/kemot/USD/lib/libusd_usdSemantics.so \
@@ -131,6 +133,10 @@ libmonke_resolver.so: \
 /usr/lib/gcc/x86_64-redhat-linux/14/crtbeginS.o:
 
 CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o:
+
+CMakeFiles/monke_resolver.dir/resolver_db.cpp.o:
+
+CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o:
 
 /home/kemot/USD/lib/libusd_usdMedia.so:
 
