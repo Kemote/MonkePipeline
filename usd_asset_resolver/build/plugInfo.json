@@ -1,0 +1,17 @@
+{
+  "Plugins": [
+    {
+      "Info": {
+        "Types": {
+          "MonkeResolver": {
+            "bases": [ "ArResolver" ],
+            "uriSchemes": [ "monkeUri" ]
+          }
+        }
+      },
+      "LibraryPath": "libmonke_resolver.so",
+      "Name": "monke_resolver",
+      "Type": "library"
+    }
+  ]
+}
