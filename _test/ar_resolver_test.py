@@ -1,7 +1,14 @@
 import os
 import requests
 
-# set correct environment
+
+# set project settings:
+# those envs should be set by some kind of luncher
+os.environ["PROJECTNAME"] = "SomeProject"
+os.environ["PROJECTSROOT"] = "/home/kemot/Documents/ProjectRoot"
+
+
+# set correct pxr environment
 os.environ["PXR_PLUGINPATH_NAME"] = "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build"
 os.environ["TF_DEBUG"] = "AR_RESOLVER_INIT"
 # pxr should be imported after ar environ is already set
@@ -23,14 +30,19 @@ print(f"TOKEN: {token}")
 os.environ["MONKEDBTOKEN"] = token
 
 
-# test code
-test_path = "monkeDisk://asset:monkeHero:Geom?version=2&status=hujowy"
+
+# test
+# wypadku monkeDb to czy sciezki w glab tak jak sceizki do roznych variantow bede relartywnie? 
+# Okreslany bylby tylko glowny plik stepu
+test_path = "monkeDb://asset:monkeHero:Geom?version=2&status=hujowy"
+test_disc_path = "monkeDisc://assets/assetName/ver<version>blabla/someAsset_v<version>.usda:lastest"
 asset_resolver = Ar.GetResolver()
 resolved_path = asset_resolver.Resolve(test_path)
-str_path = resolved_path.GetPathString()
+resolved_disc_path = asset_resolver.Resolve(test_disc_path)
 
-current_resolver = Ar.GetResolver()
-resolver_type = Tf.Type.Find(current_resolver)
-print(f"TFTYPE: {resolver_type.typeName}")
+# current_resolver = Ar.GetResolver()
+# resolver_type = Tf.Type.Find(current_resolver)
+# print(f"TFTYPE: {resolver_type.typeName}")
 
-print(f"PATH: {resolved_path}")
+print(f"DB PATH: {resolved_path}")
+print(f"DISC PATH: {resolved_disc_path}")

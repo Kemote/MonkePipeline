@@ -19,7 +19,7 @@ std::string MonkeApiRequest(const std::string& assetId) {
     CURL* curl = curl_easy_init();
     std::string responseString;
 
-    if(curl) {
+    if(curl){
         std::string url = "http://127.0.0.1:5000/api/assets/" + assetId + "/fin_path";
         
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -61,12 +61,12 @@ std::tuple<std::string, std::string, std::string, std::string, std::string> GetM
     std::string entity_type, entity_name, entity_step, version, status;
     size_t tokensSeparator = monkeDbPath.find("?");    
 
-    if (tokensSeparator == std::string::npos) {
-        uriBody = monkeDbPath.substr(11);
+    if (tokensSeparator == std::string::npos){
+        uriBody = monkeDbPath.substr(10);
     }
 
     else {
-        uriBody = monkeDbPath.substr(11, tokensSeparator - 11);
+        uriBody = monkeDbPath.substr(10, tokensSeparator - 10);
         std::string_view tokens = monkeDbPath.substr(tokensSeparator + 1);
         std::string valKey = "";
         std::string value = "";
@@ -81,10 +81,10 @@ std::tuple<std::string, std::string, std::string, std::string, std::string> GetM
                 valKey = value_pair.substr(0, eqPos);
                 value = value_pair.substr(eqPos + 1);
                 // get tokens we need
-                if (valKey == "version") {
+                if (valKey == "version"){
                     version = value;
                 }
-                else if (valKey == "status") {
+                else if (valKey == "status"){
                     status = value;
                 }
             } 
@@ -95,7 +95,7 @@ std::tuple<std::string, std::string, std::string, std::string, std::string> GetM
 
     // get monkeDbPath body parts
     int index = 1;
-    while (!uriBody.empty()) {
+    while (!uriBody.empty()){
         size_t eqPos = uriBody.find(":");
         if (eqPos == std::string_view::npos) {
             entity_step = uriBody;
@@ -119,8 +119,6 @@ std::string MonkeDbResolver::_CreateIdentifier(
     const std::string& assetPath,
     const ArResolvedPath& anchorAssetPath) const 
 {
-    // For a schematic pass-through, we do nothing.
-    // We just return the exact same string USD gave us.
     return assetPath;
 }
 
@@ -140,9 +138,6 @@ ArResolvedPath MonkeDbResolver::_Resolve(const std::string& monkeDbPath) const {
 
 // function which handle streaming USD from http or zip files
 std::shared_ptr<ArAsset> MonkeDbResolver::_OpenAsset(const ArResolvedPath& resolvedPath) const {
-    // nullptr is modern version of "NULL" in C++
-    // if we return bullptr OpenUSD knwo that we don't have custom memory stream
-    // and it should be oppened form local hard drive
     return nullptr;
 }
 

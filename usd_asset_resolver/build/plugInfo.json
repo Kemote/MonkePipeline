@@ -9,7 +9,7 @@
           },
           "MonkeDiskResolver": {
             "bases": [ "ArResolver" ],
-            "uriSchemes": [ "monkeDisk" ]
+            "uriSchemes": [ "monkeDisc" ]
           }
         }
       },
