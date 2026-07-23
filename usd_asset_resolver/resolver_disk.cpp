@@ -44,10 +44,10 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
             size_t lastSlash = basedir.rfind("/");
             if (lastSlash != std::string_view::npos){
                 // cos z tym version token jest nie tak
-                startName = fullPath.substr(lastSlash + 1, versionToken);
-                std::string restOfPath = fullPath.substr(versionToken + 9);
+                startName = fullPath.substr(lastSlash + 1, versionToken - (lastSlash + 1));
+                std::string restOfPath = fullPath.substr(versionToken);
                 size_t nameSlash = restOfPath.find("/");
-                endName = restOfPath.substr(0, nameSlash);
+                endName = restOfPath.substr(9, nameSlash - 9);
                 basedir = basedir.substr(0, lastSlash);
             }
         }
@@ -59,7 +59,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
         for (const auto& entry : fs::directory_iterator(basedir)){
             
             std::cout << "ENTRY: " << entry << std::endl;
-
+                
 
         }
 
