@@ -35,7 +35,7 @@ os.environ["MONKEDBTOKEN"] = token
 # wypadku monkeDb to czy sciezki w glab tak jak sceizki do roznych variantow bede relartywnie? 
 # Okreslany bylby tylko glowny plik stepu
 test_path = "monkeDb://asset:monkeHero:Geom?version=2&status=hujowy"
-test_disc_path = "monkeDisc://assets/assetName/ver<version>blabla/someAsset_v<version>.usda:lastest"
+test_disc_path = "monkeDisc://assets/assetName/ver<version>/someAsset_v<version>.usda:json"
 asset_resolver = Ar.GetResolver()
 resolved_path = asset_resolver.Resolve(test_path)
 resolved_disc_path = asset_resolver.Resolve(test_disc_path)

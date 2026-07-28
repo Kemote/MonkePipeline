@@ -157,20 +157,46 @@ CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
  /usr/include/c++/14/bits/unique_ptr.h \
  /usr/include/c++/14/ext/aligned_buffer.h \
  /usr/include/c++/14/bits/fs_dir.h /usr/include/c++/14/bits/fs_ops.h \
- /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.h \
- /home/kemot/USD/include/pxr/pxr.h \
- /home/kemot/USD/include/pxr/usd/ar/resolver.h \
- /home/kemot/USD/include/pxr/usd/ar/api.h \
- /home/kemot/USD/include/pxr/base/arch/export.h \
- /home/kemot/USD/include/pxr/base/arch/defines.h \
- /home/kemot/USD/include/pxr/usd/ar/ar.h \
- /home/kemot/USD/include/pxr/usd/ar/resolvedPath.h \
- /home/kemot/USD/include/pxr/base/tf/hash.h \
- /home/kemot/USD/include/pxr/base/tf/tf.h \
- /home/kemot/USD/include/pxr/base/arch/buildMode.h \
- /home/kemot/USD/include/pxr/base/arch/math.h \
- /home/kemot/USD/include/pxr/base/arch/inttypes.h \
- /usr/include/c++/14/cinttypes /usr/include/inttypes.h \
+ /usr/include/c++/14/fstream \
+ /usr/include/c++/14/x86_64-redhat-linux/bits/basic_file.h \
+ /usr/include/c++/14/x86_64-redhat-linux/bits/c++io.h \
+ /usr/include/c++/14/bits/fstream.tcc /usr/include/nlohmann/json.hpp \
+ /usr/include/c++/14/algorithm /usr/include/c++/14/bits/stl_algo.h \
+ /usr/include/c++/14/bits/algorithmfwd.h \
+ /usr/include/c++/14/bits/stl_heap.h \
+ /usr/include/c++/14/bits/uniform_int_dist.h \
+ /usr/include/c++/14/bits/stl_tempbuf.h \
+ /usr/include/c++/14/pstl/glue_algorithm_defs.h \
+ /usr/include/c++/14/pstl/execution_defs.h /usr/include/c++/14/functional \
+ /usr/include/c++/14/bits/std_function.h \
+ /usr/include/c++/14/unordered_map \
+ /usr/include/c++/14/bits/unordered_map.h \
+ /usr/include/c++/14/bits/hashtable.h \
+ /usr/include/c++/14/bits/hashtable_policy.h \
+ /usr/include/c++/14/bits/enable_special_members.h \
+ /usr/include/c++/14/bits/node_handle.h \
+ /usr/include/c++/14/bits/erase_if.h /usr/include/c++/14/vector \
+ /usr/include/c++/14/bits/stl_uninitialized.h \
+ /usr/include/c++/14/bits/stl_vector.h \
+ /usr/include/c++/14/bits/stl_bvector.h \
+ /usr/include/c++/14/bits/vector.tcc /usr/include/c++/14/array \
+ /usr/include/c++/14/compare /usr/include/c++/14/iterator \
+ /usr/include/c++/14/bits/stream_iterator.h /usr/include/c++/14/memory \
+ /usr/include/c++/14/bits/stl_raw_storage_iter.h \
+ /usr/include/c++/14/bits/align.h \
+ /usr/include/c++/14/bits/shared_ptr_atomic.h \
+ /usr/include/c++/14/bits/atomic_base.h \
+ /usr/include/c++/14/bits/atomic_lockfree_defines.h \
+ /usr/include/c++/14/backward/auto_ptr.h \
+ /usr/include/c++/14/pstl/glue_memory_defs.h /usr/include/c++/14/utility \
+ /usr/include/c++/14/bits/stl_relops.h \
+ /usr/include/nlohmann/adl_serializer.hpp \
+ /usr/include/nlohmann/detail/abi_macros.hpp \
+ /usr/include/nlohmann/detail/conversions/from_json.hpp \
+ /usr/include/c++/14/forward_list /usr/include/c++/14/bits/forward_list.h \
+ /usr/include/c++/14/bits/forward_list.tcc /usr/include/c++/14/map \
+ /usr/include/c++/14/bits/stl_tree.h /usr/include/c++/14/bits/stl_map.h \
+ /usr/include/c++/14/bits/stl_multimap.h /usr/include/c++/14/valarray \
  /usr/include/c++/14/cmath /usr/include/math.h \
  /usr/include/bits/math-vector.h /usr/include/bits/libm-simd-decl-stubs.h \
  /usr/include/bits/flt-eval-method.h /usr/include/bits/fp-logb.h \
@@ -189,30 +215,78 @@ CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
  /usr/include/c++/14/tr1/modified_bessel_func.tcc \
  /usr/include/c++/14/tr1/poly_hermite.tcc \
  /usr/include/c++/14/tr1/poly_laguerre.tcc \
- /usr/include/c++/14/tr1/riemann_zeta.tcc /usr/include/c++/14/math.h \
- /usr/include/c++/14/utility /usr/include/c++/14/bits/stl_relops.h \
- /home/kemot/USD/include/pxr/base/tf/api.h /usr/include/c++/14/cstring \
- /usr/include/string.h /usr/include/strings.h /usr/include/c++/14/map \
- /usr/include/c++/14/bits/stl_tree.h \
- /usr/include/c++/14/bits/node_handle.h \
- /usr/include/c++/14/bits/stl_map.h \
- /usr/include/c++/14/bits/stl_multimap.h \
- /usr/include/c++/14/bits/erase_if.h /usr/include/c++/14/memory \
- /usr/include/c++/14/bits/stl_tempbuf.h \
- /usr/include/c++/14/bits/stl_uninitialized.h \
- /usr/include/c++/14/bits/stl_raw_storage_iter.h \
- /usr/include/c++/14/bits/align.h \
- /usr/include/c++/14/bits/shared_ptr_atomic.h \
- /usr/include/c++/14/bits/atomic_base.h \
- /usr/include/c++/14/bits/atomic_lockfree_defines.h \
- /usr/include/c++/14/backward/auto_ptr.h \
- /usr/include/c++/14/pstl/glue_memory_defs.h \
- /usr/include/c++/14/pstl/execution_defs.h /usr/include/c++/14/set \
- /usr/include/c++/14/bits/stl_set.h \
+ /usr/include/c++/14/tr1/riemann_zeta.tcc \
+ /usr/include/c++/14/bits/valarray_array.h \
+ /usr/include/c++/14/bits/valarray_array.tcc \
+ /usr/include/c++/14/bits/valarray_before.h \
+ /usr/include/c++/14/bits/slice_array.h \
+ /usr/include/c++/14/bits/valarray_after.h \
+ /usr/include/c++/14/bits/gslice.h \
+ /usr/include/c++/14/bits/gslice_array.h \
+ /usr/include/c++/14/bits/mask_array.h \
+ /usr/include/c++/14/bits/indirect_array.h \
+ /usr/include/nlohmann/detail/exceptions.hpp \
+ /usr/include/nlohmann/detail/value_t.hpp \
+ /usr/include/nlohmann/detail/macro_scope.hpp \
+ /usr/include/nlohmann/detail/meta/detected.hpp \
+ /usr/include/nlohmann/detail/meta/void_t.hpp \
+ /usr/include/nlohmann/thirdparty/hedley/hedley.hpp \
+ /usr/include/c++/14/version /usr/include/c++/14/cassert \
+ /usr/include/assert.h /usr/include/nlohmann/detail/string_escape.hpp \
+ /usr/include/nlohmann/detail/input/position_t.hpp \
+ /usr/include/nlohmann/detail/meta/cpp_future.hpp \
+ /usr/include/nlohmann/detail/meta/type_traits.hpp \
+ /usr/include/nlohmann/detail/iterators/iterator_traits.hpp \
+ /usr/include/nlohmann/detail/meta/call_std/begin.hpp \
+ /usr/include/nlohmann/detail/meta/call_std/end.hpp \
+ /usr/include/nlohmann/json_fwd.hpp \
+ /usr/include/nlohmann/detail/string_concat.hpp \
+ /usr/include/c++/14/cstring /usr/include/string.h /usr/include/strings.h \
+ /usr/include/nlohmann/detail/meta/identity_tag.hpp \
+ /usr/include/nlohmann/detail/meta/std_fs.hpp \
+ /usr/include/nlohmann/detail/conversions/to_json.hpp \
+ /usr/include/nlohmann/detail/iterators/iteration_proxy.hpp \
+ /usr/include/nlohmann/byte_container_with_subtype.hpp \
+ /usr/include/nlohmann/detail/hash.hpp \
+ /usr/include/nlohmann/detail/input/binary_reader.hpp \
+ /usr/include/nlohmann/detail/input/input_adapters.hpp \
+ /usr/include/c++/14/numeric /usr/include/c++/14/bits/stl_numeric.h \
+ /usr/include/c++/14/pstl/glue_numeric_defs.h \
+ /usr/include/nlohmann/detail/input/json_sax.hpp \
+ /usr/include/nlohmann/detail/input/lexer.hpp \
+ /usr/include/nlohmann/detail/meta/is_sax.hpp \
+ /usr/include/nlohmann/detail/input/parser.hpp \
+ /usr/include/nlohmann/detail/iterators/internal_iterator.hpp \
+ /usr/include/nlohmann/detail/iterators/primitive_iterator.hpp \
+ /usr/include/nlohmann/detail/iterators/iter_impl.hpp \
+ /usr/include/nlohmann/detail/iterators/json_reverse_iterator.hpp \
+ /usr/include/nlohmann/detail/json_custom_base_class.hpp \
+ /usr/include/nlohmann/detail/json_pointer.hpp \
+ /usr/include/nlohmann/detail/json_ref.hpp \
+ /usr/include/nlohmann/detail/output/binary_writer.hpp \
+ /usr/include/nlohmann/detail/output/output_adapters.hpp \
+ /usr/include/nlohmann/detail/output/serializer.hpp \
+ /usr/include/nlohmann/detail/conversions/to_chars.hpp \
+ /usr/include/nlohmann/ordered_map.hpp /usr/include/c++/14/any \
+ /usr/include/nlohmann/detail/macro_unscope.hpp \
+ /usr/include/nlohmann/thirdparty/hedley/hedley_undef.hpp \
+ /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.h \
+ /home/kemot/USD/include/pxr/pxr.h \
+ /home/kemot/USD/include/pxr/usd/ar/resolver.h \
+ /home/kemot/USD/include/pxr/usd/ar/api.h \
+ /home/kemot/USD/include/pxr/base/arch/export.h \
+ /home/kemot/USD/include/pxr/base/arch/defines.h \
+ /home/kemot/USD/include/pxr/usd/ar/ar.h \
+ /home/kemot/USD/include/pxr/usd/ar/resolvedPath.h \
+ /home/kemot/USD/include/pxr/base/tf/hash.h \
+ /home/kemot/USD/include/pxr/base/tf/tf.h \
+ /home/kemot/USD/include/pxr/base/arch/buildMode.h \
+ /home/kemot/USD/include/pxr/base/arch/math.h \
+ /home/kemot/USD/include/pxr/base/arch/inttypes.h \
+ /usr/include/c++/14/cinttypes /usr/include/inttypes.h \
+ /usr/include/c++/14/math.h /home/kemot/USD/include/pxr/base/tf/api.h \
+ /usr/include/c++/14/set /usr/include/c++/14/bits/stl_set.h \
  /usr/include/c++/14/bits/stl_multiset.h /usr/include/c++/14/typeindex \
- /usr/include/c++/14/vector /usr/include/c++/14/bits/stl_vector.h \
- /usr/include/c++/14/bits/stl_bvector.h \
- /usr/include/c++/14/bits/vector.tcc \
  /home/kemot/USD/include/pxr/usd/ar/resolverContext.h \
  /home/kemot/USD/include/pxr/base/tf/safeTypeCompare.h \
  /home/kemot/USD/include/pxr/base/tf/pyLock.h \
@@ -232,9 +306,8 @@ CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
  /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
  /usr/include/bits/getopt_core.h /usr/include/bits/unistd_ext.h \
- /usr/include/linux/close_range.h /usr/include/assert.h \
- /usr/include/python3.12/pyport.h /usr/include/sys/time.h \
- /usr/include/sys/stat.h /usr/include/bits/stat.h \
+ /usr/include/linux/close_range.h /usr/include/python3.12/pyport.h \
+ /usr/include/sys/time.h /usr/include/sys/stat.h /usr/include/bits/stat.h \
  /usr/include/bits/struct_stat.h /usr/include/bits/statx.h \
  /usr/include/linux/stat.h /usr/include/bits/statx-generic.h \
  /usr/include/bits/types/struct_statx_timestamp.h \
@@ -344,13 +417,6 @@ CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
  /home/kemot/USD/include/pxr/external/boost/python/ptr.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/bool.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/ref.hpp \
- /usr/include/c++/14/functional /usr/include/c++/14/bits/std_function.h \
- /usr/include/c++/14/unordered_map \
- /usr/include/c++/14/bits/unordered_map.h \
- /usr/include/c++/14/bits/hashtable.h \
- /usr/include/c++/14/bits/hashtable_policy.h \
- /usr/include/c++/14/bits/enable_special_members.h \
- /usr/include/c++/14/array /usr/include/c++/14/compare \
  /home/kemot/USD/include/pxr/external/boost/python/tag.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/to_python_indirect.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/object/pointer_holder.hpp \
@@ -449,10 +515,5 @@ CMakeFiles/monke_resolver.dir/resolver_disk.cpp.o: \
  /home/kemot/USD/include/pxr/external/boost/python/detail/def_helper_fwd.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/detail/not_specified.hpp \
  /home/kemot/USD/include/pxr/external/boost/python/slice_nil.hpp \
- /usr/include/c++/14/algorithm /usr/include/c++/14/bits/stl_algo.h \
- /usr/include/c++/14/bits/algorithmfwd.h \
- /usr/include/c++/14/bits/stl_heap.h \
- /usr/include/c++/14/bits/uniform_int_dist.h \
- /usr/include/c++/14/pstl/glue_algorithm_defs.h \
  /home/kemot/USD/include/pxr/usd/ar/timestamp.h \
  /home/kemot/USD/include/pxr/base/arch/hints.h
