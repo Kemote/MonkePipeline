@@ -1,20 +1,21 @@
 # PROJECT ROOT should be set by some kind of luncher
 
-fields:
-    assets_root: 
-        template: "<PROJECT_ROOT>/assets/"
-        type: root
+roots:
+    main: "/home/kemot/Documents/Dev/_TestProjectRoot/<project_name>"
 
-    VER:
-        template: "%03d"
-        type: format
+tokens:
+    version: 
+        type: int
+        format: "v%03d"
+    name:
+        type: str
+    step:
+        type: str
+    project_name:
+        type: str
 
 templates:
-    
     # ASSETS TEMPLATES:
-
-    asset_name_template:
-        template: "<NAME>_<STEP>_v<VER>"
-
-    asset_publish_root:
-        template: "<assets_root>/<NAME>/<STEP>/..."
+    asset_publish:
+        template: "/assets/<name>_<step>_<version>"
+        root: "main"
