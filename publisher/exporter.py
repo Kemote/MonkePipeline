@@ -256,7 +256,7 @@ class MeshLayerExporter:
 
 class MaterialsLayerExporter:
     # TODO: now its takes only bae color from BSDF, we need to get more data from materials,
-    # maybe it should be converted to MAterialSX
+    # maybe it should be converted to MAterialX
 
     """
     collects every material used by the asset's meshes under /{asset_name}/Looks -
@@ -433,116 +433,122 @@ class MaterialBindingLayerExporter:
         prim.CreateRelationship("material:binding", custom=False).SetTargets([Sdf.Path(material_path)])
 
 
-# class AnimationLayerExporter:
-#     """
-#     authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
-#     decomposed translate/rotate/scale ops for objects animated only by their
-#     transform, and time-sampled `points` for meshes that are actually deformed
-#     (shape keys, armature, cloth, etc.)
-#     """
+class AnimationLayerExporter:
+    """
+    authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
+    decomposed translate/rotate/scale ops for objects animated only by their
+    transform, and time-sampled `points` for meshes that are actually deformed
+    (shape keys, armature, cloth, etc.)
+    """
 
-#     def export(self, stage, asset_item):
-#         scene = bpy.context.scene
-#         depsgraph = bpy.context.evaluated_depsgraph_get()
+    def export(self, stage, asset_item):
+        scene = bpy.context.scene
+        depsgraph = bpy.context.evaluated_depsgraph_get()
 
-#         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
+        UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
 
-#         deformed = {}
-#         transform_animated = {}
-#         for outliner_path, mesh_obj in asset_item.mesh_objects.items():
-#             prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
-#             if AnimationInspector.is_deformed(mesh_obj):
-#                 deformed[prim_path] = mesh_obj
-#             if AnimationInspector.is_transform_animated(mesh_obj):
-#                 transform_animated[prim_path] = mesh_obj
+        deformed = {}
+        transform_animated = {}
+        for outliner_path, mesh_obj in asset_item.mesh_objects.items():
+            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
+            if AnimationInspector.is_deformed(mesh_obj):
+                deformed[prim_path] = mesh_obj
+            if AnimationInspector.is_transform_animated(mesh_obj):
+                transform_animated[prim_path] = mesh_obj
 
-#         if not deformed and not transform_animated:
-#             return
+        if not deformed and not transform_animated:
+            return
 
-#         points_attrs = {
-#             prim_path: UsdGeom.Mesh(stage.OverridePrim(prim_path)).CreatePointsAttr()
-#             for prim_path in deformed
-#         }
-#         xform_ops = {prim_path: self._add_transform_ops(stage, prim_path) for prim_path in transform_animated}
+        points_attrs = {
+            prim_path: UsdGeom.Mesh(stage.OverridePrim(prim_path)).CreatePointsAttr()
+            for prim_path in deformed
+        }
+        xform_ops = {prim_path: self._add_transform_ops(stage, prim_path) for prim_path in transform_animated}
 
-#         original_frame = scene.frame_current
-#         try:
-#             for frame in range(scene.frame_start, scene.frame_end + 1):
-#                 scene.frame_set(frame)
-#                 depsgraph.update()
-#                 time_code = Usd.TimeCode(frame)
+        original_frame = scene.frame_current
+        try:
+            for frame in range(scene.frame_start, scene.frame_end + 1):
+                scene.frame_set(frame)
+                depsgraph.update()
+                time_code = Usd.TimeCode(frame)
 
-#                 for path, mesh_obj in deformed.items():
-#                     self._sample_points(mesh_obj, depsgraph, points_attrs[path], time_code)
+                for path, mesh_obj in deformed.items():
+                    self._sample_points(mesh_obj, depsgraph, points_attrs[path], time_code)
 
-#                 for path, mesh_obj in transform_animated.items():
-#                     self._sample_transform(mesh_obj, xform_ops[path], time_code)
-#         finally:
-#             scene.frame_set(original_frame)
+                for path, mesh_obj in transform_animated.items():
+                    self._sample_transform(mesh_obj, xform_ops[path], time_code)
+        finally:
+            scene.frame_set(original_frame)
 
-#         stage.SetStartTimeCode(scene.frame_start)
-#         stage.SetEndTimeCode(scene.frame_end)
+        stage.SetStartTimeCode(scene.frame_start)
+        stage.SetEndTimeCode(scene.frame_end)
 
-#     def _add_transform_ops(self, stage, prim_path):
-#         over_xform = UsdGeom.Xformable(stage.OverridePrim(prim_path))
-#         return over_xform.AddTranslateOp(), over_xform.AddRotateXYZOp(), over_xform.AddScaleOp()
+    def _add_transform_ops(self, stage, prim_path):
+        over_xform = UsdGeom.Xformable(stage.OverridePrim(prim_path))
+        return over_xform.AddTranslateOp(), over_xform.AddRotateXYZOp(), over_xform.AddScaleOp()
 
-#     @staticmethod
-#     def _sample_points(mesh_obj, depsgraph, points_attr, time_code):
-#         evaluated_obj = mesh_obj.evaluated_get(depsgraph)
-#         evaluated_mesh = evaluated_obj.to_mesh()
-#         points_attr.Set([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in evaluated_mesh.vertices], time_code)
-#         evaluated_obj.to_mesh_clear()
+    @staticmethod
+    def _sample_points(mesh_obj, depsgraph, points_attr, time_code):
+        evaluated_obj = mesh_obj.evaluated_get(depsgraph)
+        evaluated_mesh = evaluated_obj.to_mesh()
+        points_attr.Set([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in evaluated_mesh.vertices], time_code)
+        evaluated_obj.to_mesh_clear()
 
-#     @staticmethod
-#     def _sample_transform(mesh_obj, xform_ops, time_code):
-#         translate_op, rotate_op, scale_op = xform_ops
-#         translation, rotation, scale = mesh_obj.matrix_world.decompose()
-#         euler = rotation.to_euler("XYZ")
+    @staticmethod
+    def _sample_transform(mesh_obj, xform_ops, time_code):
+        translate_op, rotate_op, scale_op = xform_ops
+        translation, rotation, scale = mesh_obj.matrix_world.decompose()
+        euler = rotation.to_euler("XYZ")
 
-#         translate_op.Set(Gf.Vec3d(translation.x, translation.y, translation.z), time_code)
-#         rotate_op.Set(Gf.Vec3f(math.degrees(euler.x), math.degrees(euler.y), math.degrees(euler.z)), time_code)
-#         scale_op.Set(Gf.Vec3f(scale.x, scale.y, scale.z), time_code)
+        translate_op.Set(Gf.Vec3d(translation.x, translation.y, translation.z), time_code)
+        rotate_op.Set(Gf.Vec3f(math.degrees(euler.x), math.degrees(euler.y), math.degrees(euler.z)), time_code)
+        scale_op.Set(Gf.Vec3f(scale.x, scale.y, scale.z), time_code)
 
 
 class UsdExporter:
-    def __init__(self, output_dir, extension="usda"):
-        self.output_dir = output_dir
-        self.extension = (extension or self.DEFAULT_EXTENSION).lstrip(".")
-        # material bindings are not a standalone top-level layer anymore:
-        # MeshLayerExporter writes a "<name>_binding" companion file next to
-        # every geometry layer it creates (main geo, variants and lods)
-        self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension)
+    def __init__(self, settings):
+
+        self.output_dir = settings["filepath"]
+        self.extension = settings["extension"]
+        
+        self.export_geom = settings["export_geometry"]
+        self.export_mat = settings["export_materials"]
+        self.export_armature = settings["export_armature"]
+        self.export_animation = settings("export_animation")
+
+        self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension, )
         self.materials_exporter = MaterialsLayerExporter()
-        # self.animation_exporter = AnimationLayerExporter()
+        self.animation_exporter = AnimationLayerExporter()
 
     def export(self, asset_item):
         asset_name = asset_item.name
         layers_dir = os.path.join(self.output_dir, "layers")
         os.makedirs(layers_dir, exist_ok=True)
 
-        mesh_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
-        materials_path = os.path.join(layers_dir, f"{asset_name}_materials.{self.extension}")
-        # animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
+        if self.export_geom:
+            geom_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
+            self._write_layer(geom_path, self.mesh_exporter, asset_item)
+
+        if self.export_mat:
+            materials_path = os.path.join(layers_dir, f"{asset_name}_materials.{self.extension}")
+            self._write_layer(materials_path, self.materials_exporter, asset_item)
+
+        if self.export_armature:
+            pass
+
+        if self.export_animation:
+            animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
+            self._write_layer(animations_path, self.animation_exporter, asset_item)
+
         main_path = os.path.join(self.output_dir, f"{asset_name}.{self.extension}")
-
-        self._write_layer(mesh_path, self.mesh_exporter, asset_item)
-        self._write_layer(materials_path, self.materials_exporter, asset_item)
-        # self._write_layer(animations_path, self.animation_exporter, asset_item)
-
-        # the main file carries no content of its own, only composition arcs to the
-        # layer files above, so it stays a thin, human-readable entry point for the asset
         main_stage = Usd.Stage.CreateNew(main_path)
         self._set_fps(main_stage)
         self._set_metadata(main_stage)
 
         main_layer = main_stage.GetRootLayer()
-        # strongest first: materials win over the base mesh data (whose geometry
-        # layers each carry their own "<name>_binding" sublayer)
-        for layer_path in (materials_path, mesh_path):  # animations_path,
+        for layer_path in (materials_path, geom_path, animations_path):
             main_layer.subLayerPaths.append(os.path.relpath(layer_path, self.output_dir))
         main_layer.defaultPrim = sanitize_name(asset_name)
-
         main_layer.Save()
         return main_path
 

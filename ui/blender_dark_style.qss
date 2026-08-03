@@ -1,0 +1,74 @@
+/* Qt stylesheet approximating Blender's default dark theme, used by the
+   PySide6 dialogs in blender_exporter_ui.py. */
+
+QDialog {
+    background-color: #303030;
+    color: #dcdcdc;
+}
+
+QLabel {
+    color: #dcdcdc;
+    background: transparent;
+}
+
+QLineEdit {
+    background-color: #232323;
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    border-radius: 3px;
+    padding: 4px 6px;
+    selection-background-color: #5680c2;
+}
+
+QLineEdit:focus {
+    border: 1px solid #5680c2;
+}
+
+QPushButton {
+    background-color: #4a4a4a;
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    border-radius: 3px;
+    padding: 5px 14px;
+}
+
+QPushButton:hover {
+    background-color: #5a5a5a;
+}
+
+QPushButton:pressed {
+    background-color: #2a2a2a;
+}
+
+QPushButton:default {
+    background-color: #5680c2;
+    border: 1px solid #3d5f8f;
+    color: #ffffff;
+}
+
+QPushButton:default:hover {
+    background-color: #6690d2;
+}
+
+QCheckBox {
+    color: #dcdcdc;
+    spacing: 8px;
+    background: transparent;
+}
+
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #191919;
+    border-radius: 3px;
+    background-color: #232323;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #5680c2;
+    border: 1px solid #3d5f8f;
+}
+
+QCheckBox::indicator:hover {
+    border: 1px solid #5680c2;
+}
