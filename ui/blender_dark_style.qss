@@ -32,6 +32,32 @@ QPushButton {
     padding: 5px 14px;
 }
 
+QComboBox {
+    background-color: #4a4a4a;
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    border-radius: 3px;
+    padding: 5px 14px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #3c3c3c;
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    outline: none;
+    selection-background-color: #5680c2;
+    selection-color: #ffffff;
+}
+
+QComboBox QAbstractItemView::item {
+    padding: 4px 6px;
+}
+
+QComboBox QAbstractItemView::item:hover {
+    background-color: #4a4a4a;
+}
+
+
 QPushButton:hover {
     background-color: #5a5a5a;
 }

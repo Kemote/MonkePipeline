@@ -41,7 +41,7 @@ class MonkeUsdExportDialog(QDialog):
         layout.addLayout(path_row)
 
         self.extension_combo = QComboBox()
-        self.extension_combo.addActions(["usda", "usd", "usdc", "usdz"])
+        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
         layout.addWidget(self.extension_combo)
         
         layout.addWidget(QLabel("Include:"))
@@ -121,6 +121,7 @@ def _on_dialog_finished(result):
     asset_collector = AssetsCollector()
     asset_collector.collect()
     for asset_item in asset_collector.items:
+        print(asset_item.name)
         usd_exporter.export(asset_item)
 
 

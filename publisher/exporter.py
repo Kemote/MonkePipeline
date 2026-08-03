@@ -2,18 +2,17 @@ import os
 import math
 import bpy
 
-from pxr import Usd, UsdGeom, UsdShade, Sdf, Gf
-from collector import VARIANT_SEPARATOR
+from pxr import Usd, UsdGeom, UsdShade, UsdSkel, Sdf, Gf
+from publisher.collector import VARIANT_SEPARATOR
 
 
 FPS = 30
 DEFORM_MODIFIER_TYPES = {"ARMATURE", "CLOTH", "SOFT_BODY", "SURFACE_DEFORM"}
+MAX_JOINT_INFLUENCES = 4
 
 LOD_VARIANT_SET = "lod"
 LOD_PURPOSES = {
-    "high": UsdGeom.Tokens.render,
     "render": UsdGeom.Tokens.render,
-    "low": UsdGeom.Tokens.proxy,
     "proxy": UsdGeom.Tokens.proxy,
 }
 
@@ -51,6 +50,10 @@ def geom_scope_path(asset_name):
 
 def looks_scope_path(asset_name):
     return f"{asset_root_path(asset_name)}/Looks"
+
+
+def armature_scope_path(asset_name):
+    return f"{asset_root_path(asset_name)}/Rig"
 
 
 def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
@@ -96,6 +99,22 @@ def matrix_to_gf(matrix_world):
     return Gf.Matrix4d(*[component for row in transposed for component in row])
 
 
+def bone_ancestors(bone):
+    ancestors = []
+    current = bone.parent
+    while current is not None:
+        ancestors.append(current)
+        current = current.parent
+    return ancestors
+
+
+def find_armature_modifier(mesh_obj, armature_objects):
+    for modifier in mesh_obj.modifiers:
+        if modifier.type == "ARMATURE" and modifier.object in armature_objects:
+            return modifier
+    return None
+
+
 class AnimationInspector:
     """
     classifies an object's animation so the mesh layer and the animation layer
@@ -133,27 +152,36 @@ class MeshLayerExporter:
         self.binding_exporter = MaterialBindingLayerExporter()
 
     def export(self, stage: Usd.Stage, asset_item):
-        UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
+        # a SkelRoot is required somewhere above both a Skeleton and the meshes
+        # it skins for UsdSkel binding to resolve at all, so the asset root
+        # itself becomes one whenever the asset has an armature to bind to
+        if asset_item.armature_objects:
+            UsdSkel.Root.Define(stage, asset_root_path(asset_item.name))
+        else:
+            UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
+
+        skeleton_plan = SkeletonBindingPlan(asset_item) if asset_item.armature_objects else None
 
         root = asset_item.variant_root
         # meshes with no variant belong to the asset itself, so they live directly
         # in this layer and are shared by every variant selection
-        self._write_meshes(stage, asset_item, root.outliner_paths)
+        self._write_meshes(stage, asset_item, root.outliner_paths, skeleton_plan)
         self._attach_binding_layer(stage, asset_item, root.outliner_paths)
 
         if root.variant_sets:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name))
             variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
-            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, variants_dir)
+            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, variants_dir, skeleton_plan)
 
-    def _write_meshes(self, stage, asset_item, outliner_paths):
+    def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None):
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
             prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path)
-            self._write_mesh(stage, prim_path, mesh)
+            binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
+            self._write_mesh(stage, prim_path, mesh, binding)
 
-    def _author_variant_sets(self, stage: Usd.Stage, asset_item, prim: Usd.Prim, variant_sets, variants_dir):
+    def _author_variant_sets(self, stage: Usd.Stage, asset_item, prim: Usd.Prim, variant_sets, variants_dir, skeleton_plan=None):
         """
         authors `variant_sets` onto `prim`. each variant's geometry - its own
         meshes plus any deeper variant sets - is written to a standalone layer laid
@@ -177,7 +205,7 @@ class MeshLayerExporter:
             if is_lod_set(set_name):
                 for variant_name, node in variants.items():
                     lod_layer_path = self._write_variant_layer(
-                        asset_item, set_dir, variant_name, node, purpose=lod_purpose(variant_name)
+                        asset_item, set_dir, variant_name, node, skeleton_plan, purpose=lod_purpose(variant_name)
                     )
                     prim.GetReferences().AddReference(os.path.relpath(lod_layer_path, stage_dir))
                 continue
@@ -185,7 +213,7 @@ class MeshLayerExporter:
             variant_set = variant_sets_api.AddVariantSet(set_name)
             for variant_name, node in variants.items():
                 variant_set.AddVariant(variant_name)
-                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node)
+                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node, skeleton_plan)
                 variant_set.SetVariantSelection(variant_name)
                 with variant_set.GetVariantEditContext():
                     prim.GetReferences().AddReference(os.path.relpath(variant_layer_path, stage_dir))
@@ -193,11 +221,14 @@ class MeshLayerExporter:
             # leave a deterministic default selection rather than the last authored one
             variant_set.SetVariantSelection(next(iter(variants)))
 
-    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, purpose=None):
+    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, skeleton_plan=None, purpose=None):
         variant_layer_path = os.path.join(set_dir, f"{sanitize_name(variant_name)}.{self.extension}")
 
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
-        UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
+        if asset_item.armature_objects:
+            UsdSkel.Root.Define(variant_stage, asset_root_path(asset_item.name))
+        else:
+            UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
 
         if purpose:
@@ -208,13 +239,13 @@ class MeshLayerExporter:
             )
             purpose_scope.CreatePurposeAttr().Set(purpose)
 
-        self._write_meshes(variant_stage, asset_item, node.outliner_paths)
+        self._write_meshes(variant_stage, asset_item, node.outliner_paths, skeleton_plan)
         self._attach_binding_layer(variant_stage, asset_item, node.outliner_paths)
 
         if node.variant_sets:
             asset_prim = variant_stage.GetPrimAtPath(asset_root_path(asset_item.name))
             nested_dir = os.path.join(set_dir, sanitize_name(variant_name))
-            self._author_variant_sets(variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir)
+            self._author_variant_sets(variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir, skeleton_plan)
 
         # a defaultPrim lets the parent layer reference this file without naming a prim
         variant_stage.GetRootLayer().defaultPrim = sanitize_name(asset_item.name)
@@ -234,7 +265,7 @@ class MeshLayerExporter:
         # the binding file sits next to its geometry layer, so the relative path is just the name
         geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
-    def _write_mesh(self, stage, prim_path, mesh_obj):
+    def _write_mesh(self, stage, prim_path, mesh_obj, skeleton_binding=None):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
         mesh_data = mesh_obj.data
 
@@ -252,6 +283,51 @@ class MeshLayerExporter:
 
         if not AnimationInspector.is_transform_animated(mesh_obj):
             usd_mesh.AddTransformOp().Set(matrix_to_gf(mesh_obj.matrix_world))
+
+        if skeleton_binding:
+            self._write_skin_binding(usd_mesh, mesh_obj, skeleton_binding)
+
+    @staticmethod
+    def _write_skin_binding(usd_mesh, mesh_obj, skeleton_binding):
+        """
+        authors the UsdSkelBindingAPI data that ties this mesh to its skeleton:
+        which Skeleton it deforms with, each vertex's influencing joints/weights
+        (its Blender vertex groups, up to MAX_JOINT_INFLUENCES, normalized and
+        padded), and the bind-time transform the skinning is relative to
+        """
+        skeleton_path, bone_names = skeleton_binding
+        bone_index = {name: index for index, name in enumerate(bone_names)}
+
+        binding_api = UsdSkel.BindingAPI.Apply(usd_mesh.GetPrim())
+        binding_api.CreateSkeletonRel().SetTargets([Sdf.Path(skeleton_path)])
+
+        indices, weights = MeshLayerExporter._per_vertex_weights(mesh_obj, bone_index)
+        binding_api.CreateJointIndicesPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(indices)
+        binding_api.CreateJointWeightsPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(weights)
+        binding_api.CreateGeomBindTransformAttr().Set(matrix_to_gf(mesh_obj.matrix_world))
+
+    @staticmethod
+    def _per_vertex_weights(mesh_obj, bone_index):
+        indices = []
+        weights = []
+        for vertex in mesh_obj.data.vertices:
+            influences = sorted(
+                (
+                    (bone_index[mesh_obj.vertex_groups[group.group].name], group.weight)
+                    for group in vertex.groups
+                    if mesh_obj.vertex_groups[group.group].name in bone_index
+                ),
+                key=lambda pair: pair[1],
+                reverse=True,
+            )[:MAX_JOINT_INFLUENCES]
+
+            total_weight = sum(weight for _, weight in influences) or 1.0
+            pad = MAX_JOINT_INFLUENCES - len(influences)
+
+            indices.extend([index for index, _ in influences] + [0] * pad)
+            weights.extend([weight / total_weight for _, weight in influences] + [0.0] * pad)
+
+        return indices, weights
 
 
 class MaterialsLayerExporter:
@@ -433,6 +509,157 @@ class MaterialBindingLayerExporter:
         prim.CreateRelationship("material:binding", custom=False).SetTargets([Sdf.Path(material_path)])
 
 
+class SkeletonBindingPlan:
+    """
+    figures out, per armature, which bones are actually needed and which
+    Skeleton prim each mesh should bind to.
+
+    a bone that's only ever weight-painted on meshes belonging to one variant
+    (e.g. an extra bone driving a variant-only prop) has no business showing up
+    in the skeleton when a different variant is selected - so instead of one
+    skeleton with every bone always present, this walks the asset's variant
+    tree the same way MeshLayerExporter does: the root skeleton only gets
+    bones used by non-variant meshes, and a variant only gets its own
+    additional Skeleton prim (self-contained, full ancestor chain included)
+    if its meshes use bones the root skeleton doesn't already have. meshes
+    that only need root bones keep binding to the root skeleton.
+
+    skeletons: {skeleton_path: (armature_obj, [bone names in armature order])}
+    mesh_bindings: {outliner_path: (skeleton_path, [bone names in armature order])}
+    """
+
+    def __init__(self, asset_item):
+        self.asset_item = asset_item
+        self.skeletons = {}
+        self.mesh_bindings = {}
+
+        for armature_obj in asset_item.armature_objects.values():
+            self._plan_armature(armature_obj)
+
+    def _plan_armature(self, armature_obj):
+        root = self.asset_item.variant_root
+        skeleton_name = sanitize_name(armature_obj.name)
+        root_skeleton_path = f"{armature_scope_path(self.asset_item.name)}/{skeleton_name}"
+
+        root_bones = self._bones_for(armature_obj, root.outliner_paths)
+        if root_bones:
+            self.skeletons[root_skeleton_path] = (armature_obj, root_bones)
+            self._bind_meshes(armature_obj, root.outliner_paths, root_skeleton_path, root_bones)
+
+        self._plan_variants(armature_obj, root.variant_sets, root_bones, root_skeleton_path, skeleton_name)
+
+    def _plan_variants(self, armature_obj, variant_sets, inherited_bones, inherited_skeleton_path, skeleton_name):
+        for variants in variant_sets.values():
+            for variant_name, node in variants.items():
+                node_bones = self._bones_for(armature_obj, node.outliner_paths)
+                extra_bones = [name for name in node_bones if name not in inherited_bones]
+
+                if extra_bones:
+                    combined_names = set(inherited_bones) | set(node_bones)
+                    active_bones = [b.name for b in armature_obj.data.bones if b.name in combined_names]
+                    active_skeleton_path = (
+                        f"{armature_scope_path(self.asset_item.name)}/"
+                        f"{skeleton_name}_{sanitize_name(variant_name)}"
+                    )
+                    self.skeletons[active_skeleton_path] = (armature_obj, active_bones)
+                else:
+                    active_bones, active_skeleton_path = inherited_bones, inherited_skeleton_path
+
+                if active_bones:
+                    self._bind_meshes(armature_obj, node.outliner_paths, active_skeleton_path, active_bones)
+
+                self._plan_variants(armature_obj, node.variant_sets, active_bones, active_skeleton_path, skeleton_name)
+
+    def _bind_meshes(self, armature_obj, outliner_paths, skeleton_path, bone_names):
+        for outliner_path in outliner_paths:
+            if self._used_bones(armature_obj, outliner_path):
+                self.mesh_bindings[outliner_path] = (skeleton_path, bone_names)
+
+    def _bones_for(self, armature_obj, outliner_paths):
+        """ancestor-expanded list of bone names used by these meshes, kept in the armature's own bone order"""
+        used = set()
+        for outliner_path in outliner_paths:
+            used.update(self._used_bones(armature_obj, outliner_path))
+
+        expanded = set(used)
+        for bone_name in used:
+            for ancestor in bone_ancestors(armature_obj.data.bones[bone_name]):
+                expanded.add(ancestor.name)
+
+        return [bone.name for bone in armature_obj.data.bones if bone.name in expanded]
+
+    def _used_bones(self, armature_obj, outliner_path):
+        mesh_obj = self.asset_item.mesh_objects.get(outliner_path)
+        if mesh_obj is None or find_armature_modifier(mesh_obj, {armature_obj}) is None:
+            return set()
+        bone_names = {bone.name for bone in armature_obj.data.bones}
+        return {group.name for group in mesh_obj.vertex_groups if group.name in bone_names}
+
+
+class ArmatureLayerExporter:
+    """
+    writes the asset's armature(s) as UsdSkel Skeletons under /{asset_name}/Rig,
+    using a SkeletonBindingPlan to decide which bones belong on the shared root
+    skeleton versus a dedicated per-variant companion skeleton. only the static
+    bind-pose joint hierarchy is authored here; animating the skeleton's joints
+    is left to the animation layer, kept separate for the same reason mesh
+    statics and mesh animation are split
+    """
+
+    def export(self, stage, asset_item):
+        if not asset_item.armature_objects:
+            return
+
+        plan = SkeletonBindingPlan(asset_item)
+        if not plan.skeletons:
+            return
+
+        UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name))
+        for skeleton_path, (armature_obj, bone_names) in plan.skeletons.items():
+            self._write_skeleton(stage, skeleton_path, armature_obj, bone_names)
+
+    def _write_skeleton(self, stage, skeleton_path, armature_obj, bone_names):
+        skeleton = UsdSkel.Skeleton.Define(stage, skeleton_path)
+        bones = [armature_obj.data.bones[name] for name in bone_names]
+
+        joint_tokens = {}
+        for bone in bones:
+            self._joint_token(bone, joint_tokens)
+
+        joints = [joint_tokens[bone.name] for bone in bones]
+        bind_transforms = [matrix_to_gf(bone.matrix_local) for bone in bones]
+        rest_transforms = [self._local_rest_matrix(bone, bone_names) for bone in bones]
+
+        skeleton.CreateJointsAttr(joints)
+        skeleton.CreateBindTransformsAttr(bind_transforms)
+        skeleton.CreateRestTransformsAttr(rest_transforms)
+        skeleton.AddTransformOp().Set(matrix_to_gf(armature_obj.matrix_world))
+
+    @classmethod
+    def _joint_token(cls, bone, joint_tokens):
+        """
+        builds this bone's "Parent/.../bone" joint path token, memoized in
+        joint_tokens - bones normally iterate parents-before-children, but a
+        parent's token is built on demand here too in case that ever isn't true.
+        SkeletonBindingPlan always includes a bone's full ancestor chain
+        alongside it, so the parent is guaranteed to be resolvable here
+        """
+        token = joint_tokens.get(bone.name)
+        if token is not None:
+            return token
+
+        name = sanitize_name(bone.name)
+        token = name if bone.parent is None else f"{cls._joint_token(bone.parent, joint_tokens)}/{name}"
+        joint_tokens[bone.name] = token
+        return token
+
+    @staticmethod
+    def _local_rest_matrix(bone, included_bone_names):
+        if bone.parent is None or bone.parent.name not in included_bone_names:
+            return matrix_to_gf(bone.matrix_local)
+        return matrix_to_gf(bone.parent.matrix_local.inverted() @ bone.matrix_local)
+
+
 class AnimationLayerExporter:
     """
     authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
@@ -514,10 +741,11 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
-        self.export_animation = settings("export_animation")
+        self.export_animation = settings["export_animation"]
 
         self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension, )
         self.materials_exporter = MaterialsLayerExporter()
+        self.armature_exporter = ArmatureLayerExporter()
         self.animation_exporter = AnimationLayerExporter()
 
     def export(self, asset_item):
@@ -525,20 +753,27 @@ class UsdExporter:
         layers_dir = os.path.join(self.output_dir, "layers")
         os.makedirs(layers_dir, exist_ok=True)
 
-        if self.export_geom:
-            geom_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
-            self._write_layer(geom_path, self.mesh_exporter, asset_item)
+        layer_paths = []
 
         if self.export_mat:
             materials_path = os.path.join(layers_dir, f"{asset_name}_materials.{self.extension}")
             self._write_layer(materials_path, self.materials_exporter, asset_item)
+            layer_paths.append(materials_path)
+
+        if self.export_geom:
+            geom_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
+            self._write_layer(geom_path, self.mesh_exporter, asset_item)
+            layer_paths.append(geom_path)
 
         if self.export_armature:
-            pass
+            armature_path = os.path.join(layers_dir, f"{asset_name}_armature.{self.extension}")
+            self._write_layer(armature_path, self.armature_exporter, asset_item)
+            layer_paths.append(armature_path)
 
         if self.export_animation:
             animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
             self._write_layer(animations_path, self.animation_exporter, asset_item)
+            layer_paths.append(animations_path)
 
         main_path = os.path.join(self.output_dir, f"{asset_name}.{self.extension}")
         main_stage = Usd.Stage.CreateNew(main_path)
@@ -546,7 +781,8 @@ class UsdExporter:
         self._set_metadata(main_stage)
 
         main_layer = main_stage.GetRootLayer()
-        for layer_path in (materials_path, geom_path, animations_path):
+        # TODO: add cehck for existing versions if None
+        for layer_path in layer_paths:
             main_layer.subLayerPaths.append(os.path.relpath(layer_path, self.output_dir))
         main_layer.defaultPrim = sanitize_name(asset_name)
         main_layer.Save()
