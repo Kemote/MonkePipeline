@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 
 VARIANT_SEPARATOR = "_VAR_"
-ASSETS_ROOT = "/Scene/assets"
+ASSETS_ROOT = "/Scene Collection/assets"
 ARMATURE_COLLECTION_NAME = "armature"
 
 

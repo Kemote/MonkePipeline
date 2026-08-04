@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
+DEFAULT_OUTPUT = "/home/kemot/Documents/tmp"
 
 
 class MonkeUsdExportDialog(QDialog):
@@ -34,7 +35,8 @@ class MonkeUsdExportDialog(QDialog):
 
         path_row = QHBoxLayout()
         self.path_edit = QLineEdit()
-        browse_button = QPushButton("Browse...")
+        self.path_edit.setText(DEFAULT_OUTPUT)
+        browse_button = QPushButton("Browse output directory...")
         browse_button.clicked.connect(self._browse)
         path_row.addWidget(self.path_edit)
         path_row.addWidget(browse_button)
@@ -48,13 +50,11 @@ class MonkeUsdExportDialog(QDialog):
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
-        self.animation_check = QCheckBox("Animation")
 
         for check in (
             self.geometry_check,
             self.materials_check,
             self.armature_check,
-            self.animation_check
         ):
             check.setChecked(True)
             layout.addWidget(check)
@@ -70,7 +70,7 @@ class MonkeUsdExportDialog(QDialog):
         layout.addLayout(button_row)
 
     def _browse(self):
-        path, _ = QFileDialog.getSaveFileName(
+        path, _ = QFileDialog.getExistingDirectory(
             self, "USD Export Path", self.path_edit.text(), "USD (*.usd *.usda *.usdc)"
         )
         if path:
@@ -83,7 +83,6 @@ class MonkeUsdExportDialog(QDialog):
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
-            "export_animation": self.animation_check.isChecked(),
         }
 
 

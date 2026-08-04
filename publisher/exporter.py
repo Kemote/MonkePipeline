@@ -115,30 +115,6 @@ def find_armature_modifier(mesh_obj, armature_objects):
     return None
 
 
-class AnimationInspector:
-    """
-    classifies an object's animation so the mesh layer and the animation layer
-    never author competing opinions for the same attribute (a stronger root layer
-    opinion would otherwise permanently shadow the weaker sublayer's timeSamples)
-    """
-
-    @staticmethod
-    def is_transform_animated(mesh_obj):
-        action = mesh_obj.animation_data and mesh_obj.animation_data.action
-        if not action:
-            return False
-        return any(
-            fcurve.data_path.startswith(("location", "rotation_euler", "rotation_quaternion", "scale"))
-            for fcurve in action.fcurves
-        )
-
-    @staticmethod
-    def is_deformed(mesh_obj):
-        if mesh_obj.data.shape_keys and mesh_obj.data.shape_keys.animation_data:
-            return True
-        return any(modifier.type in DEFORM_MODIFIER_TYPES for modifier in mesh_obj.modifiers)
-
-
 class MeshLayerExporter:
     """
     writes the asset's mesh data layer: hierarchy, topology, uvs and the static
@@ -271,18 +247,14 @@ class MeshLayerExporter:
 
         usd_mesh.CreateFaceVertexCountsAttr([len(p.vertices) for p in mesh_data.polygons])
         usd_mesh.CreateFaceVertexIndicesAttr([idx for p in mesh_data.polygons for idx in p.vertices])
-
-        if not AnimationInspector.is_deformed(mesh_obj):
-            usd_mesh.CreatePointsAttr([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in mesh_data.vertices])
+        usd_mesh.CreatePointsAttr([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in mesh_data.vertices])
+        usd_mesh.AddTransformOp().Set(matrix_to_gf(mesh_obj.matrix_world))
 
         if mesh_data.uv_layers.active:
             uv_attr = UsdGeom.PrimvarsAPI(usd_mesh).CreatePrimvar(
                 "st", Sdf.ValueTypeNames.TexCoord2fArray, UsdGeom.Tokens.faceVarying
             )
             uv_attr.Set([Gf.Vec2f(uv.uv.x, uv.uv.y) for uv in mesh_data.uv_layers.active.data])
-
-        if not AnimationInspector.is_transform_animated(mesh_obj):
-            usd_mesh.AddTransformOp().Set(matrix_to_gf(mesh_obj.matrix_world))
 
         if skeleton_binding:
             self._write_skin_binding(usd_mesh, mesh_obj, skeleton_binding)
@@ -660,78 +632,6 @@ class ArmatureLayerExporter:
         return matrix_to_gf(bone.parent.matrix_local.inverted() @ bone.matrix_local)
 
 
-class AnimationLayerExporter:
-    """
-    authors `over` prims, scoped under /{asset_name}/Geom, carrying timeSamples:
-    decomposed translate/rotate/scale ops for objects animated only by their
-    transform, and time-sampled `points` for meshes that are actually deformed
-    (shape keys, armature, cloth, etc.)
-    """
-
-    def export(self, stage, asset_item):
-        scene = bpy.context.scene
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-
-        UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name))
-
-        deformed = {}
-        transform_animated = {}
-        for outliner_path, mesh_obj in asset_item.mesh_objects.items():
-            prim_path = mesh_prim_path(asset_item.name, asset_item.usd_like_path, outliner_path)
-            if AnimationInspector.is_deformed(mesh_obj):
-                deformed[prim_path] = mesh_obj
-            if AnimationInspector.is_transform_animated(mesh_obj):
-                transform_animated[prim_path] = mesh_obj
-
-        if not deformed and not transform_animated:
-            return
-
-        points_attrs = {
-            prim_path: UsdGeom.Mesh(stage.OverridePrim(prim_path)).CreatePointsAttr()
-            for prim_path in deformed
-        }
-        xform_ops = {prim_path: self._add_transform_ops(stage, prim_path) for prim_path in transform_animated}
-
-        original_frame = scene.frame_current
-        try:
-            for frame in range(scene.frame_start, scene.frame_end + 1):
-                scene.frame_set(frame)
-                depsgraph.update()
-                time_code = Usd.TimeCode(frame)
-
-                for path, mesh_obj in deformed.items():
-                    self._sample_points(mesh_obj, depsgraph, points_attrs[path], time_code)
-
-                for path, mesh_obj in transform_animated.items():
-                    self._sample_transform(mesh_obj, xform_ops[path], time_code)
-        finally:
-            scene.frame_set(original_frame)
-
-        stage.SetStartTimeCode(scene.frame_start)
-        stage.SetEndTimeCode(scene.frame_end)
-
-    def _add_transform_ops(self, stage, prim_path):
-        over_xform = UsdGeom.Xformable(stage.OverridePrim(prim_path))
-        return over_xform.AddTranslateOp(), over_xform.AddRotateXYZOp(), over_xform.AddScaleOp()
-
-    @staticmethod
-    def _sample_points(mesh_obj, depsgraph, points_attr, time_code):
-        evaluated_obj = mesh_obj.evaluated_get(depsgraph)
-        evaluated_mesh = evaluated_obj.to_mesh()
-        points_attr.Set([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in evaluated_mesh.vertices], time_code)
-        evaluated_obj.to_mesh_clear()
-
-    @staticmethod
-    def _sample_transform(mesh_obj, xform_ops, time_code):
-        translate_op, rotate_op, scale_op = xform_ops
-        translation, rotation, scale = mesh_obj.matrix_world.decompose()
-        euler = rotation.to_euler("XYZ")
-
-        translate_op.Set(Gf.Vec3d(translation.x, translation.y, translation.z), time_code)
-        rotate_op.Set(Gf.Vec3f(math.degrees(euler.x), math.degrees(euler.y), math.degrees(euler.z)), time_code)
-        scale_op.Set(Gf.Vec3f(scale.x, scale.y, scale.z), time_code)
-
-
 class UsdExporter:
     def __init__(self, settings):
 
@@ -741,16 +641,14 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
-        self.export_animation = settings["export_animation"]
 
-        self.mesh_exporter = MeshLayerExporter(self.output_dir, self.extension, )
         self.materials_exporter = MaterialsLayerExporter()
         self.armature_exporter = ArmatureLayerExporter()
-        self.animation_exporter = AnimationLayerExporter()
 
     def export(self, asset_item):
         asset_name = asset_item.name
-        layers_dir = os.path.join(self.output_dir, "layers")
+        output_dir = os.path.join(self.output_dir, asset_name)
+        layers_dir = os.path.join(output_dir, "layers")
         os.makedirs(layers_dir, exist_ok=True)
 
         layer_paths = []
@@ -761,8 +659,9 @@ class UsdExporter:
             layer_paths.append(materials_path)
 
         if self.export_geom:
+            mesh_exporter = MeshLayerExporter(output_dir, self.extension)
             geom_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
-            self._write_layer(geom_path, self.mesh_exporter, asset_item)
+            self._write_layer(geom_path, mesh_exporter, asset_item)
             layer_paths.append(geom_path)
 
         if self.export_armature:
@@ -770,20 +669,15 @@ class UsdExporter:
             self._write_layer(armature_path, self.armature_exporter, asset_item)
             layer_paths.append(armature_path)
 
-        if self.export_animation:
-            animations_path = os.path.join(layers_dir, f"{asset_name}_animations.{self.extension}")
-            self._write_layer(animations_path, self.animation_exporter, asset_item)
-            layer_paths.append(animations_path)
-
-        main_path = os.path.join(self.output_dir, f"{asset_name}.{self.extension}")
+        main_path = os.path.join(output_dir, f"{asset_name}.{self.extension}")
         main_stage = Usd.Stage.CreateNew(main_path)
         self._set_fps(main_stage)
         self._set_metadata(main_stage)
 
         main_layer = main_stage.GetRootLayer()
-        # TODO: add cehck for existing versions if None
+        # TODO: add check for existing versions if None
         for layer_path in layer_paths:
-            main_layer.subLayerPaths.append(os.path.relpath(layer_path, self.output_dir))
+            main_layer.subLayerPaths.append(os.path.relpath(layer_path, output_dir))
         main_layer.defaultPrim = sanitize_name(asset_name)
         main_layer.Save()
         return main_path
