@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 
 
 VARIANT_SEPARATOR = "_VAR_"
-ASSETS_ROOT = "/Scene/Assets"
+ASSETS_ROOT = "/Scene Collection/assets"
+ARMATURE_COLLECTION_NAME = "armature"
 
 
 class VariantNode:
@@ -41,6 +42,8 @@ class CollectedAssetItem(CollectedItem):
     """
     mesh_objects: dict mapping a mesh's outliner path -> its Blender object, for
     every mesh in the asset (across all variant levels)
+    armature_objects: dict mapping an armature's outliner path -> its Blender
+                      object, gathered from the asset's "armature" collection
     materials: {material_name: material} for materials without variants
     material_variants: {base_name: {variant_name: material}} for materials named
                        "baseName{VARIANT_SEPARATOR}variantName" - unlike geometry,
@@ -49,6 +52,7 @@ class CollectedAssetItem(CollectedItem):
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
         self.mesh_objects = {}
+        self.armature_objects = {}
         self.materials = {}
         self.material_variants = {}
         self.type = "ASSET_ITEM"
@@ -82,8 +86,16 @@ class Collector(ABC):
                 group_path = f"{outliner_base_path}/{asset_name}"
                 asset_item = CollectedAssetItem(asset_name, group_path)
                 self.collect_variants(asset_group, group_path, object_type, asset_item, asset_item.variant_root)
+                self._post_collect(asset_group, group_path, asset_item)
                 self.items.append(asset_item)
         return
+
+    def _post_collect(self, asset_group, group_path, asset_item):
+        """
+        override to gather additional per-asset data that isn't part of the
+        `object_type` variant walk above (e.g. armatures for AssetsCollector)
+        """
+        pass
 
     def collect_variants(self, collection: bpy.types.Collection, outliner_path: str, obj_type: str, asset_item, node):
         """
@@ -136,6 +148,30 @@ class AssetsCollector(Collector):
     def collect(self, assets_path=ASSETS_ROOT):
         super().collect(assets_path, "MESH")
         return
+
+    def _post_collect(self, asset_group, group_path, asset_item):
+        """
+        armatures live in their own "armature" collection directly under the
+        asset group, rather than in the mesh variant hierarchy, so they're
+        gathered separately here instead of through collect_variants()
+        """
+        armature_collection = next(
+            (child for child in asset_group.children if child.name.lower() == ARMATURE_COLLECTION_NAME),
+            None,
+        )
+        if armature_collection is None:
+            return
+
+        armature_path = f"{group_path}/{armature_collection.name}"
+        self._collect_objects_by_type(armature_collection, armature_path, "ARMATURE", asset_item.armature_objects)
+
+    def _collect_objects_by_type(self, collection, outliner_path, obj_type, target):
+        for obj in collection.objects:
+            if obj.type == obj_type:
+                target[f"{outliner_path}/{obj.name}"] = obj
+
+        for child in collection.children:
+            self._collect_objects_by_type(child, f"{outliner_path}/{child.name}", obj_type, target)
 
     def get_usd_export_data(self):
         """
