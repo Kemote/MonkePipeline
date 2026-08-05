@@ -42,15 +42,29 @@ class MonkeUsdExportDialog(QDialog):
         path_row.addWidget(browse_button)
         layout.addLayout(path_row)
 
+        # extension combo box
+        extension_row = QHBoxLayout()
         self.extension_combo = QComboBox()
         self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
-        layout.addWidget(self.extension_combo)
+        extension_row.addWidget(QLabel("Extension:"))
+        extension_row.addWidget(self.extension_combo)
+
+        # up axis combo box
+        up_axis_row = QHBoxLayout()
+        self.up_axis_combo = QComboBox()
+        self.up_axis_combo.addItems(["x", "y", "z"])
+        up_axis_row.addWidget(QLabel("Up Axis:"))
+        up_axis_row.addWidget(self.up_axis_combo)
+
+        # add sublayouts
+        layout.addLayout(extension_row)
+        layout.addLayout(up_axis_row)
         
-        layout.addWidget(QLabel("Include:"))
+
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
-
+        layout.addWidget(QLabel("Include:"))
         for check in (
             self.geometry_check,
             self.materials_check,
@@ -70,9 +84,7 @@ class MonkeUsdExportDialog(QDialog):
         layout.addLayout(button_row)
 
     def _browse(self):
-        path, _ = QFileDialog.getExistingDirectory(
-            self, "USD Export Path", self.path_edit.text(), "USD (*.usd *.usda *.usdc)"
-        )
+        path, _ = QFileDialog.getExistingDirectory(self, "USD Export Directory", self.path_edit.text())
         if path:
             self.path_edit.setText(path)
 
@@ -83,6 +95,7 @@ class MonkeUsdExportDialog(QDialog):
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
+            "up_axis": self.up_axis_combo.currentText()
         }
 
 

@@ -637,7 +637,7 @@ class UsdExporter:
 
         self.output_dir = settings["filepath"]
         self.extension = settings["extension"]
-        
+        self.up_axis = settings["up_axis"]
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
@@ -673,14 +673,23 @@ class UsdExporter:
         main_stage = Usd.Stage.CreateNew(main_path)
         self._set_fps(main_stage)
         self._set_metadata(main_stage)
-
-        main_layer = main_stage.GetRootLayer()
+        self._set_up_axis(main_stage, self.up_axis)
         # TODO: add check for existing versions if None
+        main_layer = main_stage.GetRootLayer()
         for layer_path in layer_paths:
             main_layer.subLayerPaths.append(os.path.relpath(layer_path, output_dir))
         main_layer.defaultPrim = sanitize_name(asset_name)
         main_layer.Save()
         return main_path
+
+    @staticmethod
+    def _set_up_axis(stage, axis):
+        axis_dict = {
+            "x": UsdGeom.Tokens.x,
+            "y": UsdGeom.Tokens.y,
+            "z": UsdGeom.Tokens.z
+        }
+        UsdGeom.SetStageUpAxis(stage, axis_dict[axis])
 
     def _write_layer(self, file_path, layer_exporter, asset_item):
         stage = Usd.Stage.CreateNew(file_path)
