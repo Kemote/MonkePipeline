@@ -7,9 +7,9 @@
     framesPerSecond = 30
     metersPerUnit = 1
     subLayers = [
-        @layers/roboticArm_materials.usda@,
-        @layers/roboticArm_geo.usda@,
-        @layers/roboticArm_armature.usda@
+        @layers/roboticArm_geom.usda@,
+        @layers/roboticArm_looks.usda@,
+        @layers/roboticArm_rig.usda@
     ]
     timeCodesPerSecond = 30
     upAxis = "Z"

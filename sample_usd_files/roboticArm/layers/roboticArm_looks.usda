@@ -47,7 +47,7 @@ def "roboticArm"
             def Shader "BaseColorTexture"
             {
                 uniform token info:id = "UsdUVTexture"
-                asset inputs:file = @/home/kemot/Documents/Dev/MonkePipeline/blend_sample_files/textures/welder.png@
+                asset inputs:file = @../textures/welder.png@
                 color3f outputs:rgb
             }
         }
