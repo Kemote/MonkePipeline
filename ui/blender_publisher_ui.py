@@ -4,6 +4,8 @@ import bpy
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
+from PySide6.QtCore import QLocale
+from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -19,7 +21,7 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
-DEFAULT_OUTPUT = "/home/kemot/Documents/tmp"
+DEFAULT_OUTPUT = "/home/kemot/Documents/Dev/MonkePipeline/sample_usd_files"
 
 
 class MonkeUsdExportDialog(QDialog):
@@ -30,9 +32,13 @@ class MonkeUsdExportDialog(QDialog):
         self.setWindowTitle("USD Export")
         self.setMinimumWidth(420)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
+        main_layout = QVBoxLayout(self)
+        
+        # collect asset items
+        self.asset_collector = AssetsCollector()
+        self.asset_collector.collect()
 
-        layout = QVBoxLayout(self)
-
+        # browse row
         path_row = QHBoxLayout()
         self.path_edit = QLineEdit()
         self.path_edit.setText(DEFAULT_OUTPUT)
@@ -40,49 +46,88 @@ class MonkeUsdExportDialog(QDialog):
         browse_button.clicked.connect(self._browse)
         path_row.addWidget(self.path_edit)
         path_row.addWidget(browse_button)
-        layout.addLayout(path_row)
+        main_layout.addLayout(path_row)
 
+        # assets selector
+        self.assets_checkboxes = []
+        assets_column = QVBoxLayout()
+        for item in self.asset_collector.items:
+            asseet_checkbox = QCheckBox(item.name)
+            asseet_checkbox.setChecked(True)
+            self.assets_checkboxes.append(asseet_checkbox)
+            assets_column.addWidget(asseet_checkbox)
+        main_layout.addLayout(assets_column)
+
+        # extension combo box
+        extension_row = QHBoxLayout()
         self.extension_combo = QComboBox()
         self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
-        layout.addWidget(self.extension_combo)
-        
-        layout.addWidget(QLabel("Include:"))
+        extension_row.addWidget(QLabel("Extension:"))
+        extension_row.addWidget(self.extension_combo)
+        main_layout.addLayout(extension_row)
+
+        # up axis combo box
+        up_axis_row = QHBoxLayout()
+        self.up_axis_combo = QComboBox()
+        self.up_axis_combo.addItems(["z", "y"])
+        up_axis_row.addWidget(QLabel("Up Axis:"))
+        up_axis_row.addWidget(self.up_axis_combo)
+        main_layout.addLayout(up_axis_row)
+
+        # units per meter
+        validator = QDoubleValidator(0.0001, 1000, 1, self)
+        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
+        locale = QLocale(QLocale.Language.C)
+        validator.setLocale(locale)
+        self.meter_per_unit = QLineEdit()
+        self.meter_per_unit.setValidator(validator)
+        self.meter_per_unit.setText("1.0")
+        main_layout.addWidget(self.meter_per_unit)
+
+        # create export option checkers
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
-
+        main_layout.addWidget(QLabel("Include:"))
         for check in (
             self.geometry_check,
             self.materials_check,
             self.armature_check,
         ):
             check.setChecked(True)
-            layout.addWidget(check)
+            main_layout.addWidget(check)
 
-        button_row = QHBoxLayout()
+        # button row
         export_button = QPushButton("Export")
         export_button.setDefault(True)
         cancel_button = QPushButton("Cancel")
         export_button.clicked.connect(self.accept)
         cancel_button.clicked.connect(self.reject)
+        button_row = QHBoxLayout()
         button_row.addWidget(export_button)
         button_row.addWidget(cancel_button)
-        layout.addLayout(button_row)
+        main_layout.addLayout(button_row)
+
+    def _asset_checker_state_change(self, state):
+        pass
 
     def _browse(self):
-        path, _ = QFileDialog.getExistingDirectory(
-            self, "USD Export Path", self.path_edit.text(), "USD (*.usd *.usda *.usdc)"
-        )
+        path, _ = QFileDialog.getExistingDirectory(self, "USD Export Directory", self.path_edit.text())
         if path:
             self.path_edit.setText(path)
 
     def collect(self):
+        selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
+        collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         return {
             "filepath": self.path_edit.text(),
             "extension": self.extension_combo.currentText(),
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
+            "up_axis": self.up_axis_combo.currentText(),
+            "collected_item": collected_items,
+            "meter_per_unit": float(self.meter_per_unit.text())
         }
 
 
@@ -115,11 +160,11 @@ def _on_dialog_finished(result):
         print("USD export cancelled")
         return
 
+    
     settings = dialog.collect()
     usd_exporter = UsdExporter(settings)
-    asset_collector = AssetsCollector()
-    asset_collector.collect()
-    for asset_item in asset_collector.items:
+
+    for asset_item in settings["collected_item"]:
         print(asset_item.name)
         usd_exporter.export(asset_item)
 

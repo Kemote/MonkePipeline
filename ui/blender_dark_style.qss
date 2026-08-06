@@ -40,6 +40,14 @@ QComboBox {
     padding: 5px 14px;
 }
 
+/* the popup's own outer frame (QComboBoxPrivateContainer, a plain QFrame) is
+   a separate widget from the QAbstractItemView it wraps - without this it
+   keeps its default light border regardless of the rule above */
+QComboBox QFrame {
+    background-color: #3c3c3c;
+    border: 1px solid #191919;
+}
+
 QComboBox QAbstractItemView {
     background-color: #3c3c3c;
     color: #dcdcdc;

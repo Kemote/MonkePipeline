@@ -1,0 +1,15 @@
+#usda 1.0
+(
+    framesPerSecond = 30
+    timeCodesPerSecond = 30
+)
+
+def SkelRoot "roboticArm" (
+    prepend references = @mesh_variants/lod/render.usda@
+)
+{
+    def Scope "Geom"
+    {
+    }
+}
+
