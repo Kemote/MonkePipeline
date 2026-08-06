@@ -30,11 +30,6 @@ def write_bootstrap_script():
     script = textwrap.dedent(f"""\
         import sys
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
-        # appended, not inserted at the front: Blender bundles its own pxr
-        # (USD) built for its own Python version, and it must resolve first -
-        # the venv only needs to be there for PySide6, which Blender doesn't
-        # ship. Putting the venv ahead would shadow Blender's own pxr with
-        # the venv's, which is built for a different Python and won't load.
         sys.path.append({str(PYSIDE6_SITE_PACKAGES)!r})
 
         from publisher.publisher import register
@@ -50,7 +45,6 @@ def write_bootstrap_script():
 
 
 def run_blender():
-
     bootstrap_script = write_bootstrap_script()
     command = ["flatpak", "run"]
     for name, value in get_pipeline_env().items():

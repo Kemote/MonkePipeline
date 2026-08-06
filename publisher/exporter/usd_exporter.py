@@ -1,6 +1,6 @@
 import os
 
-from pxr import Usd
+from pxr import Usd, UsdGeom
 from publisher.exporter.armature import ArmatureLayerExporter
 from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
@@ -9,14 +9,18 @@ from publisher.exporter.mesh import MeshLayerExporter
 
 class UsdExporter:
     def __init__(self, settings):
-
+        self.up_axis = {
+            "y": UsdGeom.Tokens.y,
+            "z": UsdGeom.Tokens.z
+        }[settings["up_axis"]]
+                
         self.output_dir = settings["filepath"]
         self.extension = settings["extension"]
-
+        self.meter_per_unit = settings["meter_per_unit"]
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
-
+        
         self.materials_exporter = MaterialsLayerExporter()
         self.armature_exporter = ArmatureLayerExporter()
 
@@ -48,6 +52,8 @@ class UsdExporter:
         main_stage = Usd.Stage.CreateNew(main_path)
         self._set_fps(main_stage)
         self._set_metadata(main_stage)
+        UsdGeom.SetStageUpAxis(main_stage, self.up_axis)
+        UsdGeom.SetStageMetersPerUnit(main_stage, self.meter_per_unit)
 
         main_layer = main_stage.GetRootLayer()
         # TODO: add check for existing versions if None
@@ -62,7 +68,7 @@ class UsdExporter:
         layer_exporter.export(stage, asset_item)
         self._set_fps(stage)
         stage.GetRootLayer().Save()
-
+                
     @staticmethod
     def _set_fps(stage):
         stage.SetFramesPerSecond(FPS)

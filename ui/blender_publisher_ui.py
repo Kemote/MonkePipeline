@@ -4,6 +4,8 @@ import bpy
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
+from PySide6.QtCore import QLocale
+from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -19,7 +21,7 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
-DEFAULT_OUTPUT = "/home/kemot/Documents/tmp"
+DEFAULT_OUTPUT = "/home/kemot/Documents/Dev/MonkePipeline/sample_usd_files"
 
 
 class MonkeUsdExportDialog(QDialog):
@@ -50,7 +52,8 @@ class MonkeUsdExportDialog(QDialog):
         self.assets_checkboxes = []
         assets_column = QVBoxLayout()
         for item in self.asset_collector.items:
-            asseet_checkbox = self.QCheckBox(item.name)
+            asseet_checkbox = QCheckBox(item.name)
+            asseet_checkbox.setChecked(True)
             self.assets_checkboxes.append(asseet_checkbox)
             assets_column.addWidget(asseet_checkbox)
         main_layout.addLayout(assets_column)
@@ -66,11 +69,21 @@ class MonkeUsdExportDialog(QDialog):
         # up axis combo box
         up_axis_row = QHBoxLayout()
         self.up_axis_combo = QComboBox()
-        self.up_axis_combo.addItems(["x", "y", "z"])
+        self.up_axis_combo.addItems(["z", "y"])
         up_axis_row.addWidget(QLabel("Up Axis:"))
         up_axis_row.addWidget(self.up_axis_combo)
         main_layout.addLayout(up_axis_row)
-        
+
+        # units per meter
+        validator = QDoubleValidator(0.0001, 1000, 1, self)
+        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
+        locale = QLocale(QLocale.Language.C)
+        validator.setLocale(locale)
+        self.meter_per_unit = QLineEdit()
+        self.meter_per_unit.setValidator(validator)
+        self.meter_per_unit.setText("1.0")
+        main_layout.addWidget(self.meter_per_unit)
+
         # create export option checkers
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
@@ -104,7 +117,7 @@ class MonkeUsdExportDialog(QDialog):
             self.path_edit.setText(path)
 
     def collect(self):
-        selected_assets_names = [x.currentText() for x in self.assets_checkboxes if x.isChecked()]
+        selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         return {
             "filepath": self.path_edit.text(),
@@ -113,7 +126,8 @@ class MonkeUsdExportDialog(QDialog):
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
             "up_axis": self.up_axis_combo.currentText(),
-            "collected_item": collected_items
+            "collected_item": collected_items,
+            "meter_per_unit": float(self.meter_per_unit.text())
         }
 
 
