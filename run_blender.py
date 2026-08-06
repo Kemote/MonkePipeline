@@ -33,7 +33,7 @@ def write_bootstrap_script():
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
         sys.path.append({str(PYSIDE6_SITE_PACKAGES)!r})
 
-        from publisher.publisher import register
+        from publisher_plugin import register
         register()
     """)
     tmp = tempfile.NamedTemporaryFile(
