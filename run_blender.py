@@ -5,6 +5,7 @@ set up and the USD Monke Exporter addon registered automatically.
 import subprocess
 import tempfile
 import textwrap
+
 from pathlib import Path
 
 PROJECT_ROOT = Path("/home/kemot/Documents/Dev/MonkePipeline")
