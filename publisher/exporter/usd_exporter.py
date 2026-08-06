@@ -20,32 +20,32 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
-        
-        self.materials_exporter = MaterialsLayerExporter()
-        self.armature_exporter = ArmatureLayerExporter()
 
     def export(self, asset_item):
         asset_name = asset_item.name
         output_dir = os.path.join(self.output_dir, asset_name)
         layers_dir = os.path.join(output_dir, "layers")
+        textures_dir = os.path.join(output_dir, "textures")
         os.makedirs(layers_dir, exist_ok=True)
 
         layer_paths = []
 
-        if self.export_mat:
-            materials_path = os.path.join(layers_dir, f"{asset_name}_materials.{self.extension}")
-            self._write_layer(materials_path, self.materials_exporter, asset_item)
-            layer_paths.append(materials_path)
-
         if self.export_geom:
             mesh_exporter = MeshLayerExporter(output_dir, self.extension)
-            geom_path = os.path.join(layers_dir, f"{asset_name}_geo.{self.extension}")
+            geom_path = os.path.join(layers_dir, f"{asset_name}_geom.{self.extension}")
             self._write_layer(geom_path, mesh_exporter, asset_item)
             layer_paths.append(geom_path)
 
+        if self.export_mat:
+            materials_exporter = MaterialsLayerExporter(textures_dir)
+            materials_path = os.path.join(layers_dir, f"{asset_name}_looks.{self.extension}")
+            self._write_layer(materials_path, materials_exporter, asset_item)
+            layer_paths.append(materials_path)
+
         if self.export_armature:
-            armature_path = os.path.join(layers_dir, f"{asset_name}_armature.{self.extension}")
-            self._write_layer(armature_path, self.armature_exporter, asset_item)
+            armature_exporter = ArmatureLayerExporter()
+            armature_path = os.path.join(layers_dir, f"{asset_name}_rig.{self.extension}")
+            self._write_layer(armature_path, armature_exporter, asset_item)
             layer_paths.append(armature_path)
 
         main_path = os.path.join(output_dir, f"{asset_name}.{self.extension}")
