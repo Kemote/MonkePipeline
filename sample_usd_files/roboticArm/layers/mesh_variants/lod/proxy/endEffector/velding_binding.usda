@@ -6,14 +6,14 @@ over "roboticArm"
     {
         over "proxy"
         {
-            over "weldingBox____proxy" (
+            over "weldingBox" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
                 rel material:binding = </roboticArm/Looks/secColor>
             }
 
-            over "weldingEnd____proxy" (
+            over "weldingEnd" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {

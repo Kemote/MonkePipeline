@@ -85,6 +85,10 @@ class MonkeUsdExportDialog(QDialog):
         self.meter_per_unit.setText("1.0")
         main_layout.addWidget(self.meter_per_unit)
 
+        # create proxy generator checker
+        self.proxy_generator_check = QCheckBox("Generate proxy LOD")
+        main_layout.addWidget(self.proxy_generator_check)
+        
         # create export option checkers
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
@@ -128,7 +132,8 @@ class MonkeUsdExportDialog(QDialog):
             "export_armature": self.armature_check.isChecked(),
             "up_axis": self.up_axis_combo.currentText(),
             "collected_item": collected_items,
-            "meter_per_unit": float(self.meter_per_unit.text())
+            "meter_per_unit": float(self.meter_per_unit.text()),
+            "generate_proxy": self.proxy_generator_check.isChecked()
         }
 
 
@@ -168,7 +173,7 @@ def _on_dialog_finished(result):
     asset_items = settings["collected_item"]
     for asset_item in asset_items:
         # it needs to be controlled by checkbox !!!
-        if True:    # if settings["generate_proxy"]
+        if settings["generate_proxy"]:
             proxy_generator = ProxyGenerator(asset_item)
             proxy_generator.add_proxy()
         usd_exporter.export(asset_item)

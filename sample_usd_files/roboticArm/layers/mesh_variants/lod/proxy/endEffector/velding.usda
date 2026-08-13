@@ -12,7 +12,7 @@ def SkelRoot "roboticArm"
     {
         def "proxy"
         {
-            def Mesh "weldingBox____proxy"
+            def Mesh "weldingBox"
             {
                 int[] faceVertexCounts = [3, 3]
                 int[] faceVertexIndices = [2, 0, 1, 0, 2, 1]
@@ -24,7 +24,7 @@ def SkelRoot "roboticArm"
                 uniform token[] xformOpOrder = ["xformOp:transform"]
             }
 
-            def Mesh "weldingEnd____proxy"
+            def Mesh "weldingEnd"
             {
                 int[] faceVertexCounts = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 4, 4, 3, 4, 4]
                 int[] faceVertexIndices = [6, 5, 16, 5, 9, 10, 10, 9, 11, 12, 13, 15, 14, 4, 12, 14, 12, 16, 5, 14, 16, 16, 24, 17, 6, 17, 18, 1, 18, 0, 7, 18, 19, 10, 11, 13, 12, 20, 9, 19, 21, 11, 20, 4, 14, 5, 7, 5, 6, 8, 5, 7, 9, 5, 8, 10, 4, 5, 1, 2, 20, 19, 12, 4, 10, 16, 12, 15, 0, 17, 24, 6, 16, 17, 0, 18, 17, 7, 6, 18, 1, 19, 18, 19, 8, 7, 19, 9, 8, 2, 3, 22, 21, 20, 11, 9, 21, 20, 2, 11, 21, 22, 13, 22, 23, 15, 13, 3, 23, 22, 23, 3, 0, 24, 23, 24, 16, 15]

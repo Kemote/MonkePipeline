@@ -10,6 +10,7 @@ LOD_PURPOSES = {
     "render": UsdGeom.Tokens.render,
     "proxy": UsdGeom.Tokens.proxy,
 }
+PROXY_POST_FIX = "_&&_proxy"
 
 
 def sanitize_name(name):
@@ -60,6 +61,8 @@ def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
     after the lod's purpose (render/proxy/guide) so every lod can coexist
     """
     relative = outliner_path[len(asset_outliner_path):].strip("/")
+    # clean auto generated proxy post fix
+    relative = relative.replace(PROXY_POST_FIX, "")
     parts = []
     for part in relative.split("/"):
         if not part:
@@ -69,7 +72,9 @@ def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
             parts.append(sanitize_name(part))
         elif is_lod_set(set_name):
             parts.append(lod_purpose(variant_name))
-    return "/".join([geom_scope_path(asset_name)] + parts)
+
+    prim_path = "/".join([geom_scope_path(asset_name)] + parts)
+    return prim_path 
 
 
 def base_material_name(material_name):

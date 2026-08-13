@@ -9,9 +9,9 @@ def "roboticArm" (
 {
     def "Geom"
     {
-        def "guide"
+        def "proxy"
         {
-            def "base____proxy" (
+            def "base" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
@@ -37,13 +37,13 @@ def "roboticArm" (
                 }
             }
 
-            over "mainArmBAe____proxy" (
+            over "mainArmBAe" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
             }
 
-            def "mainArmEngines____proxy" (
+            def "mainArmEngines" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
@@ -70,7 +70,7 @@ def "roboticArm" (
                 }
             }
 
-            def "mainArm____proxy" (
+            def "mainArm" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
@@ -96,14 +96,14 @@ def "roboticArm" (
                 }
             }
 
-            over "mainArmEngine____proxy" (
+            over "mainArmEngine" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
                 rel material:binding = </roboticArm/Looks/engineRed>
             }
 
-            def "secArm____proxy" (
+            def "secArm" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
@@ -134,9 +134,9 @@ def "roboticArm" (
         "red" {
             over "Geom"
             {
-                over "guide"
+                over "proxy"
                 {
-                    over "base____proxy"
+                    over "base"
                     {
                         over "mainColor"
                         {
@@ -144,12 +144,12 @@ def "roboticArm" (
                         }
                     }
 
-                    over "mainArmBAe____proxy"
+                    over "mainArmBAe"
                     {
                         rel material:binding = </roboticArm/Looks/mainColor_red>
                     }
 
-                    over "mainArm____proxy"
+                    over "mainArm"
                     {
                         over "mainColor"
                         {
@@ -157,7 +157,7 @@ def "roboticArm" (
                         }
                     }
 
-                    over "secArm____proxy"
+                    over "secArm"
                     {
                         over "mainColor"
                         {
@@ -171,9 +171,9 @@ def "roboticArm" (
         "yellow" {
             over "Geom"
             {
-                over "guide"
+                over "proxy"
                 {
-                    over "base____proxy"
+                    over "base"
                     {
                         over "mainColor"
                         {
@@ -181,12 +181,12 @@ def "roboticArm" (
                         }
                     }
 
-                    over "mainArmBAe____proxy"
+                    over "mainArmBAe"
                     {
                         rel material:binding = </roboticArm/Looks/mainColor_yellow>
                     }
 
-                    over "mainArm____proxy"
+                    over "mainArm"
                     {
                         over "mainColor"
                         {
@@ -194,7 +194,7 @@ def "roboticArm" (
                         }
                     }
 
-                    over "secArm____proxy"
+                    over "secArm"
                     {
                         over "mainColor"
                         {

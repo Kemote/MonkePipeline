@@ -6,28 +6,28 @@ over "roboticArm"
     {
         over "proxy"
         {
-            over "handleBox____proxy" (
+            over "handleBox" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
                 rel material:binding = </roboticArm/Looks/secColor>
             }
 
-            over "handleEnd____proxy" (
+            over "handleEnd" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
                 rel material:binding = </roboticArm/Looks/secColor>
             }
 
-            over "handleL____proxy" (
+            over "handleL" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
                 rel material:binding = </roboticArm/Looks/rubber>
             }
 
-            over "handleR____proxy" (
+            over "handleR" (
                 prepend apiSchemas = ["MaterialBindingAPI"]
             )
             {
