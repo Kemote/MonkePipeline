@@ -6,7 +6,6 @@ from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
 from publisher.exporter.mesh import MeshLayerExporter
 
-
 class UsdExporter:
     def __init__(self, settings):
         self.up_axis = {

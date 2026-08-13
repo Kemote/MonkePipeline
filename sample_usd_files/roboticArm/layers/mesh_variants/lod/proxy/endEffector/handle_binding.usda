@@ -1,0 +1,39 @@
+#usda 1.0
+
+over "roboticArm"
+{
+    over "Geom"
+    {
+        over "proxy"
+        {
+            over "handleBox____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/secColor>
+            }
+
+            over "handleEnd____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/secColor>
+            }
+
+            over "handleL____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/rubber>
+            }
+
+            over "handleR____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/rubber>
+            }
+        }
+    }
+}
+

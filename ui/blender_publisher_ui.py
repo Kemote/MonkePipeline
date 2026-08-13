@@ -4,6 +4,7 @@ import bpy
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
+from publisher.proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
@@ -164,8 +165,12 @@ def _on_dialog_finished(result):
     settings = dialog.collect()
     usd_exporter = UsdExporter(settings)
 
-    for asset_item in settings["collected_item"]:
-        print(asset_item.name)
+    asset_items = settings["collected_item"]
+    for asset_item in asset_items:
+        # it needs to be controlled by checkbox !!!
+        if True:    # if settings["generate_proxy"]
+            proxy_generator = ProxyGenerator(asset_item)
+            proxy_generator.add_proxy()
         usd_exporter.export(asset_item)
 
 

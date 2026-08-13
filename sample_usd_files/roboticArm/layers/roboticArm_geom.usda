@@ -5,7 +5,10 @@
 )
 
 def SkelRoot "roboticArm" (
-    prepend references = @mesh_variants/lod/render.usda@
+    prepend references = [
+        @mesh_variants/lod/render.usda@,
+        @mesh_variants/lod/proxy.usda@
+    ]
 )
 {
     def Scope "Geom"

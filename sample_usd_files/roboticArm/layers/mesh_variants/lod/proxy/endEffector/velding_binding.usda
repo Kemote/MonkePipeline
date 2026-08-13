@@ -1,0 +1,25 @@
+#usda 1.0
+
+over "roboticArm"
+{
+    over "Geom"
+    {
+        over "proxy"
+        {
+            over "weldingBox____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/secColor>
+            }
+
+            over "weldingEnd____proxy" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </roboticArm/Looks/welder_metal>
+            }
+        }
+    }
+}
+
