@@ -34,7 +34,19 @@ class ProxyGenerator:
                     self._add_proxy_mesh(outliner_path, proxy_variant_node)
                 self._add_subvariants(variant_node.variant_sets, proxy_variant_node)
 
-    
+    def clear(self):
+        # remove all meshes
+        for mesh in self.proxy_meshes:
+            bpy.data.objects.remove(mesh, do_unlink=True)
+        # remove all collections
+        bpy_collections = bpy.data.collections
+        self.proxy_collections.reverse()
+        for proxy_collection in self.proxy_collections:
+            try:
+                bpy_collections.remove(proxy_collection, do_unlink=True)
+            except:
+                pass
+ 
     def generate_proxy(self, source_mesh, source_path, add_postfix):
         """
         method which generate lod proxy mesh and put it to the appropriate collection
@@ -50,7 +62,7 @@ class ProxyGenerator:
         mesh = self._create_mesh_copy(source_mesh, target_collection, self.decimate_ratio)
         scene_path = f"{target_collection_path}/{mesh.name}"
         self.proxy_meshes.append(mesh)
-        self.proxy_collections.append(scene_path)
+        self.proxy_collections.append(target_collection)
         return mesh, scene_path
 
     def _add_proxy_mesh(self, source_path, proxy_node: collector.VariantNode, add_postfix=True):

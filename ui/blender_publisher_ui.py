@@ -5,7 +5,7 @@ from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
 from publisher.proxy_generator.app import ProxyGenerator
-from PySide6.QtCore import QLocale
+from PySide6.QtCore import QLocale, Signal, Qt
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
     QApplication,
@@ -17,12 +17,45 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QVBoxLayout,
-    QComboBox
+    QComboBox,
+    QSlider
 )
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
 DEFAULT_OUTPUT = "/home/kemot/Documents/Dev/MonkePipeline/sample_usd_files"
+
+
+class FloatSlider(QSlider):
+    """Suwak obsługujący liczby zmiennoprzecinkowe (float)."""
+
+    # Sygnał emitujący wartość typu float przy zmianie
+    floatValueChanged = Signal(float)
+
+    def __init__(
+        self,
+        min_val: float = 0.0001,
+        max_val: float = 1.0,
+        decimals: int = 4,
+        orientation=Qt.Orientation.Horizontal,
+        parent=None,
+    ):
+        super().__init__(orientation, parent)
+        self.decimals = decimals
+        self.factor = 10**decimals
+        self.setMinimum(int(min_val * self.factor))
+        self.setMaximum(int(max_val * self.factor))
+        self.setSingleStep(1)
+        self.valueChanged.connect(self._on_value_changed)
+
+    def _on_value_changed(self, value: int):
+        self.floatValueChanged.emit(self.value_float())
+
+    def value_float(self) -> float:
+        return self.value() / self.factor
+
+    def set_value_float(self, val: float):
+        self.setValue(int(round(val * self.factor)))
 
 
 class MonkeUsdExportDialog(QDialog):
@@ -34,12 +67,13 @@ class MonkeUsdExportDialog(QDialog):
         self.setMinimumWidth(420)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
         main_layout = QVBoxLayout(self)
-        
+
         # collect asset items
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
 
         # browse row
+        main_layout.addWidget(QLabel("Output settings:"))
         path_row = QHBoxLayout()
         self.path_edit = QLineEdit()
         self.path_edit.setText(DEFAULT_OUTPUT)
@@ -49,7 +83,16 @@ class MonkeUsdExportDialog(QDialog):
         path_row.addWidget(browse_button)
         main_layout.addLayout(path_row)
 
+        # extension combo box
+        extension_row = QHBoxLayout()
+        self.extension_combo = QComboBox()
+        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
+        extension_row.addWidget(QLabel("Extension:"))
+        extension_row.addWidget(self.extension_combo)
+        main_layout.addLayout(extension_row)
+
         # assets selector
+        main_layout.addWidget(QLabel("Assets to export:"))
         self.assets_checkboxes = []
         assets_column = QVBoxLayout()
         for item in self.asset_collector.items:
@@ -59,41 +102,47 @@ class MonkeUsdExportDialog(QDialog):
             assets_column.addWidget(asseet_checkbox)
         main_layout.addLayout(assets_column)
 
-        # extension combo box
-        extension_row = QHBoxLayout()
-        self.extension_combo = QComboBox()
-        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
-        extension_row.addWidget(QLabel("Extension:"))
-        extension_row.addWidget(self.extension_combo)
-        main_layout.addLayout(extension_row)
-
         # up axis combo box
+        main_layout.addSpacing(25)
+        main_layout.addWidget(QLabel("Stage settings:"))
         up_axis_row = QHBoxLayout()
         self.up_axis_combo = QComboBox()
         self.up_axis_combo.addItems(["z", "y"])
-        up_axis_row.addWidget(QLabel("Up Axis:"))
+        up_axis_row.addWidget(QLabel("Up Axis"))
         up_axis_row.addWidget(self.up_axis_combo)
         main_layout.addLayout(up_axis_row)
 
         # units per meter
-        validator = QDoubleValidator(0.0001, 1000, 1, self)
-        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
-        locale = QLocale(QLocale.Language.C)
-        validator.setLocale(locale)
         self.meter_per_unit = QLineEdit()
-        self.meter_per_unit.setValidator(validator)
+        self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
         self.meter_per_unit.setText("1.0")
         main_layout.addWidget(self.meter_per_unit)
 
-        # create proxy generator checker
+        # create proxy settings
+        main_layout.addSpacing(25)
+        main_layout.addWidget(QLabel("Auto Proxy Generation:"))
+        decimate_ratio_lay = QHBoxLayout()
+        decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
+        self.decimate_slider = FloatSlider()
+        self.decimate_slider.set_value_float(0.025)
+        self.ratio_txt = QLineEdit("0.025")
+        self.ratio_txt.setValidator(self._create_double_validator(0.00001, 1.0))
+        self.ratio_txt.setFixedWidth(100)
+        self.ratio_txt.editingFinished.connect(self._sync_ratio_slider)
+        decimate_ratio_lay.addWidget(self.decimate_slider)
+        decimate_ratio_lay.addWidget(self.ratio_txt)
+        self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
         self.proxy_generator_check = QCheckBox("Generate proxy LOD")
+        self.proxy_generator_check.setChecked(True)
         main_layout.addWidget(self.proxy_generator_check)
+        main_layout.addLayout(decimate_ratio_lay)
         
         # create export option checkers
+        main_layout.addSpacing(25)
+        main_layout.addWidget(QLabel("Include layers:"))
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
-        main_layout.addWidget(QLabel("Include:"))
         for check in (
             self.geometry_check,
             self.materials_check,
@@ -103,6 +152,7 @@ class MonkeUsdExportDialog(QDialog):
             main_layout.addWidget(check)
 
         # button row
+        main_layout.addSpacing(25)
         export_button = QPushButton("Export")
         export_button.setDefault(True)
         cancel_button = QPushButton("Cancel")
@@ -112,6 +162,28 @@ class MonkeUsdExportDialog(QDialog):
         button_row.addWidget(export_button)
         button_row.addWidget(cancel_button)
         main_layout.addLayout(button_row)
+
+
+    def _create_double_validator(self, min_val, max_val):
+        validator = QDoubleValidator(min_val, max_val, 5, self)
+        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
+        locale = QLocale(QLocale.Language.C)
+        validator.setLocale(locale)
+        return validator
+
+    def _sync_ratio_slider(self):
+        try:
+            val = float(self.ratio_txt.text())
+            self.decimate_slider.blockSignals(True)  # <-- Prevents recursion
+            self.decimate_slider.set_value_float(val)
+            self.decimate_slider.blockSignals(False)
+        except ValueError:
+            pass
+
+    def _sync_slider_to_text(self, val: float):
+        self.ratio_txt.blockSignals(True)  # <-- Prevents recursion
+        self.ratio_txt.setText(f"{val:.4f}".rstrip('0').rstrip('.'))
+        self.ratio_txt.blockSignals(False)
 
     def _asset_checker_state_change(self, state):
         pass
@@ -133,7 +205,8 @@ class MonkeUsdExportDialog(QDialog):
             "up_axis": self.up_axis_combo.currentText(),
             "collected_item": collected_items,
             "meter_per_unit": float(self.meter_per_unit.text()),
-            "generate_proxy": self.proxy_generator_check.isChecked()
+            "generate_proxy": self.proxy_generator_check.isChecked(),
+            "decimate_ratio": self.decimate_slider.value_float()
         }
 
 
@@ -172,11 +245,14 @@ def _on_dialog_finished(result):
 
     asset_items = settings["collected_item"]
     for asset_item in asset_items:
-        # it needs to be controlled by checkbox !!!
+        proxy_generator = None
         if settings["generate_proxy"]:
-            proxy_generator = ProxyGenerator(asset_item)
+            decimate_ratio = settings["decimate_ratio"]
+            proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
             proxy_generator.add_proxy()
         usd_exporter.export(asset_item)
+        if proxy_generator:
+            proxy_generator.clear()
 
 
 def show_export_dialog():
