@@ -174,14 +174,16 @@ class MonkeUsdExportDialog(QDialog):
     def _sync_ratio_slider(self):
         try:
             val = float(self.ratio_txt.text())
-            self.decimate_slider.blockSignals(True)  # <-- Prevents recursion
+            # prevents recursion
+            self.decimate_slider.blockSignals(True)
             self.decimate_slider.set_value_float(val)
             self.decimate_slider.blockSignals(False)
         except ValueError:
             pass
 
     def _sync_slider_to_text(self, val: float):
-        self.ratio_txt.blockSignals(True)  # <-- Prevents recursion
+        # prevents recursion
+        self.ratio_txt.blockSignals(True)
         self.ratio_txt.setText(f"{val:.4f}".rstrip('0').rstrip('.'))
         self.ratio_txt.blockSignals(False)
 
