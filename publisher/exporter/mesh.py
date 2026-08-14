@@ -1,6 +1,8 @@
 import os
 
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
+from publisher import collector
+# from publisher.proxy_generator.proxy_generator import ProxyGenerator
 from publisher.exporter.armature import SkeletonBindingPlan
 from publisher.exporter.common import (
     MAX_JOINT_INFLUENCES,
@@ -39,7 +41,7 @@ class MeshLayerExporter:
 
         skeleton_plan = SkeletonBindingPlan(asset_item) if asset_item.armature_objects else None
 
-        root = asset_item.variant_root
+        root : collector.VariantNode = asset_item.variant_root
         # meshes with no variant belong to the asset itself, so they live directly
         # in this layer and are shared by every variant selection
         self._write_meshes(stage, asset_item, root.outliner_paths, skeleton_plan)
@@ -57,7 +59,13 @@ class MeshLayerExporter:
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
             self._write_mesh(stage, prim_path, mesh, binding)
 
-    def _author_variant_sets(self, stage: Usd.Stage, asset_item, prim: Usd.Prim, variant_sets, variants_dir, skeleton_plan=None):
+    def _author_variant_sets(self, 
+                             stage: Usd.Stage, 
+                             asset_item: collector.CollectedAssetItem, 
+                             prim: Usd.Prim, 
+                             variant_sets, 
+                             variants_dir, 
+                             skeleton_plan=None):
         """
         authors `variant_sets` onto `prim`. each variant's geometry - its own
         meshes plus any deeper variant sets - is written to a standalone layer laid
