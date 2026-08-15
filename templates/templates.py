@@ -89,6 +89,43 @@ class Templates:
 
         return template
 
+    def get_fields_from_path(self, template, resolved_path):
+        """
+        the inverse of resolve_template: given a template and a path it could
+        have produced, recover the fields dict that resolves back to that path.
+        version fields come back as int, everything else as str.
+        """
+        token_names = re.findall(r"<(\w+)>", template)
+        regex_str = "^"
+        for literal, token in zip(re.split(r"<\w+>", template), token_names + [None]):
+            regex_str += re.escape(literal)
+            if token is None:
+                continue
+
+            template_token = self._tokens.get(token)
+            if not template_token:
+                raise KeyError(f"You need to declare '{token}' token in template.yaml")
+
+            token_format = template_token.get("format")
+            if template_token["type"] == "int" and token_format:
+                regex_str += re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", lambda m: r"(\d+)", re.escape(token_format))
+            else:
+                # str fields (e.g. variant_path) may themselves contain "/"
+                # for nested paths, so don't stop at path separators
+                regex_str += r"(.+)"
+        regex_str += "$"
+
+        match = re.match(regex_str, os.path.normpath(resolved_path))
+        if not match:
+            raise ValueError(f"'{resolved_path}' does not match template '{template}'")
+
+        fields = {}
+        for token, value in zip(token_names, match.groups()):
+            template_token = self._tokens[token]
+            fields[token] = int(value) if template_token["type"] == "int" else value
+
+        return fields
+
     def get_template_by_name(self, template_name):
         template_dict = self._templates.get(template_name)
         template_root = template_dict["root"]

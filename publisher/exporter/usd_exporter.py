@@ -78,10 +78,9 @@ class UsdExporter:
         UsdGeom.SetStageMetersPerUnit(main_stage, self.meter_per_unit)
 
         main_layer = main_stage.GetRootLayer()
-        # TODO: add check for existing versions if None
         for layer_path in layer_paths:
-            # TODO: here it should add correct path for assets resolver!
-            main_layer.subLayerPaths.append(os.path.relpath(layer_path, os.path.dirname(main_file_template)))
+            main_layer.subLayerPaths.append(os.path.relpath(layer_path, os.path.dirname(main_file_path)))
+
         main_layer.defaultPrim = sanitize_name(asset_name)
         main_layer.Save()
         return main_file_path

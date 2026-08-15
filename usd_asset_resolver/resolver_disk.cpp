@@ -54,18 +54,8 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     // now we need to get version
-    if (versionType == "lastest"){
-
-
-        std::cout << "BASEDIR: " << basedir << std::endl;
-        std::cout << "STARNAME: " << startName << std::endl;
-        std::cout << "ENDNAME: " << endName << std::endl;
-        std::cout << "PATH TO SEARCH: " << basedir << std::endl;
-        
+    if (versionType == "lastest"){        
         for (const auto& file_path : fs::directory_iterator(basedir)){
-
-            std::cout << "ENTRY: " << file_path << std::endl;
-
             std::string entryName = file_path.path().filename().string();
             if (entryName.size() <= startName.size() + endName.size()) {
                 continue;
@@ -89,9 +79,6 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
                 continue;
             }
         }
-
-        std::cout << "LATEST VERSION: " << version << std::endl;
-
     }
 
     else if (versionType == "json"){
