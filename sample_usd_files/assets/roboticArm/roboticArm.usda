@@ -1,0 +1,17 @@
+#usda 1.0
+(
+    customLayerData = {
+        string userName = "unknown"
+    }
+    defaultPrim = "roboticArm"
+    framesPerSecond = 30
+    metersPerUnit = 1
+    subLayers = [
+        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_geom_v003.usda@,
+        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_look_v003.usda@,
+        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_rig_v003.usda@
+    ]
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+

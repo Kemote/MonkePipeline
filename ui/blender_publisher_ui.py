@@ -27,9 +27,6 @@ DEFAULT_OUTPUT = "/home/kemot/Documents/Dev/MonkePipeline/sample_usd_files"
 
 
 class FloatSlider(QSlider):
-    """Suwak obsługujący liczby zmiennoprzecinkowe (float)."""
-
-    # Sygnał emitujący wartość typu float przy zmianie
     floatValueChanged = Signal(float)
 
     def __init__(
@@ -59,8 +56,6 @@ class FloatSlider(QSlider):
 
 
 class MonkeUsdExportDialog(QDialog):
-    """PySide6 dialog collecting USD export settings."""
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("USD Export")
@@ -72,16 +67,16 @@ class MonkeUsdExportDialog(QDialog):
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
 
-        # browse row
-        main_layout.addWidget(QLabel("Output settings:"))
-        path_row = QHBoxLayout()
-        self.path_edit = QLineEdit()
-        self.path_edit.setText(DEFAULT_OUTPUT)
-        browse_button = QPushButton("Browse output directory...")
-        browse_button.clicked.connect(self._browse)
-        path_row.addWidget(self.path_edit)
-        path_row.addWidget(browse_button)
-        main_layout.addLayout(path_row)
+        # # browse row
+        # main_layout.addWidget(QLabel("Output settings:"))
+        # path_row = QHBoxLayout()
+        # self.path_edit = QLineEdit()
+        # self.path_edit.setText(DEFAULT_OUTPUT)
+        # browse_button = QPushButton("Browse output directory...")
+        # browse_button.clicked.connect(self._browse)
+        # path_row.addWidget(self.path_edit)
+        # path_row.addWidget(browse_button)
+        # main_layout.addLayout(path_row)
 
         # extension combo box
         extension_row = QHBoxLayout()
@@ -190,16 +185,16 @@ class MonkeUsdExportDialog(QDialog):
     def _asset_checker_state_change(self, state):
         pass
 
-    def _browse(self):
-        path, _ = QFileDialog.getExistingDirectory(self, "USD Export Directory", self.path_edit.text())
-        if path:
-            self.path_edit.setText(path)
+    # def _browse(self):
+    #     path, _ = QFileDialog.getExistingDirectory(self, "USD Export Directory", self.path_edit.text())
+    #     if path:
+    #         self.path_edit.setText(path)
 
     def collect(self):
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         return {
-            "filepath": self.path_edit.text(),
+            # "filepath": self.path_edit.text(),
             "extension": self.extension_combo.currentText(),
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),

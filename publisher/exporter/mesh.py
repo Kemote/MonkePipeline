@@ -24,8 +24,8 @@ class MeshLayerExporter:
     skipped here so the sublayer's timeSamples are free to take effect
     """
 
-    def __init__(self, output_dir, extension):
-        self.output_dir = output_dir
+    def __init__(self, variants_dir, extension):
+        self.variants_dir = variants_dir
         self.extension = extension
         self.binding_exporter = MaterialBindingLayerExporter()
 
@@ -49,8 +49,8 @@ class MeshLayerExporter:
 
         if root.variant_sets:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name))
-            variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
-            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, variants_dir, skeleton_plan)
+            # variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
+            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, self.variants_dir, skeleton_plan)
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None):
         for outliner_path in outliner_paths:
