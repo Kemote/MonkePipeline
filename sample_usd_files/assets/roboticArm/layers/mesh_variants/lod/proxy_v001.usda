@@ -2,7 +2,7 @@
 (
     defaultPrim = "roboticArm"
     subLayers = [
-        @proxy_binding.usda@
+        @proxy_v001_binding.usda@
     ]
 )
 
@@ -94,12 +94,12 @@ def SkelRoot "roboticArm" (
     }
     variantSet "endEffector" = {
         "handle" (
-            prepend references = @proxy/endEffector/handle.usda@
+            prepend references = @proxy/endEffector/handle_v001.usda@
         ) {
 
         }
         "velding" (
-            prepend references = @proxy/endEffector/velding.usda@
+            prepend references = @proxy/endEffector/velding_v001.usda@
         ) {
 
         }

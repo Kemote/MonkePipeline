@@ -2,7 +2,7 @@
 (
     defaultPrim = "roboticArm"
     subLayers = [
-        @render_binding.usda@
+        @render_v002_binding.usda@
     ]
 )
 
@@ -154,12 +154,12 @@ def SkelRoot "roboticArm" (
     }
     variantSet "endEffector" = {
         "handle" (
-            prepend references = @render/endEffector/handle.usda@
+            prepend references = @render/endEffector/handle_v002.usda@
         ) {
 
         }
         "velding" (
-            prepend references = @render/endEffector/velding.usda@
+            prepend references = @render/endEffector/velding_v002.usda@
         ) {
 
         }

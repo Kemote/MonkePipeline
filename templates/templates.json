@@ -1,0 +1,51 @@
+{
+  "roots": {
+    "main": "/home/kemot/Documents/Dev/MonkePipeline/<project_name>"
+  },
+  "tokens": {
+    "version": {
+      "type": "int",
+      "format": "v%03d"
+    },
+    "name": {
+      "type": "str"
+    },
+    "step": {
+      "type": "str"
+    },
+    "project_name": {
+      "type": "str"
+    },
+    "ext": {
+      "type": "str"
+    },
+    "variant": {
+      "type": "str"
+    },
+    "variant_path": {
+      "type": "str"
+    }
+  },
+  "templates": {
+    "asset_main_file": {
+      "template": "/assets/<name>/<name>.<ext>",
+      "root": "main"
+    },
+    "asset_sublayer_file": {
+      "template": "/assets/<name>/layers/<name>_<step>_<version>.<ext>",
+      "root": "main"
+    },
+    "asset_mesh_variants_output": {
+      "template": "/assets/<name>/layers/mesh_variants",
+      "root": "main"
+    },
+    "asset_mesh_variant_layer": {
+      "template": "/assets/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>.<ext>",
+      "root": "main"
+    },
+    "asset_textures_output": {
+      "template": "/assets/<name>/textures",
+      "root": "main"
+    }
+  }
+}

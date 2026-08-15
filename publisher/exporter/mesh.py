@@ -24,8 +24,13 @@ class MeshLayerExporter:
     skipped here so the sublayer's timeSamples are free to take effect
     """
 
-    def __init__(self, output_dir, extension):
-        self.output_dir = output_dir
+    VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
+
+    def __init__(self, templates, base_fields, variants_dir, extension):
+        self.templates = templates
+        self.base_fields = base_fields
+        self.variant_layer_template = templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
+        self.variants_dir = variants_dir
         self.extension = extension
         self.binding_exporter = MaterialBindingLayerExporter()
 
@@ -49,8 +54,8 @@ class MeshLayerExporter:
 
         if root.variant_sets:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name))
-            variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
-            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, variants_dir, skeleton_plan)
+            # variants_dir = os.path.join(self.output_dir, "layers", "mesh_variants")
+            self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, self.variants_dir, skeleton_plan)
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None):
         for outliner_path in outliner_paths:
@@ -59,19 +64,24 @@ class MeshLayerExporter:
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
             self._write_mesh(stage, prim_path, mesh, binding)
 
-    def _author_variant_sets(self, 
-                             stage: Usd.Stage, 
-                             asset_item: collector.CollectedAssetItem, 
-                             prim: Usd.Prim, 
-                             variant_sets, 
-                             variants_dir, 
-                             skeleton_plan=None):
+    def _author_variant_sets(self,
+                             stage: Usd.Stage,
+                             asset_item: collector.CollectedAssetItem,
+                             prim: Usd.Prim,
+                             variant_sets,
+                             variants_dir,
+                             skeleton_plan=None,
+                             variant_path=""):
         """
         authors `variant_sets` onto `prim`. each variant's geometry - its own
         meshes plus any deeper variant sets - is written to a standalone layer laid
         out as <variants_dir>/<set>/<variant>.<ext>; a variant that nests further
         variants recurses into <variants_dir>/<set>/<variant>/, mirroring the
         collection hierarchy on disk. the layer is referenced back into the variant.
+
+        `variant_path` mirrors that same nesting as a "/"-joined set of sanitized
+        segments (e.g. "lod/proxy") so the variant layer template can resolve a
+        versioned filename at any depth.
 
         the "lod" set is the exception: lods coexist instead of switching, so no
         variantSet is authored - every lod layer is referenced unconditionally and
@@ -83,13 +93,15 @@ class MeshLayerExporter:
         variant_sets_api = prim.GetVariantSets()
 
         for set_name, variants in variant_sets.items():
-            set_dir = os.path.join(variants_dir, sanitize_name(set_name))
+            set_segment = sanitize_name(set_name)
+            set_dir = os.path.join(variants_dir, set_segment)
+            set_variant_path = os.path.join(variant_path, set_segment) if variant_path else set_segment
             os.makedirs(set_dir, exist_ok=True)
 
             if is_lod_set(set_name):
                 for variant_name, node in variants.items():
                     lod_layer_path = self._write_variant_layer(
-                        asset_item, set_dir, variant_name, node, skeleton_plan, purpose=lod_purpose(variant_name)
+                        asset_item, set_dir, variant_name, node, set_variant_path, skeleton_plan, purpose=lod_purpose(variant_name)
                     )
                     prim.GetReferences().AddReference(os.path.relpath(lod_layer_path, stage_dir))
                 continue
@@ -97,7 +109,7 @@ class MeshLayerExporter:
             variant_set = variant_sets_api.AddVariantSet(set_name)
             for variant_name, node in variants.items():
                 variant_set.AddVariant(variant_name)
-                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node, skeleton_plan)
+                variant_layer_path = self._write_variant_layer(asset_item, set_dir, variant_name, node, set_variant_path, skeleton_plan)
                 variant_set.SetVariantSelection(variant_name)
                 with variant_set.GetVariantEditContext():
                     prim.GetReferences().AddReference(os.path.relpath(variant_layer_path, stage_dir))
@@ -105,8 +117,12 @@ class MeshLayerExporter:
             # leave a deterministic default selection rather than the last authored one
             variant_set.SetVariantSelection(next(iter(variants)))
 
-    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, skeleton_plan=None, purpose=None):
-        variant_layer_path = os.path.join(set_dir, f"{sanitize_name(variant_name)}.{self.extension}")
+    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, variant_path, skeleton_plan=None, purpose=None):
+        fields = dict(self.base_fields)
+        fields["variant_path"] = variant_path
+        fields["variant"] = sanitize_name(variant_name)
+        variant_layer_path = self.templates.get_new_file_path(self.variant_layer_template, fields)
+        os.makedirs(os.path.dirname(variant_layer_path), exist_ok=True)
 
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
         if asset_item.armature_objects:
@@ -128,8 +144,12 @@ class MeshLayerExporter:
 
         if node.variant_sets:
             asset_prim = variant_stage.GetPrimAtPath(asset_root_path(asset_item.name))
-            nested_dir = os.path.join(set_dir, sanitize_name(variant_name))
-            self._author_variant_sets(variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir, skeleton_plan)
+            variant_segment = sanitize_name(variant_name)
+            nested_dir = os.path.join(set_dir, variant_segment)
+            nested_variant_path = os.path.join(variant_path, variant_segment)
+            self._author_variant_sets(
+                variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir, skeleton_plan, nested_variant_path
+            )
 
         # a defaultPrim lets the parent layer reference this file without naming a prim
         variant_stage.GetRootLayer().defaultPrim = sanitize_name(asset_item.name)
