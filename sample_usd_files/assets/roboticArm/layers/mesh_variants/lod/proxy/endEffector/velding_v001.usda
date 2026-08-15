@@ -2,7 +2,7 @@
 (
     defaultPrim = "roboticArm"
     subLayers = [
-        @velding_binding.usda@
+        @velding_v001_binding.usda@
     ]
 )
 

@@ -18,6 +18,12 @@
     },
     "ext": {
       "type": "str"
+    },
+    "variant": {
+      "type": "str"
+    },
+    "variant_path": {
+      "type": "str"
     }
   },
   "templates": {
@@ -31,6 +37,10 @@
     },
     "asset_mesh_variants_output": {
       "template": "/assets/<name>/layers/mesh_variants",
+      "root": "main"
+    },
+    "asset_mesh_variant_layer": {
+      "template": "/assets/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>.<ext>",
       "root": "main"
     },
     "asset_textures_output": {

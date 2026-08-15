@@ -6,8 +6,8 @@
 
 def SkelRoot "roboticArm" (
     prepend references = [
-        @mesh_variants/lod/render.usda@,
-        @mesh_variants/lod/proxy.usda@
+        @mesh_variants/lod/render_v001.usda@,
+        @mesh_variants/lod/proxy_v001.usda@
     ]
 )
 {

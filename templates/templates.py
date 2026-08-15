@@ -21,8 +21,8 @@ class Templates:
             if not self._roots:
                 raise KeyError("File ./templates.json dont have 'roots' key which is required")
 
-        version_token = self._tokens["version"]
-        self.version_pattern = re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", "*", version_token)
+        version_format = self._tokens["version"]["format"]
+        self.version_pattern = re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", "*", version_format)
 
     def get_existing_version_numbers(self, template, fields):
         fields["version"] = self.version_pattern
@@ -32,9 +32,7 @@ class Templates:
         regex = re.compile(regex_str)
         version_numbers = []
 
-        print(f"norm patt {norm_pattern}")
         for file_path in glob.glob(norm_pattern):
-            print(f"GLOBE: {file_path}")
             file_path_norm = os.path.normpath(file_path)
             match = regex.match(file_path_norm)
 
@@ -44,8 +42,12 @@ class Templates:
         return sorted(version_numbers)
 
     def get_new_file_path(self, template, fields):
+        if "<version>" not in template:
+            # no version token in this template - nothing to bump, just
+            # resolve straight through and let the caller overwrite
+            return self.resolve_template(template, fields)
+
         existing_versions = self.get_existing_version_numbers(template, fields)
-        print(f"EXISTIN G VER: {existing_versions}")
         if not existing_versions:
             version = 1
         else:
@@ -81,10 +83,9 @@ class Templates:
                         field = format % field
 
             template = template.replace(f"<{token}>", field)
-            print(template)
 
         if "<" in template:
-            self.resolve_template(template, fields)
+            return self.resolve_template(template, fields)
 
         return template
 

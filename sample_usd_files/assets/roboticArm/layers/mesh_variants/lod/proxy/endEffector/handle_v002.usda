@@ -2,7 +2,7 @@
 (
     defaultPrim = "roboticArm"
     subLayers = [
-        @handle_binding.usda@
+        @handle_v002_binding.usda@
     ]
 )
 

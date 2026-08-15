@@ -5,7 +5,7 @@ from publisher.exporter.armature import ArmatureLayerExporter
 from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
 from publisher.exporter.mesh import MeshLayerExporter
-from path_resolver.templates import Templates
+from templates.templates import Templates
 
 
 class UsdExporter:
@@ -47,12 +47,17 @@ class UsdExporter:
         look_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "rig"
         rig_file_path = templates.get_new_file_path(sublayer_file_template, fields)
-        mesh_variants_output = templates.resolve_template(mesh_variants_template, fields)
-        textures_output = templates.resolve_template(textures_template, fields)
+        mesh_variants_output = templates.get_new_file_path(mesh_variants_template, fields)
+        textures_output = templates.get_new_file_path(textures_template, fields)
         layer_paths = []
 
         if self.export_geom:
-            mesh_exporter = MeshLayerExporter(mesh_variants_output, self.extension)
+            variant_base_fields = {
+                "ext": fields["ext"],
+                "project_name": fields["project_name"],
+                "name": fields["name"],
+            }
+            mesh_exporter = MeshLayerExporter(templates, variant_base_fields, mesh_variants_output, self.extension)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths.append(geom_file_path)
 
