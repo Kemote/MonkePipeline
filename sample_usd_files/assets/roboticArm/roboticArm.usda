@@ -3,13 +3,12 @@
     customLayerData = {
         string userName = "unknown"
     }
-    defaultPrim = "roboticArm"
     framesPerSecond = 30
     metersPerUnit = 1
     subLayers = [
-        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_geom_v002.usda@,
-        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_look_v002.usda@,
-        @../../../sample_usd_files/assets/roboticArm/layers/roboticArm_rig_v002.usda@
+        @monkeDisc://assets/roboticArm/layers/roboticArm_geom_<version>.usda:lastest@,
+        @monkeDisc://assets/roboticArm/layers/roboticArm_look_<version>.usda:lastest@,
+        @monkeDisc://assets/roboticArm/layers/roboticArm_rig_<version>.usda:lastest@
     ]
     timeCodesPerSecond = 30
     upAxis = "Z"

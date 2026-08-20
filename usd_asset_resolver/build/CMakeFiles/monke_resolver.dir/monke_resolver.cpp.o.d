@@ -2,18 +2,18 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/monke_resolver.cpp \
  /usr/include/stdc-predef.h \
  /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_db.h \
- /home/kemot/USD/include/pxr/pxr.h \
- /home/kemot/USD/include/pxr/usd/ar/resolver.h \
- /home/kemot/USD/include/pxr/usd/ar/api.h \
- /home/kemot/USD/include/pxr/base/arch/export.h \
- /home/kemot/USD/include/pxr/base/arch/defines.h \
- /home/kemot/USD/include/pxr/usd/ar/ar.h \
- /home/kemot/USD/include/pxr/usd/ar/resolvedPath.h \
- /home/kemot/USD/include/pxr/base/tf/hash.h \
- /home/kemot/USD/include/pxr/base/tf/tf.h \
- /home/kemot/USD/include/pxr/base/arch/buildMode.h \
- /home/kemot/USD/include/pxr/base/arch/math.h \
- /home/kemot/USD/include/pxr/base/arch/inttypes.h \
+ /home/kemot/UsdRoot/include/pxr/pxr.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/resolver.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/api.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/export.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/defines.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/ar.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/resolvedPath.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/hash.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/tf.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/buildMode.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/math.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/inttypes.h \
  /usr/include/c++/14/cinttypes /usr/include/c++/14/cstdint \
  /usr/include/c++/14/x86_64-redhat-linux/bits/c++config.h \
  /usr/include/bits/wordsize.h \
@@ -87,9 +87,9 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/c++/14/tr1/riemann_zeta.tcc /usr/include/c++/14/math.h \
  /usr/include/c++/14/utility /usr/include/c++/14/bits/stl_relops.h \
  /usr/include/c++/14/initializer_list \
- /home/kemot/USD/include/pxr/base/tf/api.h /usr/include/c++/14/cstring \
- /usr/include/string.h /usr/include/strings.h /usr/include/c++/14/string \
- /usr/include/c++/14/bits/stringfwd.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/api.h \
+ /usr/include/c++/14/cstring /usr/include/string.h /usr/include/strings.h \
+ /usr/include/c++/14/string /usr/include/c++/14/bits/stringfwd.h \
  /usr/include/c++/14/bits/memoryfwd.h \
  /usr/include/c++/14/bits/char_traits.h \
  /usr/include/c++/14/bits/postypes.h /usr/include/c++/14/cwchar \
@@ -178,8 +178,8 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/c++/14/vector /usr/include/c++/14/bits/stl_vector.h \
  /usr/include/c++/14/bits/stl_bvector.h \
  /usr/include/c++/14/bits/vector.tcc \
- /home/kemot/USD/include/pxr/usd/ar/resolverContext.h \
- /home/kemot/USD/include/pxr/base/tf/safeTypeCompare.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/resolverContext.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/safeTypeCompare.h \
  /usr/include/c++/14/locale /usr/include/c++/14/bits/locale_classes.h \
  /usr/include/c++/14/bits/locale_classes.tcc \
  /usr/include/c++/14/bits/locale_facets.h /usr/include/c++/14/cwctype \
@@ -198,10 +198,10 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/libintl.h /usr/include/c++/14/bits/codecvt.h \
  /usr/include/c++/14/bits/locale_facets_nonio.tcc \
  /usr/include/c++/14/bits/locale_conv.h \
- /home/kemot/USD/include/pxr/base/tf/pyLock.h \
- /home/kemot/USD/include/pxr/base/tf/pySafePython.h \
- /home/kemot/USD/include/pxr/base/arch/pragmas.h \
- /home/kemot/USD/include/pxr/external/boost/python/detail/wrap_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/base/tf/pyLock.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/pySafePython.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/pragmas.h \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/wrap_python.hpp \
  /usr/include/python3.12/pyconfig.h /usr/include/python3.12/pyconfig-64.h \
  /usr/lib/gcc/x86_64-redhat-linux/14/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/14/include/syslimits.h \
@@ -314,19 +314,19 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/python3.12/cpython/fileutils.h \
  /usr/include/python3.12/cpython/pyfpe.h \
  /usr/include/python3.12/tracemalloc.h \
- /home/kemot/USD/include/pxr/base/tf/pyObjWrapper.h \
- /home/kemot/USD/include/pxr/external/boost/python/object_fwd.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/common.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/prefix.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/config.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object_operators.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object_core.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/type.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/call.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/arg_to_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/bool.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/ref.hpp \
+ /home/kemot/UsdRoot/include/pxr/base/tf/pyObjWrapper.h \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object_fwd.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/common.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/prefix.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/config.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object_operators.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object_core.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/type.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/call.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/arg_to_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/bool.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/ref.hpp \
  /usr/include/c++/14/functional /usr/include/c++/14/bits/std_function.h \
  /usr/include/c++/14/unordered_map \
  /usr/include/c++/14/bits/unordered_map.h \
@@ -334,122 +334,122 @@ CMakeFiles/monke_resolver.dir/monke_resolver.cpp.o: \
  /usr/include/c++/14/bits/hashtable_policy.h \
  /usr/include/c++/14/bits/enable_special_members.h \
  /usr/include/c++/14/array /usr/include/c++/14/compare \
- /home/kemot/USD/include/pxr/external/boost/python/tag.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/to_python_indirect.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/pointer_holder.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/instance_holder.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/type_id.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/msvc_typeinfo.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/tag.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/to_python_indirect.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/pointer_holder.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/instance_holder.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/type_id.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/msvc_typeinfo.hpp \
  /usr/include/c++/14/ostream /usr/include/c++/14/ios \
  /usr/include/c++/14/bits/basic_ios.h \
  /usr/include/c++/14/bits/basic_ios.tcc \
  /usr/include/c++/14/bits/ostream.tcc \
- /home/kemot/USD/include/pxr/external/boost/python/detail/type_traits.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/inheritance_query.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/forward.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/if.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/value_arg.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/copy_ctor_mutates_rhs.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/is_auto_ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/indirect_traits.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/or.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/pointee.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/wrapper_base.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/force_instantiate.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/preprocessor.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/get_pointer.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/make_ptr_instance.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/make_instance.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/instance.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/registered.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/registry.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/to_python_function_type.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/rvalue_from_python_data.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/constructor_function.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/referent_storage.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/destroy.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/convertible_function.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/registrations.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/decref_guard.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/none.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/refcount.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/cast.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/base_type_traits.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/convertible.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/registered_pointee.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/pointer_type_id.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/arg_to_python_base.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/handle.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/errors.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/borrowed.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/borrowed_ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/handle_fwd.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/raw_pyobject.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/shared_ptr_to_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/shared_ptr_deleter.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/builtin_converters.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/ssize_t.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/type_traits.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/inheritance_query.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/forward.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/if.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/value_arg.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/copy_ctor_mutates_rhs.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/is_auto_ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/indirect_traits.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/or.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/pointee.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/wrapper_base.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/force_instantiate.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/preprocessor.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/get_pointer.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/make_ptr_instance.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/make_instance.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/instance.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/registered.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/registry.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/to_python_function_type.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/rvalue_from_python_data.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/constructor_function.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/referent_storage.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/destroy.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/convertible_function.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/registrations.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/decref_guard.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/none.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/refcount.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/cast.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/base_type_traits.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/convertible.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/registered_pointee.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/pointer_type_id.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/arg_to_python_base.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/handle.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/errors.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/borrowed.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/borrowed_ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/handle_fwd.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/raw_pyobject.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/shared_ptr_to_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/shared_ptr_deleter.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/builtin_converters.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/ssize_t.hpp \
  /usr/include/c++/14/complex /usr/include/c++/14/sstream \
  /usr/include/c++/14/istream /usr/include/c++/14/bits/istream.tcc \
  /usr/include/c++/14/bits/sstream.tcc \
- /home/kemot/USD/include/pxr/external/boost/python/object/function_handle.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/caller.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/invoke.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/to_python_value.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/object_manager.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/pyobject_traits.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/pyobject_type.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/value_is_shared_ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/value_is_xxx.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/is_xxx.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/is_shared_ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/signature.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/pytype_function.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/unwind_type.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/cv_category.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/back_reference.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/dependent.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/at.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/type_list.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/type_list.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/type_list_impl.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/size.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/arg_from_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/arg_from_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/from_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/eval_if.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/identity.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/and.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/not.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/void_ptr.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/obj_mgr_arg_from_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/construct.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/context_result_converter.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/front.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/mpl2/int.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/default_call_policies.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/py_function.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/signature.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/string_literal.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/converter/return_from_python.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/void_return.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/def_visitor.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/object/add_to_namespace.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/def_helper_fwd.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/detail/not_specified.hpp \
- /home/kemot/USD/include/pxr/external/boost/python/slice_nil.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/function_handle.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/caller.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/invoke.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/to_python_value.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/object_manager.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/pyobject_traits.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/pyobject_type.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/value_is_shared_ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/value_is_xxx.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/is_xxx.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/is_shared_ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/signature.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/pytype_function.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/unwind_type.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/cv_category.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/at.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/type_list.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/type_list.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/type_list_impl.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/size.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/arg_from_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/arg_from_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/from_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/eval_if.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/identity.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/and.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/not.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/void_ptr.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/back_reference.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/dependent.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/obj_mgr_arg_from_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/construct.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/context_result_converter.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/front.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/mpl2/int.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/default_call_policies.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/py_function.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/signature.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/string_literal.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/converter/return_from_python.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/void_return.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/def_visitor.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/object/add_to_namespace.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/def_helper_fwd.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/detail/not_specified.hpp \
+ /home/kemot/UsdRoot/include/pxr/external/boost/python/slice_nil.hpp \
  /usr/include/c++/14/algorithm /usr/include/c++/14/bits/stl_algo.h \
  /usr/include/c++/14/bits/algorithmfwd.h \
  /usr/include/c++/14/bits/stl_heap.h \
  /usr/include/c++/14/bits/uniform_int_dist.h \
  /usr/include/c++/14/pstl/glue_algorithm_defs.h \
- /home/kemot/USD/include/pxr/usd/ar/timestamp.h \
- /home/kemot/USD/include/pxr/base/arch/hints.h \
+ /home/kemot/UsdRoot/include/pxr/usd/ar/timestamp.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/hints.h \
  /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/resolver_disk.h \
- /home/kemot/USD/include/pxr/usd/ar/defineResolver.h \
- /home/kemot/USD/include/pxr/base/tf/registryManager.h \
- /home/kemot/USD/include/pxr/base/arch/attributes.h \
- /home/kemot/USD/include/pxr/base/tf/preprocessorUtilsLite.h \
- /home/kemot/USD/include/pxr/base/tf/type.h \
- /home/kemot/USD/include/pxr/base/tf/typeFunctions.h \
- /home/kemot/USD/include/pxr/base/tf/type_Impl.h
+ /home/kemot/UsdRoot/include/pxr/usd/ar/defineResolver.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/registryManager.h \
+ /home/kemot/UsdRoot/include/pxr/base/arch/attributes.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/preprocessorUtilsLite.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/type.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/typeFunctions.h \
+ /home/kemot/UsdRoot/include/pxr/base/tf/type_Impl.h

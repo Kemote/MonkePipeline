@@ -29,8 +29,12 @@ add_library(monke_resolver SHARED
     resolver_disk.cpp
 )
 
-# 5. Link against the necessary OpenUSD core libraries
-target_link_libraries(monke_resolver PRIVATE ${PXR_LIBRARIES} CURL::libcurl)
+# 5. Link against the necessary OpenUSD core libraries.
+# Only the Ar module (and its own transitive deps) is actually used here -
+# linking the full ${PXR_LIBRARIES} pulls in unrelated Hydra/imaging targets
+# like garch, which in prebuilt distributions (e.g. UsdRoot) can carry
+# hardcoded link paths baked in from a different build machine.
+target_link_libraries(monke_resolver PRIVATE ar CURL::libcurl)
 
 # 6. Configure compiler-specific flags for plugins
 if(MSVC)

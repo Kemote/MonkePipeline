@@ -166,6 +166,25 @@ def "roboticArm"
                 token outputs:surface
             }
         }
+
+        def Material "mainColor_green"
+        {
+            token outputs:surface.connect = </roboticArm/Looks/mainColor_green/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.00827229, 0.30541053, 0)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
     }
 }
 

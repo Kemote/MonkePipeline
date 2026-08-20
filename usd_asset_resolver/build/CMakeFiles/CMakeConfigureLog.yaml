@@ -61,8 +61,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -71,13 +71,13 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_5efc9/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_5efc9.dir/build.make CMakeFiles/cmTC_5efc9.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm'
-        Building C object CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o
-        /usr/bin/cc   -v -o CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_ef0a2/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_ef0a2.dir/build.make CMakeFiles/cmTC_ef0a2.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB'
+        Building C object CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -v -o CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
         Using built-in specs.
         COLLECT_GCC=/usr/bin/cc
         OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -87,8 +87,8 @@ events:
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
         gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/'
-         /usr/libexec/gcc/x86_64-redhat-linux/14/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_5efc9.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64-v3 -version -o /tmp/cc0zqFPd.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/'
+         /usr/libexec/gcc/x86_64-redhat-linux/14/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ef0a2.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64-v3 -version -o /tmp/ccTMHMyR.s
         GNU C17 (GCC) version 14.3.1 20251022 (Red Hat 14.3.1-4) (x86_64-redhat-linux)
         	compiled by GNU C version 14.3.1 20251022 (Red Hat 14.3.1-4), GMP version 6.2.1, MPFR version 4.2.1, MPC version 1.3.1, isl version none
         GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -101,14 +101,14 @@ events:
          /usr/include
         End of search list.
         Compiler executable checksum: e7e74dcffac3dd326c1fdacc202bf84f
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/'
-         as -v --64 -o CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o /tmp/cc0zqFPd.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/'
+         as -v --64 -o CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o /tmp/ccTMHMyR.s
         GNU assembler version 2.41 (x86_64-redhat-linux) using BFD version version 2.41-63.el10
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.'
-        Linking C executable cmTC_5efc9
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5efc9.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.'
+        Linking C executable cmTC_ef0a2
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ef0a2.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/cc
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper
@@ -121,14 +121,14 @@ events:
         gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) 
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_5efc9' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_5efc9.'
-         /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8KPDqZ.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5efc9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ef0a2' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_ef0a2.'
+         /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccUvhcJ6.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ef0a2 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
         collect2 version 14.3.1 20251022 (Red Hat 14.3.1-4)
-        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8KPDqZ.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5efc9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
+        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccUvhcJ6.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ef0a2 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
         GNU ld version 2.41-63.el10
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_5efc9' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_5efc9.'
-        /usr/bin/cc  -v -Wl,-v CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -o cmTC_5efc9
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ef0a2' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_ef0a2.'
+        /usr/bin/cc  -v -Wl,-v CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -o cmTC_ef0a2
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB'
         
       exitCode: 0
   -
@@ -161,13 +161,13 @@ events:
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm']
+        ignore line: [Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_5efc9/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_5efc9.dir/build.make CMakeFiles/cmTC_5efc9.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-5xLysm']
-        ignore line: [Building C object CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o]
-        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_ef0a2/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_ef0a2.dir/build.make CMakeFiles/cmTC_ef0a2.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-FwxvgB']
+        ignore line: [Building C object CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/cc]
         ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -177,8 +177,8 @@ events:
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
         ignore line: [gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/']
-        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_5efc9.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64-v3 -version -o /tmp/cc0zqFPd.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/']
+        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ef0a2.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64-v3 -version -o /tmp/ccTMHMyR.s]
         ignore line: [GNU C17 (GCC) version 14.3.1 20251022 (Red Hat 14.3.1-4) (x86_64-redhat-linux)]
         ignore line: [	compiled by GNU C version 14.3.1 20251022 (Red Hat 14.3.1-4)  GMP version 6.2.1  MPFR version 4.2.1  MPC version 1.3.1  isl version none]
         ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
@@ -191,14 +191,14 @@ events:
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
         ignore line: [Compiler executable checksum: e7e74dcffac3dd326c1fdacc202bf84f]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o /tmp/cc0zqFPd.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o /tmp/ccTMHMyR.s]
         ignore line: [GNU assembler version 2.41 (x86_64-redhat-linux) using BFD version version 2.41-63.el10]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.']
-        ignore line: [Linking C executable cmTC_5efc9]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5efc9.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.']
+        ignore line: [Linking C executable cmTC_ef0a2]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ef0a2.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/cc]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper]
@@ -211,13 +211,13 @@ events:
         ignore line: [gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) ]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_5efc9' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_5efc9.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8KPDqZ.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5efc9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ef0a2' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_ef0a2.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccUvhcJ6.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ef0a2 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/14/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/cc8KPDqZ.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccUvhcJ6.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -232,7 +232,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_5efc9] ==> ignore
+          arg [cmTC_ef0a2] ==> ignore
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o]
@@ -242,7 +242,7 @@ events:
           arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
           arg [-L/usr/lib/gcc/x86_64-redhat-linux/14/../../..] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/14/../../..]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o] ==> ignore
           arg [-lgcc] ==> lib [gcc]
           arg [--push-state] ==> ignore
           arg [--as-needed] ==> ignore
@@ -257,7 +257,7 @@ events:
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/crtend.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/crtend.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
         ignore line: [collect2 version 14.3.1 20251022 (Red Hat 14.3.1-4)]
-        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8KPDqZ.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5efc9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_5efc9.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
+        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccUvhcJ6.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ef0a2 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_ef0a2.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
         linker tool for 'C': /usr/bin/ld
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
@@ -292,8 +292,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -303,13 +303,13 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6beb6/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_6beb6.dir/build.make CMakeFiles/cmTC_6beb6.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts'
-        Building CXX object CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o
-        /usr/bin/c++   -v -o CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3d7b9/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_3d7b9.dir/build.make CMakeFiles/cmTC_3d7b9.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4'
+        Building CXX object CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -v -o CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -319,8 +319,8 @@ events:
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
         gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/'
-         /usr/libexec/gcc/x86_64-redhat-linux/14/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_6beb6.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64-v3 -version -o /tmp/ccVBCPmf.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/'
+         /usr/libexec/gcc/x86_64-redhat-linux/14/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_3d7b9.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64-v3 -version -o /tmp/ccxM1WuJ.s
         GNU C++17 (GCC) version 14.3.1 20251022 (Red Hat 14.3.1-4) (x86_64-redhat-linux)
         	compiled by GNU C version 14.3.1 20251022 (Red Hat 14.3.1-4), GMP version 6.2.1, MPFR version 4.2.1, MPC version 1.3.1, isl version none
         GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
@@ -336,14 +336,14 @@ events:
          /usr/include
         End of search list.
         Compiler executable checksum: 4f70295b2ddb2eb6cf8ab8b172f8ae64
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/'
-         as -v --64 -o CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccVBCPmf.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/'
+         as -v --64 -o CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccxM1WuJ.s
         GNU assembler version 2.41 (x86_64-redhat-linux) using BFD version version 2.41-63.el10
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.'
-        Linking CXX executable cmTC_6beb6
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6beb6.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_3d7b9
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d7b9.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper
@@ -356,14 +356,14 @@ events:
         gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) 
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_6beb6' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_6beb6.'
-         /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccOUHEXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6beb6 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_3d7b9' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_3d7b9.'
+         /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cciz4Wv9.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3d7b9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
         collect2 version 14.3.1 20251022 (Red Hat 14.3.1-4)
-        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccOUHEXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6beb6 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
+        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cciz4Wv9.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3d7b9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o
         GNU ld version 2.41-63.el10
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_6beb6' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_6beb6.'
-        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_6beb6
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_3d7b9' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_3d7b9.'
+        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_3d7b9
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4'
         
       exitCode: 0
   -
@@ -402,13 +402,13 @@ events:
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts']
+        ignore line: [Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6beb6/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_6beb6.dir/build.make CMakeFiles/cmTC_6beb6.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-m5FZts']
-        ignore line: [Building CXX object CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o]
-        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3d7b9/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_3d7b9.dir/build.make CMakeFiles/cmTC_3d7b9.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-IyyPF4']
+        ignore line: [Building CXX object CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -418,8 +418,8 @@ events:
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
         ignore line: [gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/']
-        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_6beb6.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64-v3 -version -o /tmp/ccVBCPmf.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/']
+        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_3d7b9.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64-v3 -version -o /tmp/ccxM1WuJ.s]
         ignore line: [GNU C++17 (GCC) version 14.3.1 20251022 (Red Hat 14.3.1-4) (x86_64-redhat-linux)]
         ignore line: [	compiled by GNU C version 14.3.1 20251022 (Red Hat 14.3.1-4)  GMP version 6.2.1  MPFR version 4.2.1  MPC version 1.3.1  isl version none]
         ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
@@ -435,14 +435,14 @@ events:
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
         ignore line: [Compiler executable checksum: 4f70295b2ddb2eb6cf8ab8b172f8ae64]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccVBCPmf.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccxM1WuJ.s]
         ignore line: [GNU assembler version 2.41 (x86_64-redhat-linux) using BFD version version 2.41-63.el10]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.']
-        ignore line: [Linking CXX executable cmTC_6beb6]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6beb6.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_3d7b9]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d7b9.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper]
@@ -455,13 +455,13 @@ events:
         ignore line: [gcc version 14.3.1 20251022 (Red Hat 14.3.1-4) (GCC) ]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/14/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/14/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/14/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_6beb6' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_6beb6.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccOUHEXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6beb6 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_3d7b9' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64-v3' '-dumpdir' 'cmTC_3d7b9.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/14/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cciz4Wv9.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3d7b9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/14/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/ccOUHEXQ.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/cciz4Wv9.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -476,7 +476,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_6beb6] ==> ignore
+          arg [cmTC_3d7b9] ==> ignore
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o]
@@ -486,7 +486,7 @@ events:
           arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
           arg [-L/usr/lib/gcc/x86_64-redhat-linux/14/../../..] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/14/../../..]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
           arg [-lstdc++] ==> lib [stdc++]
           arg [-lm] ==> lib [m]
           arg [-lgcc_s] ==> lib [gcc_s]
@@ -497,7 +497,7 @@ events:
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/crtend.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/crtend.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
         ignore line: [collect2 version 14.3.1 20251022 (Red Hat 14.3.1-4)]
-        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/ccOUHEXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6beb6 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_6beb6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
+        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/14/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/14/lto-wrapper -plugin-opt=-fresolution=/tmp/cciz4Wv9.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3d7b9 /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/14/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/14 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/14/../../.. -v CMakeFiles/cmTC_3d7b9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/14/crtend.o /usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crtn.o]
         linker tool for 'CXX': /usr/bin/ld
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/14/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
@@ -532,8 +532,8 @@ events:
     checks:
       - "Looking for XOpenDisplay in /usr/lib64/libX11.so;/usr/lib64/libXext.so"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -542,17 +542,17 @@ events:
       variable: "X11_LIB_X11_SOLO"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a7a8e/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_a7a8e.dir/build.make CMakeFiles/cmTC_a7a8e.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0'
-        Building C object CMakeFiles/cmTC_a7a8e.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=XOpenDisplay -o CMakeFiles/cmTC_a7a8e.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0/CheckFunctionExists.c
-        Linking C executable cmTC_a7a8e
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a7a8e.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=XOpenDisplay CMakeFiles/cmTC_a7a8e.dir/CheckFunctionExists.c.o -o cmTC_a7a8e  /usr/lib64/libX11.so /usr/lib64/libXext.so
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-bTfuO0'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2bf6f/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_2bf6f.dir/build.make CMakeFiles/cmTC_2bf6f.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu'
+        Building C object CMakeFiles/cmTC_2bf6f.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=XOpenDisplay -o CMakeFiles/cmTC_2bf6f.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu/CheckFunctionExists.c
+        Linking C executable cmTC_2bf6f
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2bf6f.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=XOpenDisplay CMakeFiles/cmTC_2bf6f.dir/CheckFunctionExists.c.o -o cmTC_2bf6f  /usr/lib64/libX11.so /usr/lib64/libXext.so
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-YK4Kqu'
         
       exitCode: 0
   -
@@ -564,8 +564,8 @@ events:
     checks:
       - "Looking for gethostbyname"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -574,17 +574,17 @@ events:
       variable: "CMAKE_HAVE_GETHOSTBYNAME"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_ee1e5/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_ee1e5.dir/build.make CMakeFiles/cmTC_ee1e5.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI'
-        Building C object CMakeFiles/cmTC_ee1e5.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname -o CMakeFiles/cmTC_ee1e5.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI/CheckFunctionExists.c
-        Linking C executable cmTC_ee1e5
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ee1e5.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=gethostbyname CMakeFiles/cmTC_ee1e5.dir/CheckFunctionExists.c.o -o cmTC_ee1e5
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-mnd8lI'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_f9453/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_f9453.dir/build.make CMakeFiles/cmTC_f9453.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp'
+        Building C object CMakeFiles/cmTC_f9453.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname -o CMakeFiles/cmTC_f9453.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp/CheckFunctionExists.c
+        Linking C executable cmTC_f9453
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f9453.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=gethostbyname CMakeFiles/cmTC_f9453.dir/CheckFunctionExists.c.o -o cmTC_f9453
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-hWSnkp'
         
       exitCode: 0
   -
@@ -596,8 +596,8 @@ events:
     checks:
       - "Looking for connect"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -606,17 +606,17 @@ events:
       variable: "CMAKE_HAVE_CONNECT"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a90a4/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_a90a4.dir/build.make CMakeFiles/cmTC_a90a4.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U'
-        Building C object CMakeFiles/cmTC_a90a4.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=connect -o CMakeFiles/cmTC_a90a4.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U/CheckFunctionExists.c
-        Linking C executable cmTC_a90a4
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a90a4.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=connect CMakeFiles/cmTC_a90a4.dir/CheckFunctionExists.c.o -o cmTC_a90a4
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-x6lh3U'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_31cce/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_31cce.dir/build.make CMakeFiles/cmTC_31cce.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq'
+        Building C object CMakeFiles/cmTC_31cce.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=connect -o CMakeFiles/cmTC_31cce.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq/CheckFunctionExists.c
+        Linking C executable cmTC_31cce
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_31cce.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=connect CMakeFiles/cmTC_31cce.dir/CheckFunctionExists.c.o -o cmTC_31cce
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-h2Bcbq'
         
       exitCode: 0
   -
@@ -628,8 +628,8 @@ events:
     checks:
       - "Looking for remove"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -638,17 +638,17 @@ events:
       variable: "CMAKE_HAVE_REMOVE"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6bc37/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_6bc37.dir/build.make CMakeFiles/cmTC_6bc37.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg'
-        Building C object CMakeFiles/cmTC_6bc37.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=remove -o CMakeFiles/cmTC_6bc37.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg/CheckFunctionExists.c
-        Linking C executable cmTC_6bc37
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6bc37.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=remove CMakeFiles/cmTC_6bc37.dir/CheckFunctionExists.c.o -o cmTC_6bc37
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-8pfVzg'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d23c3/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_d23c3.dir/build.make CMakeFiles/cmTC_d23c3.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T'
+        Building C object CMakeFiles/cmTC_d23c3.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=remove -o CMakeFiles/cmTC_d23c3.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T/CheckFunctionExists.c
+        Linking C executable cmTC_d23c3
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d23c3.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=remove CMakeFiles/cmTC_d23c3.dir/CheckFunctionExists.c.o -o cmTC_d23c3
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-fTtU4T'
         
       exitCode: 0
   -
@@ -660,8 +660,8 @@ events:
     checks:
       - "Looking for shmat"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -670,17 +670,17 @@ events:
       variable: "CMAKE_HAVE_SHMAT"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_85e7d/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_85e7d.dir/build.make CMakeFiles/cmTC_85e7d.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7'
-        Building C object CMakeFiles/cmTC_85e7d.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=shmat -o CMakeFiles/cmTC_85e7d.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7/CheckFunctionExists.c
-        Linking C executable cmTC_85e7d
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_85e7d.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=shmat CMakeFiles/cmTC_85e7d.dir/CheckFunctionExists.c.o -o cmTC_85e7d
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-HqtLE7'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_c6def/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_c6def.dir/build.make CMakeFiles/cmTC_c6def.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK'
+        Building C object CMakeFiles/cmTC_c6def.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=shmat -o CMakeFiles/cmTC_c6def.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK/CheckFunctionExists.c
+        Linking C executable cmTC_c6def
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c6def.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=shmat CMakeFiles/cmTC_c6def.dir/CheckFunctionExists.c.o -o cmTC_c6def
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-43v5eK'
         
       exitCode: 0
   -
@@ -692,8 +692,8 @@ events:
     checks:
       - "Looking for IceConnectionNumber in ICE"
     directories:
-      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6"
-      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6"
+      source: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW"
+      binary: "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -702,17 +702,17 @@ events:
       variable: "CMAKE_LIB_ICE_HAS_ICECONNECTIONNUMBER"
       cached: true
       stdout: |
-        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6'
+        Change Dir: '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7ebc5/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_7ebc5.dir/build.make CMakeFiles/cmTC_7ebc5.dir/build
-        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6'
-        Building C object CMakeFiles/cmTC_7ebc5.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=IceConnectionNumber -o CMakeFiles/cmTC_7ebc5.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6/CheckFunctionExists.c
-        Linking C executable cmTC_7ebc5
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7ebc5.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=IceConnectionNumber CMakeFiles/cmTC_7ebc5.dir/CheckFunctionExists.c.o -o cmTC_7ebc5  -lICE
-        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-X6FDD6'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_f24f6/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_f24f6.dir/build.make CMakeFiles/cmTC_f24f6.dir/build
+        gmake[1]: Entering directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW'
+        Building C object CMakeFiles/cmTC_f24f6.dir/CheckFunctionExists.c.o
+        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=IceConnectionNumber -o CMakeFiles/cmTC_f24f6.dir/CheckFunctionExists.c.o -c /home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW/CheckFunctionExists.c
+        Linking C executable cmTC_f24f6
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f24f6.dir/link.txt --verbose=1
+        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=IceConnectionNumber CMakeFiles/cmTC_f24f6.dir/CheckFunctionExists.c.o -o cmTC_f24f6  -lICE
+        gmake[1]: Leaving directory '/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build/CMakeFiles/CMakeScratch/TryCompile-zY7oeW'
         
       exitCode: 0
 ...

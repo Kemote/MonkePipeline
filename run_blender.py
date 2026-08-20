@@ -18,6 +18,7 @@ def get_pipeline_env():
 
     # test env vars
     return {
+        "LD_LIBRARY_PATH": "/home/kemot/USD/lib",
         "PROJECTNAME": "sample_usd_files",
         "PXR_PLUGINPATH_NAME": str(PROJECT_ROOT / "usd_asset_resolver" / "build"),
     }
