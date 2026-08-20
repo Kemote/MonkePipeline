@@ -131,6 +131,43 @@ def "roboticArm" (
         }
     }
     variantSet "mainColor" = {
+        "green" {
+            over "Geom"
+            {
+                over "render"
+                {
+                    over "base"
+                    {
+                        over "mainColor"
+                        {
+                            rel material:binding = </roboticArm/Looks/mainColor_green>
+                        }
+                    }
+
+                    over "mainArmBAe"
+                    {
+                        rel material:binding = </roboticArm/Looks/mainColor_green>
+                    }
+
+                    over "mainArm"
+                    {
+                        over "mainColor"
+                        {
+                            rel material:binding = </roboticArm/Looks/mainColor_green>
+                        }
+                    }
+
+                    over "secArm"
+                    {
+                        over "mainColor"
+                        {
+                            rel material:binding = </roboticArm/Looks/mainColor_green>
+                        }
+                    }
+                }
+            }
+
+        }
         "red" {
             over "Geom"
             {

@@ -15,17 +15,25 @@ namespace fs = std::filesystem;
 std::string MonkeDiskResolver::_CreateIdentifier(
     const std::string& assetPath,
     const ArResolvedPath& anchorAssetPath) const
-{
+{   
     return assetPath;
 }
 
 // Pass-through: treat the asset path as an already-valid local path.
 ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
+    const char* projectsRootEnv = getenv("PROJECTSROOT");
+    const char* projectNameEnv = getenv("PROJECTNAME");
+    if (!projectsRootEnv || !projectNameEnv) {
+        std::cerr << "MonkeDiskResolver: PROJECTSROOT/PROJECTNAME env vars must be set to resolve '"
+                  << assetPath << "'" << std::endl;
+        return ArResolvedPath();
+    }
+
     size_t versionSep = assetPath.rfind(":");
     std::string versionType = assetPath.substr(versionSep + 1);
     std::string pathBody = assetPath.substr(11, versionSep - 11);
-    std::string projectsRoot = getenv("PROJECTSROOT");
-    std::string projectName = getenv("PROJECTNAME");
+    std::string projectsRoot = projectsRootEnv;
+    std::string projectName = projectNameEnv;
     std::string fullPath = projectsRoot + "/" + projectName + pathBody;
     std::string basedir = fullPath;
     
@@ -44,7 +52,6 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
         basedir = fullPath.substr(0, versionToken);
         size_t lastSlash = basedir.rfind("/");
         if (lastSlash != std::string_view::npos){
-            // cos z tym version token jest nie tak
             startName = fullPath.substr(lastSlash + 1, versionToken - (lastSlash + 1));
             std::string restOfPath = fullPath.substr(versionToken);
             size_t nameSlash = restOfPath.find("/");
@@ -70,8 +77,15 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
             std::string versionStr = entryName.substr(
                 startName.size(), entryName.size() - startName.size() - endName.size());
 
+            // version tokens may be a bare number ("003") or prefixed with
+            // "v"/"V" ("v003"); strip an optional leading letter before parsing.
+            std::string versionDigits = versionStr;
+            if (!versionDigits.empty() && (versionDigits[0] == 'v' || versionDigits[0] == 'V')) {
+                versionDigits = versionDigits.substr(1);
+            }
+
             try {
-                int entryVersion = std::stoi(versionStr);
+                int entryVersion = std::stoi(versionDigits);
                 if (entryVersion > version) {
                     version = entryVersion;
                 }
@@ -82,7 +96,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     else if (versionType == "json"){
-        // TODO: czy dal json nie powinno sprwadzac czy json istnieje w asset name
+        // TODO: czy dla json nie powinno sprwadzac czy json istnieje w asset name
         std::cout << "jsonjsonjson" << std::endl;
 
         fs::path layerInfoPath = fs::path(basedir) / "layer_info.json";
@@ -103,7 +117,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     char versionBuf[16];
-    std::snprintf(versionBuf, sizeof(versionBuf), "%03d", version);
+    std::snprintf(versionBuf, sizeof(versionBuf), "v%03d", version);
     std::string versionStr(versionBuf);
 
     std::string resolvedPath = fullPath;

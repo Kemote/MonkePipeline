@@ -4,6 +4,19 @@ import glob
 import json
 
 
+class Template:
+    def __init__(self, root, template):
+        self.root = root
+        self.rel_template = template
+
+    @property
+    def full_template(self):
+        return self.root.rstrip("/") + self.rel_template
+
+    def __repr__(self):
+        return self.full_template
+
+
 class Templates:
     def __init__(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,17 +25,31 @@ class Templates:
             self._templates = _templates.get("templates")
             if not self._templates:
                 raise KeyError("File ./templates.json dont have 'templates' key which is required")
-            
+
+            # get tokens fron json file
             self._tokens = _templates.get("tokens")
+            # predefine version token
+            self._tokens["version"] = {
+                "type": "int",
+                "format": "v%03d"
+                }
             if  not self._tokens:
                 raise KeyError("File ./templates.json dont have 'fields' key which is required")
-            
+
+            # get roor
             self._roots = _templates.get("roots")
             if not self._roots:
                 raise KeyError("File ./templates.json dont have 'roots' key which is required")
 
         version_format = self._tokens["version"]["format"]
         self.version_pattern = re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", "*", version_format)
+
+    def convert_path_to_monkedDisc(self, template, path, type="lastest"):
+        fields = self.get_fields_from_path(template, path)
+        version_str = self._tokens["version"]["format"] % fields["version"]
+        rel_path = self.resolve_template(template.rel_template, fields)
+        rel_path = rel_path.replace(version_str, "<version>")
+        return f"monkeDisc://{rel_path.lstrip('/')}:{type}"
 
     def get_existing_version_numbers(self, template, fields):
         fields["version"] = self.version_pattern
@@ -42,7 +69,8 @@ class Templates:
         return sorted(version_numbers)
 
     def get_new_file_path(self, template, fields):
-        if "<version>" not in template:
+        template_str = template.rel_template if isinstance(template, Template) else template
+        if "<version>" not in template_str:
             # no version token in this template - nothing to bump, just
             # resolve straight through and let the caller overwrite
             return self.resolve_template(template, fields)
@@ -57,6 +85,7 @@ class Templates:
         return resolved_path
          
     def resolve_template(self, template, fields={}):
+        template = template.full_template if isinstance(template, Template) else template
         tokens = re.findall(r"<(\w+)>", template)
         for token in tokens:
             field : str = fields.get(token)
@@ -67,20 +96,17 @@ class Templates:
             if not template_token:
                 raise KeyError(f"You need to declare '{token}' token in template.yaml")
             token_type = template_token["type"]
-            
+
             if token_type == "str":
                 if not type(field) == str:
                     raise TypeError(f"Provided '{token}' filed is not alphanumeris")
-            
+
             elif token_type == "int":
                 if type(field) != int and str(field) != self.version_pattern :
                     field = int(field)
                 format = template_token.get("format")
-                if format:
-                    if token == "version" and field == self.version_pattern :
-                        template.replace(f"<{token}>", self.version_pattern )
-                    else:
-                        field = format % field
+                if format and not (token == "version" and field == self.version_pattern):
+                    field = format % field
 
             template = template.replace(f"<{token}>", field)
 
@@ -95,6 +121,7 @@ class Templates:
         have produced, recover the fields dict that resolves back to that path.
         version fields come back as int, everything else as str.
         """
+        template = template.full_template if isinstance(template, Template) else template
         token_names = re.findall(r"<(\w+)>", template)
         regex_str = "^"
         for literal, token in zip(re.split(r"<\w+>", template), token_names + [None]):
@@ -116,18 +143,17 @@ class Templates:
         regex_str += "$"
 
         match = re.match(regex_str, os.path.normpath(resolved_path))
-        if not match:
-            raise ValueError(f"'{resolved_path}' does not match template '{template}'")
-
         fields = {}
-        for token, value in zip(token_names, match.groups()):
-            template_token = self._tokens[token]
-            fields[token] = int(value) if template_token["type"] == "int" else value
-
+        if match:
+            for token, value in zip(token_names, match.groups()):
+                template_token = self._tokens[token]
+                fields[token] = int(value) if template_token["type"] == "int" else value
+        else:
+            print(f"'{resolved_path}' does not match template '{template}'")
         return fields
 
     def get_template_by_name(self, template_name):
         template_dict = self._templates.get(template_name)
         template_root = template_dict["root"]
         root = self._roots[template_root]
-        return root + template_dict["template"]
+        return Template(root, template_dict["template"])

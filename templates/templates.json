@@ -3,10 +3,6 @@
     "main": "/home/kemot/Documents/Dev/MonkePipeline/<project_name>"
   },
   "tokens": {
-    "version": {
-      "type": "int",
-      "format": "v%03d"
-    },
     "name": {
       "type": "str"
     },
