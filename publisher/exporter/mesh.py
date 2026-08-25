@@ -55,14 +55,18 @@ class MeshLayerExporter:
             stage = self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, self.variants_dir, skeleton_plan)
 
             if has_skeleton:
-                # promote mesh variants
                 asset_prim = stage.GetPrimAtPath(f"/{asset_item.name}")
                 promoted_sets = asset_prim.GetVariantSets()
-                self._promote_variants(stage, asset_item.name, promoted_sets, root)
+
+                # promote mesh variants
+                self._promote_mesh_variants(stage, asset_item.name, promoted_sets, root)
+
+                # promote materials variants
+                self._promote_materials_variants(stage, asset_item, promoted_sets)
 
         return stage
 
-    def _promote_variants(self, stage: Usd.Stage, asset_name, promoted_sets, variant_node):
+    def _promote_mesh_variants(self, stage: Usd.Stage, asset_name, promoted_sets, variant_node):
         for set_name, variants in variant_node.variant_sets.items():
             if not set_name.lower() == "lod":
                 variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(set_name)
@@ -73,10 +77,21 @@ class MeshLayerExporter:
                         over_prim = stage.OverridePrim(f"/{asset_name}/SkelRoot")
                         over_variant_set = over_prim.GetVariantSets().AddVariantSet(set_name)
                         over_variant_set.SetVariantSelection(variant_name)
-                    self._promote_variants(stage, asset_name, promoted_sets, nested_variant_node)
+                    self._promote_mesh_variants(stage, asset_name, promoted_sets, nested_variant_node)
             else:
                 for variant_name, nested_variant_node in variants.items():
-                    self._promote_variants(stage, asset_name, promoted_sets, nested_variant_node)
+                    self._promote_mesh_variants(stage, asset_name, promoted_sets, nested_variant_node)
+
+    def _promote_materials_variants(self, stage, asset_item, promoted_sets):
+        for mat_set_name, variants_dict in asset_item.material_variants.items():
+            mat_variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(mat_set_name)
+            for variant_name, material in variants_dict.items():
+                mat_variant_set.AddVariant(variant_name)
+                mat_variant_set.SetVariantSelection(variant_name)
+                with mat_variant_set.GetVariantEditContext():
+                    over_prim = stage.OverridePrim((f"/{asset_item.name}/SkelRoot"))
+                    over_variant_set = over_prim.GetVariantSets().AddVariantSet(mat_set_name)
+                    over_variant_set.SetVariantSelection(variant_name)
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False):
         for outliner_path in outliner_paths:
