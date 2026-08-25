@@ -1,6 +1,6 @@
 import os
 
-from pxr import Usd, UsdGeom
+from pxr import Usd, UsdGeom, Kind
 from publisher.exporter.armature import ArmatureLayerExporter
 from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
@@ -69,7 +69,6 @@ class UsdExporter:
             layer_paths_dict["rig"] = rig_file_path
 
         # creating main stage
-        print("main stage: " + main_file_path)
         if os.path.exists(main_file_path):
             main_stage = Usd.Stage.Open(main_file_path)
         else:
@@ -79,13 +78,18 @@ class UsdExporter:
         self._set_fps(main_stage)
         self._set_metadata(main_stage)
         UsdGeom.SetStageUpAxis(main_stage, self.up_axis)
-        UsdGeom.SetStageMetersPerUnit(main_stage, self.meter_per_unit)
+        UsdGeom.SetStageMetersPerUnit(main_stage, self.meter_per_unit)        
+
+        # add main prim
+        main_prim = main_stage.OverridePrim(f"/{sanitize_name(asset_name)}")
+        main_prim.SetKind(Kind.Tokens.component)
+        main_stage.SetDefaultPrim(main_prim)
 
         # setting sublayers, strongest first
         root_layer = main_stage.GetRootLayer()
         current_sublayers = list(root_layer.subLayerPaths)
-        print("SUBLAYERSL: %s" % current_sublayers)
         step_order = ("geom", "look", "rig")
+
         new_monke_paths = {
             step: self.templates.convert_path_to_monkedDisc(sublayer_file_template, layer_paths_dict[step])
             for step in step_order
@@ -97,10 +101,7 @@ class UsdExporter:
             if step in new_monke_paths:
                 final_sublayers.append(new_monke_paths[step])
                 continue
-            existing = next((path for path in current_sublayers if f"_{step}_" in path), None)
-            print(f"FIELDS: {fields}")
-            print(f"existing: {existing}")
-            
+            existing = next((path for path in current_sublayers if f"_{step}_" in path), None)            
             if existing:
                 final_sublayers.append(existing)
 
@@ -110,8 +111,8 @@ class UsdExporter:
         return main_file_path
 
     def _write_layer(self, file_path, layer_exporter, asset_item):
-        stage = Usd.Stage.CreateNew(file_path)
-        layer_exporter.export(stage, asset_item)
+        # stage = Usd.Stage.CreateNew(file_path)
+        stage = layer_exporter.export(file_path, asset_item)
         self._set_fps(stage)
         stage.GetRootLayer().Save()
                 

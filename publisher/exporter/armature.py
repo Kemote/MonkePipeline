@@ -1,4 +1,4 @@
-from pxr import UsdGeom, UsdSkel
+from pxr import UsdGeom, UsdSkel, Usd
 from publisher.exporter.common import (
     armature_scope_path,
     bone_ancestors,
@@ -38,7 +38,7 @@ class SkeletonBindingPlan:
     def _plan_armature(self, armature_obj):
         root = self.asset_item.variant_root
         skeleton_name = sanitize_name(armature_obj.name)
-        root_skeleton_path = f"{armature_scope_path(self.asset_item.name)}/{skeleton_name}"
+        root_skeleton_path = f"{armature_scope_path(self.asset_item.name, True)}/{skeleton_name}"
 
         root_bones = self._bones_for(armature_obj, root.outliner_paths)
         if root_bones:
@@ -57,7 +57,7 @@ class SkeletonBindingPlan:
                     combined_names = set(inherited_bones) | set(node_bones)
                     active_bones = [b.name for b in armature_obj.data.bones if b.name in combined_names]
                     active_skeleton_path = (
-                        f"{armature_scope_path(self.asset_item.name)}/"
+                        f"{armature_scope_path(self.asset_item.name, True)}/"
                         f"{skeleton_name}_{sanitize_name(variant_name)}"
                     )
                     self.skeletons[active_skeleton_path] = (armature_obj, active_bones)
@@ -105,7 +105,8 @@ class ArmatureLayerExporter:
     statics and mesh animation are split
     """
 
-    def export(self, stage, asset_item):
+    def export(self, output_path, asset_item):
+        stage = Usd.Stage.CreateNew(output_path)
         if not asset_item.armature_objects:
             return
 
@@ -113,10 +114,11 @@ class ArmatureLayerExporter:
         if not plan.skeletons:
             return
 
-        UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name))
+        UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name, True))
         for skeleton_path, (armature_obj, bone_names) in plan.skeletons.items():
             self._write_skeleton(stage, skeleton_path, armature_obj, bone_names)
-
+        return stage
+    
     def _write_skeleton(self, stage, skeleton_path, armature_obj, bone_names):
         skeleton = UsdSkel.Skeleton.Define(stage, skeleton_path)
         bones = [armature_obj.data.bones[name] for name in bone_names]

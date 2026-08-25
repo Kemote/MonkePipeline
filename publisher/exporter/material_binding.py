@@ -25,17 +25,17 @@ class MaterialBindingLayerExporter:
     matching "{base}_{variant}" Material prim from the materials layer
     """
 
-    def write_for_layer(self, geo_layer_path, asset_item, outliner_paths):
+    def write_for_layer(self, geo_layer_path, asset_item, outliner_paths, has_skeleton=False):
         base_path, extension = os.path.splitext(geo_layer_path)
         binding_layer_path = f"{base_path}_binding{extension}"
 
         stage = Usd.Stage.CreateNew(binding_layer_path)
-        self.export(stage, asset_item, outliner_paths)
+        self.export(stage, asset_item, outliner_paths, has_skeleton)
         stage.GetRootLayer().Save()
         return binding_layer_path
 
-    def export(self, stage, asset_item, outliner_paths):
-        looks_path = looks_scope_path(asset_item.name)
+    def export(self, stage, asset_item, outliner_paths, has_skeleton=False):
+        looks_path = looks_scope_path(asset_item.name, has_skeleton)
 
         # base material name -> paths of the prims (meshes or subsets) whose
         # binding must switch with that material's variant selection
@@ -47,7 +47,7 @@ class MaterialBindingLayerExporter:
             if not materials:
                 continue
 
-            prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path)
+            prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path, has_skeleton)
             over_prim = stage.OverridePrim(prim_path)
             binding_api = UsdShade.MaterialBindingAPI.Apply(over_prim)
 
@@ -57,7 +57,7 @@ class MaterialBindingLayerExporter:
             else:
                 self._bind_subsets(binding_api, mesh_obj, materials, looks_path, variant_bindings)
 
-        self._author_variant_bindings(stage, asset_item, looks_path, variant_bindings)
+        self._author_variant_bindings(stage, asset_item, looks_path, variant_bindings, has_skeleton)
 
     @staticmethod
     def _used_materials(mesh_obj):
@@ -94,11 +94,11 @@ class MaterialBindingLayerExporter:
         else:
             self._bind(prim, looks_path, material)
 
-    def _author_variant_bindings(self, stage, asset_item, looks_path, variant_bindings):
+    def _author_variant_bindings(self, stage, asset_item, looks_path, variant_bindings, has_skeleton=False):
         if not variant_bindings:
             return
 
-        root_prim = stage.OverridePrim(asset_root_path(asset_item.name))
+        root_prim = stage.OverridePrim(asset_root_path(asset_item.name, has_skeleton))
         for base_name, prim_paths in variant_bindings.items():
             variants = asset_item.material_variants.get(base_name)
             if not variants:

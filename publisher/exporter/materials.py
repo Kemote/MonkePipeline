@@ -2,7 +2,7 @@ import os
 import shutil
 import bpy
 
-from pxr import UsdGeom, UsdShade, Sdf, Gf
+from pxr import UsdGeom, UsdShade, Sdf, Gf, Usd
 from publisher.exporter.common import looks_scope_path, material_prim_name, sanitize_name
 
 
@@ -48,8 +48,9 @@ class MaterialsLayerExporter:
         self.textures_dir = textures_dir
         os.makedirs(self.textures_dir, exist_ok=True)
 
-    def export(self, stage, asset_item):
-        looks_path = looks_scope_path(asset_item.name)
+    def export(self, output_path, asset_item):
+        stage = Usd.Stage.CreateNew(output_path)
+        looks_path = looks_scope_path(asset_item.name, bool(asset_item.armature_objects))
         UsdGeom.Scope.Define(stage, looks_path)
 
         for material in asset_item.materials.values():
@@ -58,7 +59,8 @@ class MaterialsLayerExporter:
         for variants in asset_item.material_variants.values():
             for material in variants.values():
                 self._write_material(stage, f"{looks_path}/{material_prim_name(material.name)}", material)
-
+        return stage
+    
     def _write_material(self, stage, material_path, material):
         usd_material = UsdShade.Material.Define(stage, material_path)
         shader = UsdShade.Shader.Define(stage, f"{material_path}/PreviewSurface")
