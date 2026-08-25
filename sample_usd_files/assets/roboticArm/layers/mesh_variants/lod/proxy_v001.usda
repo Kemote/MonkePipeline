@@ -6,7 +6,7 @@
     ]
 )
 
-def SkelRoot "roboticArm" (
+def Xform "roboticArm" (
     variants = {
         string endEffector = "velding"
     }

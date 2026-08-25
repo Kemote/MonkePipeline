@@ -6,7 +6,7 @@
     ]
 )
 
-def SkelRoot "roboticArm"
+def Xform "roboticArm"
 {
     def Scope "Geom"
     {

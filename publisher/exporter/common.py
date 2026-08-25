@@ -36,23 +36,39 @@ def lod_purpose(variant_name):
     return LOD_PURPOSES.get(variant_name.lower(), UsdGeom.Tokens.guide)
 
 
-def asset_root_path(asset_name):
-    return f"/{sanitize_name(asset_name)}"
+SKEL_ROOT_NAME = "SkelRoot"
 
 
-def geom_scope_path(asset_name):
-    return f"{asset_root_path(asset_name)}/Geom"
+def skel_root_path(asset_name):
+    """
+    path of the optional SkelRoot prim sitting above the asset's root prim -
+    required somewhere above both a Skeleton and the meshes it skins for UsdSkel
+    binding to resolve, but never the asset root prim itself
+    """
+    return f"/{sanitize_name(asset_name)}/{SKEL_ROOT_NAME}"
 
 
-def looks_scope_path(asset_name):
-    return f"{asset_root_path(asset_name)}/Looks"
+def asset_root_path(asset_name, has_skeleton=False):
+    if has_skeleton:
+        root = skel_root_path(asset_name)
+    else:
+        root = f"/{sanitize_name(asset_name)}"
+    return root
 
 
-def armature_scope_path(asset_name):
-    return f"{asset_root_path(asset_name)}/Rig"
+def geom_scope_path(asset_name, has_skeleton=False):
+    return f"{asset_root_path(asset_name, has_skeleton)}/Geom"
 
 
-def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
+def looks_scope_path(asset_name, has_skeleton=False):
+    return f"{asset_root_path(asset_name, has_skeleton)}/Looks"
+
+
+def armature_scope_path(asset_name, has_skeleton=False):
+    return f"{asset_root_path(asset_name, has_skeleton)}/Rig"
+
+
+def mesh_prim_path(asset_name, asset_outliner_path, outliner_path, has_skeleton=False):
     """
     maps a mesh's outliner path (relative to the asset group) onto
     /{asset_name}/Geom/... - a variant collection ("set_VAR_variant") contributes
@@ -73,8 +89,8 @@ def mesh_prim_path(asset_name, asset_outliner_path, outliner_path):
         elif is_lod_set(set_name):
             parts.append(lod_purpose(variant_name))
 
-    prim_path = "/".join([geom_scope_path(asset_name)] + parts)
-    return prim_path 
+    prim_path = "/".join([geom_scope_path(asset_name, has_skeleton)] + parts)
+    return prim_path
 
 
 def base_material_name(material_name):

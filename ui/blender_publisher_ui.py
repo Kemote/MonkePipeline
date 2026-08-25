@@ -1,17 +1,18 @@
 import sys
 import bpy
+import logging
 
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
 from publisher.proxy_generator.app import ProxyGenerator
-from PySide6.QtCore import QLocale, Signal, Qt
+from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
+    QPlainTextEdit,
     QApplication,
     QCheckBox,
     QDialog,
-    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -23,7 +24,19 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
-DEFAULT_OUTPUT = "/home/kemot/Documents/Dev/MonkePipeline/sample_usd_files"
+logger = logging.getLogger(__name__)
+
+
+class QtLogHandler(QObject, logging.Handler):
+    log_emitted = Signal(str)
+
+    def __init__(self):
+        QObject.__init__(self)
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.log_emitted.emit(msg)
 
 
 class FloatSlider(QSlider):
@@ -59,24 +72,32 @@ class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("USD Export")
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(400)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
-        main_layout = QVBoxLayout(self)
+
+        options_layout = QVBoxLayout()
+        logging_layout = QVBoxLayout()
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(25, 25, 25, 25)
+        main_layout.addLayout(options_layout)
+        main_layout.addLayout(logging_layout)
+        
+        # add logging
+        logging_text = QPlainTextEdit()
+        logging_text.setDisabled(True)
+        logging_layout.addWidget(logging_text)
+        self.log_handler = QtLogHandler()
+        self.log_handler.log_emitted.connect(self.append_log)
+        formatter = logging.Formatter('%(asctime)s - [%(levelname)s] - %(message)s', '%H:%M:%S')
+        self.log_handler.setFormatter(formatter)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(self.log_handler)
+
 
         # collect asset items
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
-
-        # # browse row
-        # main_layout.addWidget(QLabel("Output settings:"))
-        # path_row = QHBoxLayout()
-        # self.path_edit = QLineEdit()
-        # self.path_edit.setText(DEFAULT_OUTPUT)
-        # browse_button = QPushButton("Browse output directory...")
-        # browse_button.clicked.connect(self._browse)
-        # path_row.addWidget(self.path_edit)
-        # path_row.addWidget(browse_button)
-        # main_layout.addLayout(path_row)
 
         # extension combo box
         extension_row = QHBoxLayout()
@@ -84,10 +105,10 @@ class MonkeUsdExportDialog(QDialog):
         self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
         extension_row.addWidget(QLabel("Extension:"))
         extension_row.addWidget(self.extension_combo)
-        main_layout.addLayout(extension_row)
+        options_layout.addLayout(extension_row)
 
         # assets selector
-        main_layout.addWidget(QLabel("Assets to export:"))
+        options_layout.addWidget(QLabel("Assets to export:"))
         self.assets_checkboxes = []
         assets_column = QVBoxLayout()
         for item in self.asset_collector.items:
@@ -95,27 +116,27 @@ class MonkeUsdExportDialog(QDialog):
             asseet_checkbox.setChecked(True)
             self.assets_checkboxes.append(asseet_checkbox)
             assets_column.addWidget(asseet_checkbox)
-        main_layout.addLayout(assets_column)
+        options_layout.addLayout(assets_column)
 
         # up axis combo box
-        main_layout.addSpacing(25)
-        main_layout.addWidget(QLabel("Stage settings:"))
+        options_layout.addSpacing(25)
+        options_layout.addWidget(QLabel("Stage settings:"))
         up_axis_row = QHBoxLayout()
         self.up_axis_combo = QComboBox()
         self.up_axis_combo.addItems(["z", "y"])
         up_axis_row.addWidget(QLabel("Up Axis"))
         up_axis_row.addWidget(self.up_axis_combo)
-        main_layout.addLayout(up_axis_row)
+        options_layout.addLayout(up_axis_row)
 
         # units per meter
         self.meter_per_unit = QLineEdit()
         self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
         self.meter_per_unit.setText("1.0")
-        main_layout.addWidget(self.meter_per_unit)
+        options_layout.addWidget(self.meter_per_unit)
 
         # create proxy settings
-        main_layout.addSpacing(25)
-        main_layout.addWidget(QLabel("Auto Proxy Generation:"))
+        options_layout.addSpacing(25)
+        options_layout.addWidget(QLabel("Auto Proxy Generation:"))
         decimate_ratio_lay = QHBoxLayout()
         decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
         self.decimate_slider = FloatSlider()
@@ -129,12 +150,12 @@ class MonkeUsdExportDialog(QDialog):
         self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
         self.proxy_generator_check = QCheckBox("Generate proxy LOD")
         self.proxy_generator_check.setChecked(True)
-        main_layout.addWidget(self.proxy_generator_check)
-        main_layout.addLayout(decimate_ratio_lay)
+        options_layout.addWidget(self.proxy_generator_check)
+        options_layout.addLayout(decimate_ratio_lay)
         
         # create export option checkers
-        main_layout.addSpacing(25)
-        main_layout.addWidget(QLabel("Include layers:"))
+        options_layout.addSpacing(25)
+        options_layout.addWidget(QLabel("Include layers:"))
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
@@ -144,20 +165,34 @@ class MonkeUsdExportDialog(QDialog):
             self.armature_check,
         ):
             check.setChecked(True)
-            main_layout.addWidget(check)
+            options_layout.addWidget(check)
 
-        # button row
-        main_layout.addSpacing(25)
+        # buttons row
+        options_layout.addSpacing(25)
         export_button = QPushButton("Export")
         export_button.setDefault(True)
         cancel_button = QPushButton("Cancel")
-        export_button.clicked.connect(self.accept)
+        export_button.clicked.connect(self._export)
         cancel_button.clicked.connect(self.reject)
         button_row = QHBoxLayout()
         button_row.addWidget(export_button)
         button_row.addWidget(cancel_button)
-        main_layout.addLayout(button_row)
+        options_layout.addLayout(button_row)
 
+    def _export(self):
+        settings = self.collect()
+        usd_exporter = UsdExporter(settings)
+        asset_items = settings["collected_item"]
+        for asset_item in asset_items:
+            proxy_generator = None
+            if settings["generate_proxy"]:
+                decimate_ratio = settings["decimate_ratio"]
+                proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
+                proxy_generator.add_proxy()
+            usd_exporter.export(asset_item)
+            if proxy_generator:
+                proxy_generator.clear()
+        self.accept()
 
     def _create_double_validator(self, min_val, max_val):
         validator = QDoubleValidator(min_val, max_val, 5, self)
@@ -182,19 +217,11 @@ class MonkeUsdExportDialog(QDialog):
         self.ratio_txt.setText(f"{val:.4f}".rstrip('0').rstrip('.'))
         self.ratio_txt.blockSignals(False)
 
-    def _asset_checker_state_change(self, state):
-        pass
-
-    # def _browse(self):
-    #     path, _ = QFileDialog.getExistingDirectory(self, "USD Export Directory", self.path_edit.text())
-    #     if path:
-    #         self.path_edit.setText(path)
-
     def collect(self):
+        logger.debug("Collecting asset items...")
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         return {
-            # "filepath": self.path_edit.text(),
             "extension": self.extension_combo.currentText(),
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
@@ -205,6 +232,18 @@ class MonkeUsdExportDialog(QDialog):
             "generate_proxy": self.proxy_generator_check.isChecked(),
             "decimate_ratio": self.decimate_slider.value_float()
         }
+
+    @Slot(str)
+    def append_log(self, text: str):
+        """Receives log string and appends it to the widget."""
+        self.log_display.appendPlainText(text)
+
+    def generate_logs(self):
+        """Generates sample logs when clicked."""
+        logging.debug("This is a DEBUG message.")
+        logging.info("This is an INFO message.")
+        logging.warning("This is a WARNING message!")
+        logging.error("This is an ERROR message!")
 
 
 # Kept alive here so Qt doesn't garbage-collect the dialog while it's open,
@@ -223,33 +262,15 @@ def _pump_qt_events():
 
     if _current_dialog is None or not _current_dialog.isVisible():
         return None  # dialog closed - stop repeating, unregisters the timer
-
     return 0.02  # ~50 times/second
 
 
 def _on_dialog_finished(result):
     global _current_dialog
-    dialog = _current_dialog
     _current_dialog = None
 
     if result != QDialog.Accepted:
         print("USD export cancelled")
-        return
-
-    
-    settings = dialog.collect()
-    usd_exporter = UsdExporter(settings)
-
-    asset_items = settings["collected_item"]
-    for asset_item in asset_items:
-        proxy_generator = None
-        if settings["generate_proxy"]:
-            decimate_ratio = settings["decimate_ratio"]
-            proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
-            proxy_generator.add_proxy()
-        usd_exporter.export(asset_item)
-        if proxy_generator:
-            proxy_generator.clear()
 
 
 def show_export_dialog():

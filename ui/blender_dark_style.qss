@@ -24,6 +24,19 @@ QLineEdit:focus {
     border: 1px solid #5680c2;
 }
 
+QPlainTextEdit {
+    background-color: #232323;
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    border-radius: 3px;
+    padding: 4px 6px;
+    selection-background-color: #5680c2;
+}
+
+QPlainTextEdit:focus {
+    border: 1px solid #5680c2;
+}
+
 QPushButton {
     background-color: #4a4a4a;
     color: #dcdcdc;

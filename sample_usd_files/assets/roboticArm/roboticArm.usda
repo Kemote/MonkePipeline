@@ -3,6 +3,7 @@
     customLayerData = {
         string userName = "unknown"
     }
+    defaultPrim = "roboticArm"
     framesPerSecond = 30
     metersPerUnit = 1
     subLayers = [
@@ -13,4 +14,10 @@
     timeCodesPerSecond = 30
     upAxis = "Z"
 )
+
+over "roboticArm" (
+    kind = "component"
+)
+{
+}
 
