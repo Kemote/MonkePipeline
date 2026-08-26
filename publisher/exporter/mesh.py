@@ -54,12 +54,14 @@ class MeshLayerExporter:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name, has_skeleton))
             stage = self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, self.variants_dir, skeleton_plan)
 
-            # promote variants when a skeleton causes the mesh prim path to change.
-            if has_skeleton:
-                asset_prim = stage.GetPrimAtPath(f"/{asset_item.name}")
-                promoted_sets = asset_prim.GetVariantSets()
+        # promote variants when a skeleton causes the mesh prim path to change.
+        if has_skeleton:
+            asset_prim = stage.GetPrimAtPath(f"/{asset_item.name}")
+            promoted_sets = asset_prim.GetVariantSets()
+            if root.variant_sets:
                 logger.debug("Promote meshes variants")
                 self._promote_mesh_variants(stage, asset_item.name, promoted_sets, root)
+            if asset_item.material_variants:
                 logger.debug("Promote materials variants")
                 self._promote_materials_variants(stage, asset_item, promoted_sets)
 

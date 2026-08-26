@@ -4,25 +4,23 @@ import textwrap
 
 from pathlib import Path
 
-
-PROJECT_ROOT = Path("/home/kemot/Documents/Dev/MonkePipeline")
-BLENDER_FLATPAK_APP_ID = "org.blender.Blender"
-PYSIDE6_SITE_PACKAGES = Path("/home/kemot/Documents/Dev/_VENVS/python-usd-venv/lib/python3.12/site-packages")
+from pipeline_config import PROJECT_ROOT, load_pipeline_env
 
 
-def get_pipeline_env():
+def get_pipeline_env(env):
     return {
-        "LD_LIBRARY_PATH": "/home/kemot/USD/lib",
-        "PROJECTNAME": "sample_usd_files",
-        "PXR_PLUGINPATH_NAME": str(PROJECT_ROOT / "usd_asset_resolver" / "build"),
+        "MONKENAME": env["MONKENAME"],
+        "LD_LIBRARY_PATH": env["LD_LIBRARY_PATH"],
+        "PROJECTNAME": env["PROJECTNAME"],
+        "PXR_PLUGINPATH_NAME": env["PXR_PLUGINPATH_NAME_BLENDER"],
     }
 
 
-def write_bootstrap_script():
+def write_bootstrap_script(pyside6_site_packages):
     script = textwrap.dedent(f"""\
         import sys
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
-        sys.path.append({str(PYSIDE6_SITE_PACKAGES)!r})
+        sys.path.append({pyside6_site_packages!r})
 
         from publisher_plugin import register
         register()
@@ -37,11 +35,12 @@ def write_bootstrap_script():
 
 
 def run_blender():
-    bootstrap_script = write_bootstrap_script()
+    env = load_pipeline_env()
+    bootstrap_script = write_bootstrap_script(env["PYSIDE6_SITE_PACKAGES"])
     command = ["flatpak", "run"]
-    for name, value in get_pipeline_env().items():
+    for name, value in get_pipeline_env(env).items():
         command.append(f"--env={name}={value}")
-    command.append(BLENDER_FLATPAK_APP_ID)
+    command.append(env["BLENDER_FLATPAK_APP_ID"])
     command += ["--python", str(bootstrap_script)]
 
     try:

@@ -1,4 +1,10 @@
-PROJECTNAME=sample_usd_files \
-PROJECTSROOT=/home/kemot/Documents/Dev/MonkePipeline \
-PXR_PLUGINPATH_NAME=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build_kit \
-/home/kemot/kit-app-template/repo.sh launch kemot.usd_explorer.kit
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/pipeline.env"
+[ -f "$ENV_FILE" ] || ENV_FILE="$SCRIPT_DIR/pipeline.env"
+set -a
+source "$ENV_FILE"
+set +a
+
+PXR_PLUGINPATH_NAME=$PXR_PLUGINPATH_NAME_OMNIVERSE \
+$OMNIVERSE_KIT_LAUNCHER launch $OMNIVERSE_KIT_APP

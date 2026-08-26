@@ -6,6 +6,10 @@ from publisher.exporter.common import (
     matrix_to_gf,
     sanitize_name,
 )
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class SkeletonBindingPlan:
@@ -21,7 +25,14 @@ class SkeletonBindingPlan:
         self.mesh_bindings = {}
 
         for armature_obj in asset_item.armature_objects.values():
+            skeletons_before = len(self.skeletons)
             self._plan_armature(armature_obj)
+            if len(self.skeletons) == skeletons_before:
+                logger.warning(
+                    f"Armature '{armature_obj.name}' has no meshes skinned to it - it will not be exported. "
+                    "Check that a mesh has an Armature modifier pointing at it, and that its vertex "
+                    "group names exactly match the armature's bone names."
+                )
 
     def _plan_armature(self, armature_obj):
         root = self.asset_item.variant_root
@@ -90,11 +101,12 @@ class ArmatureLayerExporter:
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
         if not asset_item.armature_objects:
-            return
+            return None
 
         plan = SkeletonBindingPlan(asset_item)
         if not plan.skeletons:
-            return
+            logger.warning(f"No skeleton bindings found for asset '{asset_item.name}' - skipping armature layer.")
+            return None
 
         UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name, True))
         for skeleton_path, (armature_obj, bone_names) in plan.skeletons.items():

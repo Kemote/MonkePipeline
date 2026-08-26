@@ -17,7 +17,7 @@ class UsdExporter:
         self.up_axis = {
             "y": UsdGeom.Tokens.y,
             "z": UsdGeom.Tokens.z
-        }[settings["up_axis"]]
+        }.get(settings["up_axis"], UsdGeom.Tokens.z)
         self.extension = settings["extension"]
         self.meter_per_unit = settings["meter_per_unit"]
         self.export_geom = settings["export_geometry"]
@@ -26,9 +26,14 @@ class UsdExporter:
 
     def export(self, asset_item):
         asset_name = asset_item.name
+        project_name = os.environ.get("PROJECTNAME")
+        if not project_name:
+            err = "There is no 'PROJECTNAME' environment variable"
+            logger.error(err)
+            raise RuntimeError(err)
         fields = {
             "ext": self.extension,
-            "project_name": str(os.environ.get("PROJECTNAME")),
+            "project_name": project_name,
             "name": asset_name
         }
         templates = Templates()
@@ -117,9 +122,10 @@ class UsdExporter:
     def _write_layer(self, file_path, layer_exporter, asset_item):
         logger.debug(f"Write layer: {file_path} for asset: {asset_item.name }")
         stage = layer_exporter.export(file_path, asset_item)
-        self._set_fps(stage)
-        stage.GetRootLayer().Save()
-                
+        if stage:
+            self._set_fps(stage)
+            stage.GetRootLayer().Save()
+                    
     @staticmethod
     def _set_fps(stage):
         stage.SetFramesPerSecond(FPS)

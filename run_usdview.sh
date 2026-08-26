@@ -1,5 +1,13 @@
-QT_QPA_PLATFORM=xcb \
-PROJECTNAME=sample_usd_files \
-PROJECTSROOT=/home/kemot/Documents/Dev/MonkePipeline \
-PXR_PLUGINPATH_NAME=/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build \
-/home/kemot/UsdRoot/scripts/usdview_gui.sh
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/pipeline.env"
+[ -f "$ENV_FILE" ] || ENV_FILE="$SCRIPT_DIR/pipeline.env.example"
+set -a
+source "$ENV_FILE"
+set +a
+
+QT_QPA_PLATFORM="$QT_QPA_PLATFORM" \
+PROJECTNAME="$PROJECTNAME" \
+PROJECTSROOT="$PROJECTSROOT" \
+PXR_PLUGINPATH_NAME="$PXR_PLUGINPATH_NAME_USDVIEW" \
+"$USDVIEW_LAUNCHER"

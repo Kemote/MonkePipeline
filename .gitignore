@@ -28,3 +28,6 @@ build/
 build_kit/
 dist/
 *.egg-info/
+
+# machine-specific pipeline config (see pipeline.env.example)
+pipeline.env
