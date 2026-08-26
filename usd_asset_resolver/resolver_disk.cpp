@@ -61,7 +61,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     // now we need to get version
-    if (versionType == "lastest"){        
+    if (versionType == "latest"){        
         for (const auto& file_path : fs::directory_iterator(basedir)){
             std::string entryName = file_path.path().filename().string();
             if (entryName.size() <= startName.size() + endName.size()) {
@@ -96,7 +96,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     else if (versionType == "json"){
-        // TODO: should we check if json file exists?
+        // TODO: should we check if json
         std::cout << "jsonjsonjson" << std::endl;
 
         fs::path layerInfoPath = fs::path(basedir) / "layer_info.json";

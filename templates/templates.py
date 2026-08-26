@@ -49,7 +49,7 @@ class Templates:
         version_format = self._tokens["version"]["format"]
         self.version_pattern = re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", "*", version_format)
 
-    def convert_path_to_monkedDisc(self, template, path, type="lastest"):
+    def convert_path_to_monkedDisc(self, template, path, type="latest"):
         fields = self.get_fields_from_path(template, path)
         version_str = self._tokens["version"]["format"] % fields["version"]
         rel_path = self.resolve_template(template.rel_template, fields)
