@@ -4,18 +4,10 @@ import bpy
 
 from pxr import UsdGeom, UsdShade, Sdf, Gf, Usd
 from publisher.exporter.common import looks_scope_path, material_prim_name, sanitize_name
+from publisher.monke_logging import get_logger
 
 
-# TODO: UsdPreviewSurface has no equivalent for subsurface, sheen, transmission
-# roughness, coat tint, anisotropy or thin-film - those Principled BSDF inputs
-# have nothing to map to here and would need a MaterialX shader instead.
-
-# usd input name -> candidate Blender socket names, in preference order. more
-# than one name covers sockets Blender 4.0 renamed (e.g. "Clearcoat" ->
-# "Coat Weight"), so this works across Blender versions without caring which
-# naming the active one uses
-
-
+logger = get_logger(__name__)
 COLOR_INPUTS = {
     "diffuseColor": ("Base Color",),
 }
@@ -33,15 +25,9 @@ EMISSION_STRENGTH_NAMES = ("Emission Strength",)
 
 class MaterialsLayerExporter:
     """
-    collects every material used by the asset's meshes under /{asset_name}/Looks,
-    writing each as a UsdPreviewSurface driven by its Principled BSDF node - every
-    BSDF input with a UsdPreviewSurface equivalent (see COLOR_INPUTS/SCALAR_INPUTS
-    plus emission and normal, handled separately below) is authored as a constant,
-    or as a UsdUVTexture sampling an Image Texture node if one feeds that input
-    (through a Normal Map node, for the Normal input). includes each variant
-    material ("base_VAR_variant") too, written as an ordinary Material prim named
-    "{base}_{variant}" - switching between variant materials is done by the
-    binding variantSets authored in the material binding layer, not here
+    collect asset materials under a Look prim using UsdPreviewSurface shaders.
+    Currently supports basic Principled BSDF inputs (textures and scalar values).
+    Advanced material networks are not yet supported.
     """
 
     def __init__(self, textures_dir):
@@ -49,6 +35,7 @@ class MaterialsLayerExporter:
         os.makedirs(self.textures_dir, exist_ok=True)
 
     def export(self, output_path, asset_item):
+        logger.debug("Exporting materials...")
         stage = Usd.Stage.CreateNew(output_path)
         looks_path = looks_scope_path(asset_item.name, bool(asset_item.armature_objects))
         UsdGeom.Scope.Define(stage, looks_path)
@@ -68,8 +55,7 @@ class MaterialsLayerExporter:
 
         bsdf = self._find_principled_bsdf(material)
         if bsdf is None:
-            # no principled BSDF to read from - fall back to a flat magenta
-            # surface so a broken material is loud/obvious rather than invisible
+            # no principled BSDF to read from, fall back to a flat magenta
             shader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(1.0, 0.0, 0.7))
         else:
             for usd_input, names in COLOR_INPUTS.items():
@@ -109,10 +95,6 @@ class MaterialsLayerExporter:
 
         tex_image = self._resolve_texture(color_socket)
         if tex_image:
-            # a textured emission color is connected as-is; Emission Strength
-            # can't be folded into the texture sample without an extra multiply
-            # shader (outside UsdPreviewSurface's fixed input set), so strength
-            # only gets applied below, for the constant (non-textured) case
             self._connect_texture(stage, material_path, shader, "emissiveColor", tex_image, Sdf.ValueTypeNames.Color3f, "rgb")
             return
 
@@ -140,8 +122,6 @@ class MaterialsLayerExporter:
         if not tex_image:
             return
 
-        # tangent-space normal maps are stored as ordinary [0, 1] colors and
-        # need remapping to [-1, 1] - UsdUVTexture's scale/bias inputs do that
         self._connect_texture(
             stage, material_path, shader, "normal", tex_image, Sdf.ValueTypeNames.Normal3f, "rgb", scale_bias=True
         )
@@ -205,8 +185,6 @@ class MaterialsLayerExporter:
 
     @staticmethod
     def _get_uv_reader(stage, material_path):
-        # UsdShade.Shader.Define() gets-or-creates at this path, so calling this
-        # once per texture on the same material is cheap and stays a single prim
         reader = UsdShade.Shader.Define(stage, f"{material_path}/uvReader_st")
         reader.CreateIdAttr("UsdPrimvarReader_float2")
         reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")

@@ -3,6 +3,11 @@ import re
 import glob
 import json
 
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
+
 
 class Template:
     def __init__(self, root, template):
@@ -117,9 +122,7 @@ class Templates:
 
     def get_fields_from_path(self, template, resolved_path):
         """
-        the inverse of resolve_template: given a template and a path it could
-        have produced, recover the fields dict that resolves back to that path.
-        version fields come back as int, everything else as str.
+        parse a resolved path back into its template fields (versions -> int, rest -> str)
         """
         template = template.full_template if isinstance(template, Template) else template
         token_names = re.findall(r"<(\w+)>", template)
@@ -137,8 +140,6 @@ class Templates:
             if template_token["type"] == "int" and token_format:
                 regex_str += re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", lambda m: r"(\d+)", re.escape(token_format))
             else:
-                # str fields (e.g. variant_path) may themselves contain "/"
-                # for nested paths, so don't stop at path separators
                 regex_str += r"(.+)"
         regex_str += "$"
 
@@ -149,7 +150,7 @@ class Templates:
                 template_token = self._tokens[token]
                 fields[token] = int(value) if template_token["type"] == "int" else value
         else:
-            print(f"'{resolved_path}' does not match template '{template}'")
+            logger.debug(f"'{resolved_path}' does not match template '{template}'")
         return fields
 
     def get_template_by_name(self, template_name):

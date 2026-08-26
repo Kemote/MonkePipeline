@@ -87,7 +87,7 @@ class MonkeUsdExportDialog(QDialog):
         
         # add logging
         self.log_display = QPlainTextEdit()
-        self.log_display.minimumWidth(500)
+        self.log_display.setMinimumWidth(500)
         self.log_display.setDisabled(True)
         logging_layout.addWidget(self.log_display)
         self.log_handler = QtLogHandler()
@@ -185,8 +185,8 @@ class MonkeUsdExportDialog(QDialog):
         options_layout.addLayout(button_row)
 
     def _export(self):
-        logger.info("Exporting asset items...")
         settings = self.collect()
+        logger.info("Exporting asset items...")
         usd_exporter = UsdExporter(settings)
         asset_items = settings["collected_item"]
         for asset_item in asset_items:

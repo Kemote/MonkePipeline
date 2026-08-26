@@ -4,6 +4,7 @@ import textwrap
 
 from pathlib import Path
 
+
 PROJECT_ROOT = Path("/home/kemot/Documents/Dev/MonkePipeline")
 BLENDER_FLATPAK_APP_ID = "org.blender.Blender"
 PYSIDE6_SITE_PACKAGES = Path("/home/kemot/Documents/Dev/_VENVS/python-usd-venv/lib/python3.12/site-packages")

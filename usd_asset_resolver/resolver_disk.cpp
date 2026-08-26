@@ -96,7 +96,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     else if (versionType == "json"){
-        // TODO: czy dla json nie powinno sprwadzac czy json istnieje w asset name
+        // TODO: should we check if json file exists?
         std::cout << "jsonjsonjson" << std::endl;
 
         fs::path layerInfoPath = fs::path(basedir) / "layer_info.json";
@@ -127,7 +127,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
         tokenPos = resolvedPath.find("<version>", tokenPos + versionStr.size());
     }
 
-    // TODO przed zwroceniem sceizki sprawdz czy plik isniteje 
+    // TODO check if file exists before returning path
     return ArResolvedPath(resolvedPath);
 }
 

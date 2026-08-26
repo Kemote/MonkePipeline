@@ -9,20 +9,15 @@ from publisher.exporter.common import (
     mesh_prim_path,
     sanitize_name,
 )
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class MaterialBindingLayerExporter:
     """
-    writes, next to every geometry layer, its "<layer name>_binding" companion:
-    `over` prims that bind that layer's meshes to Materials under
-    /{asset_name}/Looks. a mesh using a single material gets one whole-mesh
-    binding; a mesh whose polygons reference more than one material slot gets a
-    face GeomSubset (by polygon.material_index) per material instead.
-
-    a mesh using a variant material ("base_VAR_variant") is not bound directly:
-    its binding is authored inside a variantSet (named after the base material) on
-    the asset root prim, where each variant rebinds every such mesh/subset to the
-    matching "{base}_{variant}" Material prim from the materials layer
+    create a separate layer next to the geometry file for binding data
     """
 
     def write_for_layer(self, geo_layer_path, asset_item, outliner_paths, has_skeleton=False):
@@ -35,10 +30,8 @@ class MaterialBindingLayerExporter:
         return binding_layer_path
 
     def export(self, stage, asset_item, outliner_paths, has_skeleton=False):
+        logger.debug("Exporting materials binding...")
         looks_path = looks_scope_path(asset_item.name, has_skeleton)
-
-        # base material name -> paths of the prims (meshes or subsets) whose
-        # binding must switch with that material's variant selection
         variant_bindings = {}
 
         for outliner_path in outliner_paths:
@@ -77,8 +70,7 @@ class MaterialBindingLayerExporter:
             if not face_indices:
                 continue
 
-            # the subset is named after the base material so it stays stable while
-            # the variant selection swaps which material it is bound to
+            # the subset is named after the base material
             subset = binding_api.CreateMaterialBindSubset(
                 sanitize_name(base_material_name(material.name)), face_indices, elementType="face"
             )
@@ -108,19 +100,13 @@ class MaterialBindingLayerExporter:
             for variant_name, material in variants.items():
                 variant_set.AddVariant(variant_name)
                 variant_set.SetVariantSelection(variant_name)
-                # prim_paths are descendants of the root prim, so the bindings
-                # authored here land inside this variant instead of on the prims
                 with variant_set.GetVariantEditContext():
                     for prim_path in prim_paths:
                         self._bind(stage.GetPrimAtPath(prim_path), looks_path, material)
 
-            # leave a deterministic default selection rather than the last authored one
             variant_set.SetVariantSelection(next(iter(variants)))
 
     @staticmethod
     def _bind(prim, looks_path, material):
-        # Bind() needs a resolvable Material prim, but this layer is written
-        # standalone with no sublayer that defines /{asset_name}/Looks, so author
-        # the "material:binding" relationship directly instead
         material_path = f"{looks_path}/{material_prim_name(material.name)}"
         prim.CreateRelationship("material:binding", custom=False).SetTargets([Sdf.Path(material_path)])
