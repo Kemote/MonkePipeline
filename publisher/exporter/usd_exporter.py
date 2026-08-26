@@ -18,7 +18,6 @@ class UsdExporter:
             "y": UsdGeom.Tokens.y,
             "z": UsdGeom.Tokens.z
         }[settings["up_axis"]]
-        self.templates = Templates()     
         self.extension = settings["extension"]
         self.meter_per_unit = settings["meter_per_unit"]
         self.export_geom = settings["export_geometry"]
@@ -32,20 +31,21 @@ class UsdExporter:
             "project_name": str(os.environ.get("PROJECTNAME")),
             "name": asset_name
         }
-        main_file_template = self.templates.get_template_by_name("asset_main_file")
-        sublayer_file_template = self.templates.get_template_by_name("asset_sublayer_file")
-        mesh_variants_template = self.templates.get_template_by_name("asset_mesh_variants_output")
-        textures_template = self.templates.get_template_by_name("asset_textures_output")
+        templates = Templates()
+        main_file_template = templates.get_template_by_name("asset_main_file")
+        sublayer_file_template = templates.get_template_by_name("asset_sublayer_file")
+        mesh_variants_template = templates.get_template_by_name("asset_mesh_variants_output")
+        textures_template = templates.get_template_by_name("asset_textures_output")
 
-        main_file_path = self.templates.resolve_template(main_file_template, fields)
+        main_file_path = templates.resolve_template(main_file_template, fields)
         fields["step"] = "geom"
-        geom_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
+        geom_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "look"
-        look_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
+        look_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "rig"
-        rig_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
-        mesh_variants_output = self.templates.get_new_file_path(mesh_variants_template, fields)
-        textures_output = self.templates.get_new_file_path(textures_template, fields)
+        rig_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        mesh_variants_output = templates.get_new_file_path(mesh_variants_template, fields)
+        textures_output = templates.get_new_file_path(textures_template, fields)
         layer_paths_dict = {
             "geom": None,
             "look": None,
@@ -58,7 +58,7 @@ class UsdExporter:
                 "project_name": fields["project_name"],
                 "name": fields["name"],
             }
-            mesh_exporter = MeshLayerExporter(self.templates, variant_base_fields, mesh_variants_output, self.extension)
+            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
 
@@ -95,7 +95,7 @@ class UsdExporter:
         step_order = ("geom", "look", "rig")
 
         new_monke_paths = {
-            step: self.templates.convert_path_to_monkedDisc(sublayer_file_template, layer_paths_dict[step])
+            step: templates.convert_path_to_monkedDisc(sublayer_file_template, layer_paths_dict[step])
             for step in step_order
             if layer_paths_dict[step]
         }

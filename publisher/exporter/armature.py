@@ -10,21 +10,9 @@ from publisher.exporter.common import (
 
 class SkeletonBindingPlan:
     """
-    figures out, per armature, which bones are actually needed and which
-    Skeleton prim each mesh should bind to.
-
-    a bone that's only ever weight-painted on meshes belonging to one variant
-    (e.g. an extra bone driving a variant-only prop) has no business showing up
-    in the skeleton when a different variant is selected - so instead of one
-    skeleton with every bone always present, this walks the asset's variant
-    tree the same way MeshLayerExporter does: the root skeleton only gets
-    bones used by non-variant meshes, and a variant only gets its own
-    additional Skeleton prim (self-contained, full ancestor chain included)
-    if its meshes use bones the root skeleton doesn't already have. meshes
-    that only need root bones keep binding to the root skeleton.
-
-    skeletons: {skeleton_path: (armature_obj, [bone names in armature order])}
-    mesh_bindings: {outliner_path: (skeleton_path, [bone names in armature order])}
+    determine required bones per armature and assign target USD Skeleton prims.
+    Bones used exclusively by a variant are isolated into a dedicated Skeleton prim,
+    while shared bones remain on the root skeleton.
     """
 
     def __init__(self, asset_item):
@@ -75,7 +63,6 @@ class SkeletonBindingPlan:
                 self.mesh_bindings[outliner_path] = (skeleton_path, bone_names)
 
     def _bones_for(self, armature_obj, outliner_paths):
-        """ancestor-expanded list of bone names used by these meshes, kept in the armature's own bone order"""
         used = set()
         for outliner_path in outliner_paths:
             used.update(self._used_bones(armature_obj, outliner_path))
@@ -97,12 +84,7 @@ class SkeletonBindingPlan:
 
 class ArmatureLayerExporter:
     """
-    writes the asset's armature(s) as UsdSkel Skeletons under /{asset_name}/Rig,
-    using a SkeletonBindingPlan to decide which bones belong on the shared root
-    skeleton versus a dedicated per-variant companion skeleton. only the static
-    bind-pose joint hierarchy is authored here; animating the skeleton's joints
-    is left to the animation layer, kept separate for the same reason mesh
-    statics and mesh animation are split
+    export static bind-pose skeletons, separating shared and variant-only bones
     """
 
     def export(self, output_path, asset_item):
@@ -139,11 +121,7 @@ class ArmatureLayerExporter:
     @classmethod
     def _joint_token(cls, bone, joint_tokens):
         """
-        builds this bone's "Parent/.../bone" joint path token, memoized in
-        joint_tokens - bones normally iterate parents-before-children, but a
-        parent's token is built on demand here too in case that ever isn't true.
-        SkeletonBindingPlan always includes a bone's full ancestor chain
-        alongside it, so the parent is guaranteed to be resolvable here
+        build and cache joint path tokens, recursively resolving parent ancestors
         """
         token = joint_tokens.get(bone.name)
         if token is not None:

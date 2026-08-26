@@ -2,6 +2,10 @@ import bpy
 
 from publisher import collector
 from publisher.exporter.common import PROXY_POST_FIX
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class ProxyGenerator:
@@ -17,8 +21,9 @@ class ProxyGenerator:
             if var_set_name == "lod":
                 render_node: collector.VariantNode = var_dict.get("render")
                 if not render_node:
+                    logger.error("Cannot find 'render' group in 'lod' variant collection")
                     raise KeyError("Cannot find 'render' group in 'lod' variant collection")
-                # create proxy variant node
+                logger.debug("Creating proxy meshes for lod...")
                 proxy_node = collector.VariantNode()
                 var_dict[f"proxy"] = proxy_node
                 for outliner_path in render_node.outliner_paths:
@@ -35,10 +40,8 @@ class ProxyGenerator:
                 self._add_subvariants(variant_node.variant_sets, proxy_variant_node)
 
     def clear(self):
-        # remove all meshes
         for mesh in self.proxy_meshes:
             bpy.data.objects.remove(mesh, do_unlink=True)
-        # remove all collections
         bpy_collections = bpy.data.collections
         self.proxy_collections.reverse()
         for proxy_collection in self.proxy_collections:
@@ -83,12 +86,12 @@ class ProxyGenerator:
 
     @staticmethod
     def reduce_polycount(mesh, decimate_ratio):
+        logger.debug("Reducing polycount")
         decimate_mod = mesh.modifiers.new("proxy_generator_decimate", "DECIMATE")
         decimate_mod.ratio = decimate_ratio
         with bpy.context.temp_override(active_object=mesh, selected_editable_objects=[mesh]):
             bpy.context.view_layer.objects.active = mesh
             for mod in mesh.modifiers:
-                print(mod.name)
                 bpy.ops.object.modifier_apply(modifier=mod.name)
 
     @staticmethod
@@ -97,12 +100,12 @@ class ProxyGenerator:
         get or create collection from provided collections path,
         we need ommit first element because its base scene collection
         """
-        print("SEARCH: %s" % collection_path)
+        logger.debug(f"Searching for collection: {collection_path}")
         current_collection = bpy.context.scene.collection
         for collection_name in collection_path.split("/")[2:]:
             collection = current_collection.children.get(collection_name)
             if not collection:
-                print("NEEED TO CREATE: %s" % collection_name)
+                logger.debug(f"No {collection_name} collection found, creating it")
                 collection = bpy.data.collections.new(collection_name)
                 current_collection.children.link(collection)
             current_collection = collection            

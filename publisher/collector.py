@@ -1,8 +1,10 @@
 import bpy
 
 from abc import ABC, abstractmethod
+from publisher.monke_logging import get_logger
 
 
+logger = get_logger(__name__)
 VARIANT_SEPARATOR = "_VAR_"
 ASSETS_ROOT = "/Scene Collection/assets"
 ARMATURE_COLLECTION_NAME = "armature"
@@ -11,7 +13,6 @@ ARMATURE_COLLECTION_NAME = "armature"
 class VariantNode:
     """
     one level of an asset's variant hierarchy.
-
     outliner_paths: outliner paths of the meshes that live directly at this level
     variant_sets: {variant_set_name: {variant_name: VariantNode}} - a variant may
                   itself own further variant sets, so the tree nests to any depth
@@ -33,21 +34,15 @@ class CollectedItem():
         self.name = name
         self.path = outliner_path
         self.type = "BASE_ITEM"
-        # root of the variant hierarchy; variant_root.outliner_paths are the meshes
-        # that belong to the asset regardless of any variant selection
         self.variant_root = VariantNode()
 
 
 class CollectedAssetItem(CollectedItem):
     """
-    mesh_objects: dict mapping a mesh's outliner path -> its Blender object, for
-    every mesh in the asset (across all variant levels)
-    armature_objects: dict mapping an armature's outliner path -> its Blender
-                      object, gathered from the asset's "armature" collection
-    materials: {material_name: material} for materials without variants
-    material_variants: {base_name: {variant_name: material}} for materials named
-                       "baseName{VARIANT_SEPARATOR}variantName" - unlike geometry,
-                       material variants are a single level, so no VariantNode tree
+    mesh_objects: {outliner_path: mesh_obj} for all variant levels
+    armature_objects: {outliner_path: armature_obj} from armature collection
+    materials: {name: material} standard materials
+    material_variants: {base_name: {variant_name: material}} single-level variants
     """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
@@ -78,7 +73,7 @@ class Collector(ABC):
         if not outliner_base_path.startswith("/"):
             raise ValueError(f"Outliner base path: {outliner_base_path}, should starts with '/'")
 
-        self.items = []     # reset items list so it will not duplicate elements in case user use it more than once
+        self.items = [] 
         assets_collection = self.find_collection(outliner_base_path)
         if assets_collection:
             for asset_group in assets_collection.children:
@@ -91,21 +86,11 @@ class Collector(ABC):
         return
 
     def _post_collect(self, asset_group, group_path, asset_item):
-        """
-        override to gather additional per-asset data that isn't part of the
-        `object_type` variant walk above (e.g. armatures for AssetsCollector)
-        """
         pass
 
     def collect_variants(self, collection: bpy.types.Collection, outliner_path: str, obj_type: str, asset_item, node):
         """
-        walks a collection subtree building the asset's variant hierarchy.
-
-        meshes sitting directly in `collection` belong to `node`. a child
-        collection named "setName{VARIANT_SEPARATOR}variantName" opens a nested
-        variant level and is recursed into on its own VariantNode, so nesting
-        (e.g. modelType_VAR_tree > lod_VAR_high) is preserved to any depth. any
-        other child collection is plain organisation and keeps the current node.
+        recursively build variant hierarchy: '_VAR_' collections open nested nodes, others stay inline
         """
         for obj in collection.objects:
             if obj.type == obj_type:
@@ -151,9 +136,7 @@ class AssetsCollector(Collector):
 
     def _post_collect(self, asset_group, group_path, asset_item):
         """
-        armatures live in their own "armature" collection directly under the
-        asset group, rather than in the mesh variant hierarchy, so they're
-        gathered separately here instead of through collect_variants()
+        armatures sit outside the mesh variant tree and are collected separately here
         """
         armature_collection = next(
             (child for child in asset_group.children if child.name.lower() == ARMATURE_COLLECTION_NAME),

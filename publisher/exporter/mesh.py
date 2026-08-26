@@ -14,6 +14,7 @@ from publisher.exporter.common import (
     sanitize_name,
     skel_root_path,
 )
+from templates.templates import Templates
 from publisher.exporter.material_binding import MaterialBindingLayerExporter
 from publisher.monke_logging import get_logger
 
@@ -23,19 +24,16 @@ logger = get_logger(__name__)
 
 class MeshLayerExporter:
     """
-    writes the asset's mesh data layer: hierarchy, topology, uvs and the static
-    (bind pose) transform/points - any attribute owned by the animation layer is
-    skipped here so the sublayer's timeSamples are free to take effect
+    export provided asset mesh data, UV's, and it's variants
     """
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, templates, base_fields, variants_dir, extension):
-        self.templates = templates
+    def __init__(self, base_fields, variants_dir):
+        self.templates = Templates()
         self.base_fields = base_fields
-        self.variant_layer_template = templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
+        self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
         self.variants_dir = variants_dir
-        self.extension = extension
         self.binding_exporter = MaterialBindingLayerExporter()
 
     def export(self, output_path, asset_item):
@@ -49,8 +47,6 @@ class MeshLayerExporter:
         skeleton_plan = SkeletonBindingPlan(asset_item) if has_skeleton else None
 
         root : collector.VariantNode = asset_item.variant_root
-        # meshes with no variant belong to the asset itself, so they live directly
-        # in this layer and are shared by every variant selection
         self._write_meshes(stage, asset_item, root.outliner_paths, skeleton_plan, has_skeleton)
         self._attach_binding_layer(stage, asset_item, root.outliner_paths, has_skeleton)
 
@@ -58,42 +54,46 @@ class MeshLayerExporter:
             asset_prim = stage.GetPrimAtPath(asset_root_path(asset_item.name, has_skeleton))
             stage = self._author_variant_sets(stage, asset_item, asset_prim, root.variant_sets, self.variants_dir, skeleton_plan)
 
+            # promote variants when a skeleton causes the mesh prim path to change.
             if has_skeleton:
                 asset_prim = stage.GetPrimAtPath(f"/{asset_item.name}")
                 promoted_sets = asset_prim.GetVariantSets()
-                # promote mesh variants
+                logger.debug("Promote meshes variants")
                 self._promote_mesh_variants(stage, asset_item.name, promoted_sets, root)
-                # promote materials variants
+                logger.debug("Promote materials variants")
                 self._promote_materials_variants(stage, asset_item, promoted_sets)
 
         return stage
 
     def _promote_mesh_variants(self, stage: Usd.Stage, asset_name, promoted_sets, variant_node):
-        for set_name, variants in variant_node.variant_sets.items():
-            if not set_name.lower() == "lod":
-                variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(set_name)
-                for variant_name, nested_variant_node in variants.items():
-                    variant_set.AddVariant(variant_name)
-                    variant_set.SetVariantSelection(variant_name)
-                    with variant_set.GetVariantEditContext():
-                        over_prim = stage.OverridePrim(f"/{asset_name}/SkelRoot")
-                        over_variant_set = over_prim.GetVariantSets().AddVariantSet(set_name)
-                        over_variant_set.SetVariantSelection(variant_name)
-                    self._promote_mesh_variants(stage, asset_name, promoted_sets, nested_variant_node)
+        for variant_set_name, variants in variant_node.variant_sets.items():
+            logger.debug(f"Promoted variant set: {variant_set_name}")
+            if not variant_set_name.lower() == "lod":
+                variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(variant_set_name)
+                for variant_data in self._promote_variants(stage, variants, variant_set, variant_set_name, asset_name):
+                    self._promote_mesh_variants(stage, asset_name, promoted_sets, variant_data)
             else:
-                for variant_name, nested_variant_node in variants.items():
-                    self._promote_mesh_variants(stage, asset_name, promoted_sets, nested_variant_node)
+                for variant_data in variants.values():
+                    self._promote_mesh_variants(stage, asset_name, promoted_sets, variant_data)
 
     def _promote_materials_variants(self, stage, asset_item, promoted_sets):
         for mat_set_name, variants_dict in asset_item.material_variants.items():
-            mat_variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(mat_set_name)
-            for variant_name, material in variants_dict.items():
-                mat_variant_set.AddVariant(variant_name)
-                mat_variant_set.SetVariantSelection(variant_name)
-                with mat_variant_set.GetVariantEditContext():
-                    over_prim = stage.OverridePrim((f"/{asset_item.name}/SkelRoot"))
-                    over_variant_set = over_prim.GetVariantSets().AddVariantSet(mat_set_name)
+            logger.debug(f"Promoted variant set: {mat_set_name}")
+            variant_set: Usd.VariantSet = promoted_sets.AddVariantSet(mat_set_name)
+            for varaint_data in self._promote_variants(stage, variants_dict, variant_set, mat_set_name, asset_item.name):
+                logger.debug("Material promoted")
+
+    def _promote_variants(self, stage, variants_dict, variant_set, variant_set_name, asset_name):
+            for variant_name, variant_data in variants_dict.items():
+                logger.debug(f"Promote variant set: {variant_set_name}")
+                variant_set.AddVariant(variant_name)
+                variant_set.SetVariantSelection(variant_name)
+                with variant_set.GetVariantEditContext():
+                    over_prim = stage.OverridePrim((f"/{asset_name}/SkelRoot"))
+                    logger.debug(f"Set variant selection to: {variant_name}")
+                    over_variant_set = over_prim.GetVariantSets().AddVariantSet(variant_set_name)
                     over_variant_set.SetVariantSelection(variant_name)
+                yield variant_data
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False):
         for outliner_path in outliner_paths:
@@ -111,20 +111,8 @@ class MeshLayerExporter:
                              skeleton_plan=None,
                              variant_path=""):
         """
-        authors `variant_sets` onto `prim`. each variant's geometry - its own
-        meshes plus any deeper variant sets - is written to a standalone layer laid
-        out as <variants_dir>/<set>/<variant>.<ext>; a variant that nests further
-        variants recurses into <variants_dir>/<set>/<variant>/, mirroring the
-        collection hierarchy on disk. the layer is referenced back into the variant.
-
-        `variant_path` mirrors that same nesting as a "/"-joined set of sanitized
-        segments (e.g. "lod/proxy") so the variant layer template can resolve a
-        versioned filename at any depth.
-
-        the "lod" set is the exception: lods coexist instead of switching, so no
-        variantSet is authored - every lod layer is referenced unconditionally and
-        its meshes sit under a prim carrying the matching purpose (render/proxy/
-        guide), leaving the choice to the renderer
+        authors variant sets from Blender collection names. 
+        The "lod" set is the only exception: LODs use render purposes instead of standard USD variants.
         """
         os.makedirs(variants_dir, exist_ok=True)
         stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
@@ -152,28 +140,22 @@ class MeshLayerExporter:
                 with variant_set.GetVariantEditContext():
                     prim.GetReferences().AddReference(os.path.relpath(variant_layer_path, stage_dir))
                     
-            # leave a deterministic default selection rather than the last authored one
             variant_set.SetVariantSelection(next(iter(variants)))
         return stage
 
     def _write_variant_layer(self, asset_item, set_dir, variant_name, node, variant_path, skeleton_plan=None, purpose=None):
+        logger.debug(f"Writing variant layer: {variant_path}")
         fields = dict(self.base_fields)
         fields["variant_path"] = variant_path
         fields["variant"] = sanitize_name(variant_name)
         variant_layer_path = self.templates.get_new_file_path(self.variant_layer_template, fields)
         os.makedirs(os.path.dirname(variant_layer_path), exist_ok=True)
-
-        # this fragment is composed via reference (not sublayered) onto the asset
-        # root prim wherever the parent layer already established it, so its own
-        # local root stays the plain, un-prefixed asset root regardless of whether
-        # a SkelRoot ancestor exists further up in the composed stage
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
         UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
 
         if purpose:
-            # mesh_prim_path places this layer's meshes under the purpose prim, so
-            # the purpose authored here is inherited by everything in the layer
+            # meshes inherit purpose from the parent prim path
             purpose_scope = UsdGeom.Scope.Define(
                 variant_stage, f"{geom_scope_path(asset_item.name)}/{purpose}"
             )
@@ -198,15 +180,13 @@ class MeshLayerExporter:
 
     def _attach_binding_layer(self, stage, asset_item, outliner_paths, has_skeleton=False):
         """
-        writes the sibling "<layer name>_binding" file holding the material
-        bindings for the meshes of this geometry layer, and sublayers it so the
-        layer carries its own bindings wherever it is referenced
+        create separate layer for material binding which is used for material variants,
+        the binding file sits next to its geometry layer, so the relative path is just the name
         """
         if not outliner_paths:
             return
         geo_layer = stage.GetRootLayer()
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)
-        # the binding file sits next to its geometry layer, so the relative path is just the name
         geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
     def _write_mesh(self, stage, prim_path, mesh_obj, skeleton_binding=None):
@@ -230,10 +210,7 @@ class MeshLayerExporter:
     @staticmethod
     def _write_skin_binding(usd_mesh, mesh_obj, skeleton_binding):
         """
-        authors the UsdSkelBindingAPI data that ties this mesh to its skeleton:
-        which Skeleton it deforms with, each vertex's influencing joints/weights
-        (its Blender vertex groups, up to MAX_JOINT_INFLUENCES, normalized and
-        padded), and the bind-time transform the skinning is relative to
+        create armature binding
         """
         skeleton_path, bone_names = skeleton_binding
         bone_index = {name: index for index, name in enumerate(bone_names)}
