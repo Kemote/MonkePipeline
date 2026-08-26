@@ -1,0 +1,3 @@
+/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build_kit/CMakeFiles/monke_resolver.dir
+/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build_kit/CMakeFiles/edit_cache.dir
+/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build_kit/CMakeFiles/rebuild_cache.dir

@@ -15,6 +15,10 @@ from publisher.exporter.common import (
     skel_root_path,
 )
 from publisher.exporter.material_binding import MaterialBindingLayerExporter
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class MeshLayerExporter:
@@ -57,10 +61,8 @@ class MeshLayerExporter:
             if has_skeleton:
                 asset_prim = stage.GetPrimAtPath(f"/{asset_item.name}")
                 promoted_sets = asset_prim.GetVariantSets()
-
                 # promote mesh variants
                 self._promote_mesh_variants(stage, asset_item.name, promoted_sets, root)
-
                 # promote materials variants
                 self._promote_materials_variants(stage, asset_item, promoted_sets)
 

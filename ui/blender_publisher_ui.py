@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
+from publisher.monke_logging import configure_logging, get_logger
 from publisher.proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator
@@ -24,7 +25,9 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
-logger = logging.getLogger(__name__)
+current_dialog = None
+configure_logging()
+logger = get_logger(__name__)
 
 
 class QtLogHandler(QObject, logging.Handler):
@@ -83,17 +86,16 @@ class MonkeUsdExportDialog(QDialog):
         main_layout.addLayout(logging_layout)
         
         # add logging
-        logging_text = QPlainTextEdit()
-        logging_text.setDisabled(True)
-        logging_layout.addWidget(logging_text)
+        self.log_display = QPlainTextEdit()
+        self.log_display.minimumWidth(500)
+        self.log_display.setDisabled(True)
+        logging_layout.addWidget(self.log_display)
         self.log_handler = QtLogHandler()
         self.log_handler.log_emitted.connect(self.append_log)
         formatter = logging.Formatter('%(asctime)s - [%(levelname)s] - %(message)s', '%H:%M:%S')
         self.log_handler.setFormatter(formatter)
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(self.log_handler)
-
+        pipeline_logger = logging.getLogger("mainMonkeLogger")
+        pipeline_logger.addHandler(self.log_handler)
 
         # collect asset items
         self.asset_collector = AssetsCollector()
@@ -129,10 +131,13 @@ class MonkeUsdExportDialog(QDialog):
         options_layout.addLayout(up_axis_row)
 
         # units per meter
+        units_per_meter_lay = QHBoxLayout()
+        units_per_meter_lay.addWidget(QLabel("Units per meter"))
         self.meter_per_unit = QLineEdit()
         self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
         self.meter_per_unit.setText("1.0")
-        options_layout.addWidget(self.meter_per_unit)
+        units_per_meter_lay.addWidget(self.meter_per_unit)
+        options_layout.addLayout(units_per_meter_lay)
 
         # create proxy settings
         options_layout.addSpacing(25)
@@ -180,6 +185,7 @@ class MonkeUsdExportDialog(QDialog):
         options_layout.addLayout(button_row)
 
     def _export(self):
+        logger.info("Exporting asset items...")
         settings = self.collect()
         usd_exporter = UsdExporter(settings)
         asset_items = settings["collected_item"]
@@ -192,7 +198,8 @@ class MonkeUsdExportDialog(QDialog):
             usd_exporter.export(asset_item)
             if proxy_generator:
                 proxy_generator.clear()
-        self.accept()
+        logger.info("Exporting completed!")
+        # self.accept()
 
     def _create_double_validator(self, min_val, max_val):
         validator = QDoubleValidator(min_val, max_val, 5, self)
@@ -218,7 +225,7 @@ class MonkeUsdExportDialog(QDialog):
         self.ratio_txt.blockSignals(False)
 
     def collect(self):
-        logger.debug("Collecting asset items...")
+        logger.info("Collecting asset items...")
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         return {
@@ -235,55 +242,43 @@ class MonkeUsdExportDialog(QDialog):
 
     @Slot(str)
     def append_log(self, text: str):
-        """Receives log string and appends it to the widget."""
         self.log_display.appendPlainText(text)
 
     def generate_logs(self):
-        """Generates sample logs when clicked."""
-        logging.debug("This is a DEBUG message.")
-        logging.info("This is an INFO message.")
-        logging.warning("This is a WARNING message!")
-        logging.error("This is an ERROR message!")
-
-
-# Kept alive here so Qt doesn't garbage-collect the dialog while it's open,
-# and so the polling timer below can tell whether it's still on screen.
-_current_dialog = None
+        logger.debug("DEBUG message.")
+        logger.info("INFO message.")
+        logger.warning("WARNING message!")
+        logger.error("ERROR message!")
 
 
 def _pump_qt_events():
-    """bpy.app.timers callback: process pending Qt events without blocking
-    Blender's own event loop. dialog.exec() would block Blender's main
-    thread until the dialog closes (causing Blender's window to appear
-    frozen to the OS); polling like this lets both stay responsive."""
     app = QApplication.instance()
     if app is not None:
         app.processEvents()
 
-    if _current_dialog is None or not _current_dialog.isVisible():
-        return None  # dialog closed - stop repeating, unregisters the timer
-    return 0.02  # ~50 times/second
+    if current_dialog is None or not current_dialog.isVisible():
+        return None
+    return 0.02
 
 
 def _on_dialog_finished(result):
-    global _current_dialog
-    _current_dialog = None
+    global current_dialog
+    if current_dialog is not None:
+        logging.getLogger("mainMonkeLogger").removeHandler(current_dialog.log_handler)
+    current_dialog = None
 
     if result != QDialog.Accepted:
         print("USD export cancelled")
 
 
 def show_export_dialog():
-    """Show the USD export dialog without blocking Blender's main thread.
-    Reuses the existing QApplication if Blender (or a prior call) already
-    created one - only one may exist per process."""
-    global _current_dialog
+    global current_dialog
 
     QApplication.instance() or QApplication(sys.argv)
 
     dialog = MonkeUsdExportDialog()
     dialog.finished.connect(_on_dialog_finished)
-    _current_dialog = dialog
+    current_dialog = dialog
     dialog.show()
 
     if not bpy.app.timers.is_registered(_pump_qt_events):
@@ -291,7 +286,6 @@ def show_export_dialog():
 
 
 class MONKE_OT_usd_export(bpy.types.Operator):
-    """Open the USD Export dialog"""
     bl_idname = "monke.usd_export"
     bl_label = "USD Export"
     bl_options = {'REGISTER'}

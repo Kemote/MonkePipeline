@@ -1,7 +1,3 @@
-"""Launch Blender (installed via flatpak) with the Monke Pipeline environment
-set up and the USD Monke Exporter addon registered automatically.
-"""
-
 import subprocess
 import tempfile
 import textwrap
@@ -14,9 +10,6 @@ PYSIDE6_SITE_PACKAGES = Path("/home/kemot/Documents/Dev/_VENVS/python-usd-venv/l
 
 
 def get_pipeline_env():
-    """Env vars the pipeline (resolver plugin, exporter, ...) relies on."""
-
-    # test env vars
     return {
         "LD_LIBRARY_PATH": "/home/kemot/USD/lib",
         "PROJECTNAME": "sample_usd_files",
@@ -25,9 +18,6 @@ def get_pipeline_env():
 
 
 def write_bootstrap_script():
-    """Write a small script that puts the repo on sys.path and registers the
-    USD Monke Exporter addon, then hand it to Blender via --python."""
-
     script = textwrap.dedent(f"""\
         import sys
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
