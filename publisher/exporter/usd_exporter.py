@@ -6,6 +6,10 @@ from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
 from publisher.exporter.mesh import MeshLayerExporter
 from templates.templates import Templates
+from publisher.monke_logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class UsdExporter:
@@ -111,7 +115,7 @@ class UsdExporter:
         return main_file_path
 
     def _write_layer(self, file_path, layer_exporter, asset_item):
-        # stage = Usd.Stage.CreateNew(file_path)
+        logger.debug(f"Write layer: {file_path} for asset: {asset_item.name }")
         stage = layer_exporter.export(file_path, asset_item)
         self._set_fps(stage)
         stage.GetRootLayer().Save()
