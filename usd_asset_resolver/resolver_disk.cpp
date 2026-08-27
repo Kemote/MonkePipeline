@@ -19,7 +19,7 @@ std::string MonkeDiskResolver::_CreateIdentifier(
     return assetPath;
 }
 
-// Pass-through: treat the asset path as an already-valid local path.
+// resolves a "monkeDisc://<path>:<version|latest|json>" identifier to a real file on disk
 ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     const char* projectsRootEnv = getenv("PROJECTSROOT");
     const char* projectNameEnv = getenv("PROJECTNAME");
@@ -36,10 +36,6 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     std::string projectName = projectNameEnv;
     std::string fullPath = projectsRoot + "/" + projectName + pathBody;
     std::string basedir = fullPath;
-    
-
-    std::cout << "FULL PATH: " << fullPath << std::endl;
-    std::cout << "VERSION TYPE: " << versionType << std::endl;
 
     size_t versionToken = fullPath.find("<version>");
         
@@ -60,8 +56,7 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
         }
     }
 
-    // now we need to get version
-    if (versionType == "latest"){        
+    if (versionType == "latest"){
         for (const auto& file_path : fs::directory_iterator(basedir)){
             std::string entryName = file_path.path().filename().string();
             if (entryName.size() <= startName.size() + endName.size()) {
@@ -96,9 +91,6 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
     }
 
     else if (versionType == "json"){
-        // TODO: should we check if json
-        std::cout << "jsonjsonjson" << std::endl;
-
         fs::path layerInfoPath = fs::path(basedir) / "layer_info.json";
         if (!fs::exists(layerInfoPath)) {
             return ArResolvedPath();
@@ -113,7 +105,6 @@ ArResolvedPath MonkeDiskResolver::_Resolve(const std::string& assetPath) const {
         }
 
         version = layerInfo["stable_version"].get<int>();
-        std::cout << "STABLE VERSION: " << version << std::endl;
     }
 
     char versionBuf[16];

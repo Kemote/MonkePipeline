@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# 1. Define the paths
 PROJECT_BUILD_DIR="/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver/build"
 USD_INSTALL_DIR="/home/kemot/UsdRoot"
 
-# 2. Build in a temporary subshell
 (
     mkdir -p build
     cd build

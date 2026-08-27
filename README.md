@@ -3,9 +3,9 @@
 A Blender → OpenUSD asset publishing pipeline. It exports Blender scenes as
 layered, versioned USD assets (geometry, materials, armature/skinning,
 LOD/material variants), and resolves them at runtime through a custom OpenUSD
-asset resolver plugin using a `monkeDisc://` / `monkeDb://` URI scheme, so
-downstream apps (usdview, Omniverse Kit) always load the latest published
-version of a layer without hardcoded paths.
+asset resolver plugin using a `monkeDisc://` URI scheme, so downstream apps
+(usdview, Omniverse Kit) always load the latest published version of a layer
+without hardcoded paths.
 
 ## Components
 
@@ -22,9 +22,10 @@ version of a layer without hardcoded paths.
 - **`ui/`** — the PySide6 export dialog, registered into Blender as a top-bar
   menu via `publisher_plugin.py`.
 - **`usd_asset_resolver/`** — a C++ `ArResolver` plugin implementing the
-  `monkeDisc://` (disk) and `monkeDb://` (DB-backed) URI schemes, so USD
-  layers can reference each other by asset name and resolve to whichever
-  version is tagged `:latest` on disk.
+  `monkeDisc://` URI scheme, so USD layers can reference each other by asset
+  name and resolve to whichever version is tagged `:latest` on disk. It's
+  only used for the three sublayer references (`geom`/`look`/`rig`) inside
+  each asset's main `.usda` file — see below if you'd rather skip building it.
 - **`run_blender.py` / `run_usdview.sh` / `run_omniverse.sh`** — launchers
   that source `pipeline.env` and start each host application with the
   correct plugin/library paths.
@@ -35,7 +36,7 @@ version of a layer without hardcoded paths.
   CMake `pxr` package config required — a `pip install usd-core` wheel is
   *not* enough, since the resolver plugin compiles against USD's C++ headers).
 - **CMake ≥ 3.12** and a C++17 compiler.
-- **OpenGL, X11, CURL, Python3 development headers** (linked by the resolver
+- **OpenGL, X11, Python3 development headers** (linked by the resolver
   plugin — see `usd_asset_resolver/CMakeLists.txt`).
 - **Blender** (tested against 3.6+), installed as a Flatpak
   (`org.blender.Blender` by default — see `run_blender.py`).
@@ -71,6 +72,23 @@ If you upgrade OpenUSD, or move to a machine with a different USD build,
 **rebuild the resolver** before anything else — a stale/mismatched
 `libmonke_resolver.so` will fail to load or crash the host process, not just
 fail to resolve paths.
+
+### Skipping the resolver entirely
+
+The resolver's footprint is small and optional: `usd_exporter.py` uses
+`monkeDisc://` only for the three sublayer entries (`geom`/`look`/`rig`) it
+writes into an asset's main `.usda` file — everything else the exporter
+writes (variant/LOD references, material-binding sublayers) already uses
+plain relative paths and needs no resolver at all.
+
+If you don't want to build the plugin, open the exported main `.usda` file
+in a text editor, find the `subLayers` entries that look like
+`@monkeDisc://assets/<name>/layers/<name>_geom_<version>.usda:latest@`, and
+replace each with a regular relative path to the actual versioned file it
+points at, e.g. `@./layers/<name>_geom_v001.usda@`. USD resolves plain
+relative/`./` paths natively, no `ArResolver` plugin required — you'll just
+have to update those three lines by hand whenever you re-export a newer
+version, instead of `:latest` doing it for you automatically.
 
 ## Setup
 

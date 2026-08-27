@@ -1,8 +1,5 @@
-#include "resolver_db.h"
 #include "resolver_disk.h"
-#include "pxr/usd/ar/defineResolver.h" // USD macro helper to register our plugins.
+#include "pxr/usd/ar/defineResolver.h"
 
-// This file just aggregates every resolver implementation and registers it
-// with USD. The resolvers themselves live in their own header/cpp pairs.
-AR_DEFINE_RESOLVER(MonkeDbResolver, ArResolver);
+// registers MonkeDiskResolver with USD as the handler for the monkeDisc:// scheme
 AR_DEFINE_RESOLVER(MonkeDiskResolver, ArResolver);

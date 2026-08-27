@@ -6,8 +6,7 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
-// Plain pass-through resolver: resolves paths straight off local disk,
-// no database lookups involved.
+// resolves monkeDisc:// paths to versioned files on local disk
 class MonkeDiskResolver : public ArResolver {
     public:
         MonkeDiskResolver() = default;
