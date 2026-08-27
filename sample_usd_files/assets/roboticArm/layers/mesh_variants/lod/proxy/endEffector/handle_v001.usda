@@ -1,0 +1,114 @@
+#usda 1.0
+(
+    defaultPrim = "roboticArm"
+    metersPerUnit = 1
+    subLayers = [
+        @handle_v001_binding.usda@
+    ]
+)
+
+def Xform "roboticArm"
+{
+    def Scope "Geom"
+    {
+        def "proxy"
+        {
+            def Mesh "handleBox" (
+                prepend apiSchemas = ["SkelBindingAPI"]
+            )
+            {
+                int[] faceVertexCounts = [3, 4, 3]
+                int[] faceVertexIndices = [3, 2, 1, 2, 3, 0, 1, 0, 3, 1]
+                point3f[] points = [(5.322401, -0.08952703, -3.3692927), (5.1836405, 0.11316972, 3.4505644), (-8.83184, -3.501982e-7, 4.8906994), (-11.549573, -3.1665348e-8, -2.807495)]
+                matrix4d primvars:skel:geomBindTransform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-99.99607801437378, -0.0000031709316061778736, 149.7487187385559, 1) )
+                int[] primvars:skel:jointIndices = [3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                float[] primvars:skel:jointWeights = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                texCoord2f[] primvars:st = [(0.42851126, 0.26457405), (0.37170416, 0.29326928), (0.40144807, 0.6460742), (0.3718928, 0.95920736), (0.4329815, 0.97772527), (0.40627182, 0.6241843), (0.40144807, 0.6460742), (0.40627182, 0.6241843), (0.42851126, 0.26457405), (0.40144807, 0.6460742)] (
+                    interpolation = "faceVarying"
+                )
+                rel skel:skeleton = </roboticArm/Rig/Armature>
+                matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-99.99607801437378, -0.0000031709316061778736, 149.7487187385559, 1) )
+                uniform token[] xformOpOrder = ["xformOp:transform"]
+            }
+
+            def Mesh "handleEnd" (
+                prepend apiSchemas = ["SkelBindingAPI"]
+            )
+            {
+                int[] faceVertexCounts = [3, 4, 3, 3, 3, 4, 4]
+                int[] faceVertexIndices = [1, 0, 2, 4, 6, 7, 3, 6, 4, 8, 7, 5, 3, 0, 1, 2, 5, 7, 6, 8, 8, 4, 3, 5]
+                point3f[] points = [(-0.9917369, 9.320085e-10, 0.0000020566729), (0.9917369, -0.038746215, 1.3341666), (0.9917369, 0.038746208, -1.3341625), (-12.070373, -6.007148, 1.2658632), (-12.064937, -6.079432, -1.265883), (-12.064936, 6.0794325, 1.2658632), (-0.6337469, -0.0268344, -1.265883), (-0.6337469, 0.0268344, 1.2658632), (-12.070373, 6.0071483, -1.265883)]
+                matrix4d primvars:skel:geomBindTransform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-111.08174324035645, -0.0000032906733338222693, 149.74873065948486, 1) )
+                int[] primvars:skel:jointIndices = [3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                float[] primvars:skel:jointWeights = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                texCoord2f[] primvars:st = [(0.59940374, 0.6288892), (0.50865567, 1), (0.39798656, 0.6205572), (0.375, 1), (0.37500003, 0.7722414), (0.625, 0.86600715), (0.625, 1), (0.30960113, 0.6349327), (0.125, 0.7144545), (0.125, 0.5262443), (0.69039893, 0.61506736), (0.875, 0.5273737), (0.875, 0.72377044), (0.49985382, 0.12651086), (0.59940374, 0.6288892), (0.39798656, 0.6205572), (0.625, 0.2237953), (0.625, 0.47775865), (0.375, 0.38399285), (0.375, 0.22524285), (0.375, 0.22524285), (0.37500003, 0.03890364), (0.625, 0.025325648), (0.625, 0.2237953)] (
+                    interpolation = "faceVarying"
+                )
+                rel skel:skeleton = </roboticArm/Rig/Armature>
+                matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-111.08174324035645, -0.0000032906733338222693, 149.74873065948486, 1) )
+                uniform token[] xformOpOrder = ["xformOp:transform"]
+            }
+
+            def Mesh "handleL" (
+                prepend apiSchemas = ["SkelBindingAPI"]
+            )
+            {
+                int[] faceVertexCounts = [3, 3, 3, 3]
+                int[] faceVertexIndices = [2, 3, 1, 2, 0, 3, 2, 1, 0, 1, 3, 0]
+                point3f[] points = [(-1.8601265, -0.05381194, -0.000011920148), (9.93433, 0.024254484, -1.081574), (12.685682, 2.445888, 0.30282545), (11.44238, -3.0589473, 1.0815501)]
+                matrix4d primvars:skel:geomBindTransform = ( (-1, 0, -8.742277657347586e-8, 0), (0, 1, 0, 0), (8.742277657347586e-8, 0, -1, 0), (-121.03700637817383, -5.034394562244415, 149.76130723953247, 1) )
+                int[] primvars:skel:jointIndices = [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                float[] primvars:skel:jointWeights = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                texCoord2f[] primvars:st = [(0.50007856, 0.06440876), (0.375, 0.25), (0.625, 0.25), (0.125, 0.74172723), (0.36097348, 0.6198436), (0.125, 0.49999997), (0.43061447, 1), (0.625, 1), (0.4996565, 0.6186246), (0.625, 0.25), (0.375, 0.25), (0.4996565, 0.6186246)] (
+                    interpolation = "faceVarying"
+                )
+                rel skel:skeleton = </roboticArm/Rig/Armature>
+                matrix4d xformOp:transform = ( (-1, 0, -8.742277657347586e-8, 0), (0, 1, 0, 0), (8.742277657347586e-8, 0, -1, 0), (-121.03700637817383, -5.034394562244415, 149.76130723953247, 1) )
+                uniform token[] xformOpOrder = ["xformOp:transform"]
+            }
+
+            def Mesh "handleR" (
+                prepend apiSchemas = ["SkelBindingAPI"]
+            )
+            {
+                int[] faceVertexCounts = [3, 3, 3, 3]
+                int[] faceVertexIndices = [3, 1, 2, 3, 0, 1, 0, 2, 1, 0, 3, 2]
+                point3f[] points = [(1.8601265, 0.05381192, 0.000011926219), (-12.685682, -2.445888, -0.30282548), (-9.93433, -0.024254471, 1.081574), (-11.44238, 3.0589473, -1.0815501)]
+                matrix4d primvars:skel:geomBindTransform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-121.03700637817383, 5.034389346837997, 149.76130723953247, 1) )
+                int[] primvars:skel:jointIndices = [4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                float[] primvars:skel:jointWeights = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] (
+                    elementSize = 4
+                    interpolation = "vertex"
+                )
+                texCoord2f[] primvars:st = [(0.375, 0.25), (0.50007856, 0.06440879), (0.625, 0.25), (0.125, 0.49999997), (0.36100543, 0.61975384), (0.125, 0.74172723), (0.49980947, 0.61820215), (0.625, 1), (0.43061447, 1), (0.49980947, 0.61820215), (0.375, 0.25), (0.625, 0.25)] (
+                    interpolation = "faceVarying"
+                )
+                rel skel:skeleton = </roboticArm/Rig/Armature>
+                matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (-121.03700637817383, 5.034389346837997, 149.76130723953247, 1) )
+                uniform token[] xformOpOrder = ["xformOp:transform"]
+            }
+        }
+    }
+}
+
