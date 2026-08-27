@@ -14,9 +14,8 @@ logger = get_logger(__name__)
 
 class SkeletonBindingPlan:
     """
-    determine required bones per armature and assign target USD Skeleton prims.
-    Bones used exclusively by a variant are isolated into a dedicated Skeleton prim,
-    while shared bones remain on the root skeleton.
+    one Skeleton prim per armature, shared by every mesh (across all variants and LOD
+    purposes) that is skinned to it - variants only ever change geometry, never the rig.
     """
 
     def __init__(self, asset_item):
@@ -25,48 +24,31 @@ class SkeletonBindingPlan:
         self.mesh_bindings = {}
 
         for armature_obj in asset_item.armature_objects.values():
-            skeletons_before = len(self.skeletons)
             self._plan_armature(armature_obj)
-            if len(self.skeletons) == skeletons_before:
-                logger.warning(
-                    f"Armature '{armature_obj.name}' has no meshes skinned to it - it will not be exported. "
-                    "Check that a mesh has an Armature modifier pointing at it, and that its vertex "
-                    "group names exactly match the armature's bone names."
-                )
 
     def _plan_armature(self, armature_obj):
-        root = self.asset_item.variant_root
         skeleton_name = sanitize_name(armature_obj.name)
-        root_skeleton_path = f"{armature_scope_path(self.asset_item.name, True)}/{skeleton_name}"
+        skeleton_path = f"{armature_scope_path(self.asset_item.name, True)}/{skeleton_name}"
 
-        root_bones = self._bones_for(armature_obj, root.outliner_paths)
-        if root_bones:
-            self.skeletons[root_skeleton_path] = (armature_obj, root_bones)
-            self._bind_meshes(armature_obj, root.outliner_paths, root_skeleton_path, root_bones)
+        all_outliner_paths = self._all_outliner_paths(self.asset_item.variant_root)
+        bones = self._bones_for(armature_obj, all_outliner_paths)
+        if not bones:
+            logger.warning(
+                f"Armature '{armature_obj.name}' has no meshes skinned to it - it will not be exported. "
+                "Check that a mesh has an Armature modifier pointing at it, and that its vertex "
+                "group names exactly match the armature's bone names."
+            )
+            return
 
-        self._plan_variants(armature_obj, root.variant_sets, root_bones, root_skeleton_path, skeleton_name)
+        self.skeletons[skeleton_path] = (armature_obj, bones)
+        self._bind_meshes(armature_obj, all_outliner_paths, skeleton_path, bones)
 
-    def _plan_variants(self, armature_obj, variant_sets, inherited_bones, inherited_skeleton_path, skeleton_name):
-        for variants in variant_sets.values():
-            for variant_name, node in variants.items():
-                node_bones = self._bones_for(armature_obj, node.outliner_paths)
-                extra_bones = [name for name in node_bones if name not in inherited_bones]
-
-                if extra_bones:
-                    combined_names = set(inherited_bones) | set(node_bones)
-                    active_bones = [b.name for b in armature_obj.data.bones if b.name in combined_names]
-                    active_skeleton_path = (
-                        f"{armature_scope_path(self.asset_item.name, True)}/"
-                        f"{skeleton_name}_{sanitize_name(variant_name)}"
-                    )
-                    self.skeletons[active_skeleton_path] = (armature_obj, active_bones)
-                else:
-                    active_bones, active_skeleton_path = inherited_bones, inherited_skeleton_path
-
-                if active_bones:
-                    self._bind_meshes(armature_obj, node.outliner_paths, active_skeleton_path, active_bones)
-
-                self._plan_variants(armature_obj, node.variant_sets, active_bones, active_skeleton_path, skeleton_name)
+    def _all_outliner_paths(self, node):
+        paths = list(node.outliner_paths)
+        for variants in node.variant_sets.values():
+            for child in variants.values():
+                paths.extend(self._all_outliner_paths(child))
+        return paths
 
     def _bind_meshes(self, armature_obj, outliner_paths, skeleton_path, bone_names):
         for outliner_path in outliner_paths:
@@ -95,7 +77,7 @@ class SkeletonBindingPlan:
 
 class ArmatureLayerExporter:
     """
-    export static bind-pose skeletons, separating shared and variant-only bones
+    export one static bind-pose skeleton per armature, shared across all variants
     """
 
     def __init__(self, meter_per_unit, mesh_scale=1.0):
