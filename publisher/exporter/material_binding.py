@@ -20,11 +20,15 @@ class MaterialBindingLayerExporter:
     create a separate layer next to the geometry file for binding data
     """
 
+    def __init__(self, meter_per_unit):
+        self.meter_per_unit = meter_per_unit
+
     def write_for_layer(self, geo_layer_path, asset_item, outliner_paths, has_skeleton=False):
         base_path, extension = os.path.splitext(geo_layer_path)
         binding_layer_path = f"{base_path}_binding{extension}"
 
         stage = Usd.Stage.CreateNew(binding_layer_path)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         self.export(stage, asset_item, outliner_paths, has_skeleton)
         stage.GetRootLayer().Save()
         return binding_layer_path

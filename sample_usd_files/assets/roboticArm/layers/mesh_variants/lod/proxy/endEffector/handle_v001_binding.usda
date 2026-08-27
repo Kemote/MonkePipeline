@@ -1,4 +1,7 @@
 #usda 1.0
+(
+    metersPerUnit = 1
+)
 
 over "roboticArm"
 {

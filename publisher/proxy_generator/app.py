@@ -47,9 +47,9 @@ class ProxyGenerator:
         for proxy_collection in self.proxy_collections:
             try:
                 bpy_collections.remove(proxy_collection, do_unlink=True)
-            except:
-                pass
- 
+            except Exception as err:
+                logger.warning(f"An error occure during cleaning scene from proxy meshes: {err}")
+                
     def generate_proxy(self, source_mesh, source_path, add_postfix):
         """
         method which generate lod proxy mesh and put it to the appropriate collection
@@ -91,8 +91,7 @@ class ProxyGenerator:
         decimate_mod.ratio = decimate_ratio
         with bpy.context.temp_override(active_object=mesh, selected_editable_objects=[mesh]):
             bpy.context.view_layer.objects.active = mesh
-            for mod in mesh.modifiers:
-                bpy.ops.object.modifier_apply(modifier=mod.name)
+            bpy.ops.object.modifier_apply(modifier=decimate_mod.name)
 
     @staticmethod
     def get_or_create_collection_path(collection_path):

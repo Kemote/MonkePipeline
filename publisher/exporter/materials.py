@@ -30,13 +30,15 @@ class MaterialsLayerExporter:
     Advanced material networks are not yet supported.
     """
 
-    def __init__(self, textures_dir):
+    def __init__(self, textures_dir, meter_per_unit):
         self.textures_dir = textures_dir
+        self.meter_per_unit = meter_per_unit
         os.makedirs(self.textures_dir, exist_ok=True)
 
     def export(self, output_path, asset_item):
         logger.debug("Exporting materials...")
         stage = Usd.Stage.CreateNew(output_path)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         looks_path = looks_scope_path(asset_item.name, bool(asset_item.armature_objects))
         UsdGeom.Scope.Define(stage, looks_path)
 

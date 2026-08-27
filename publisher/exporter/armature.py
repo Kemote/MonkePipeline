@@ -3,8 +3,8 @@ from publisher.exporter.common import (
     armature_scope_path,
     bone_ancestors,
     find_armature_modifier,
-    matrix_to_gf,
     sanitize_name,
+    scaled_matrix_to_gf,
 )
 from publisher.monke_logging import get_logger
 
@@ -98,8 +98,13 @@ class ArmatureLayerExporter:
     export static bind-pose skeletons, separating shared and variant-only bones
     """
 
+    def __init__(self, meter_per_unit, mesh_scale=1.0):
+        self.meter_per_unit = meter_per_unit
+        self.mesh_scale = mesh_scale
+
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         if not asset_item.armature_objects:
             return None
 
@@ -116,19 +121,21 @@ class ArmatureLayerExporter:
     def _write_skeleton(self, stage, skeleton_path, armature_obj, bone_names):
         skeleton = UsdSkel.Skeleton.Define(stage, skeleton_path)
         bones = [armature_obj.data.bones[name] for name in bone_names]
+        # UsdSkel requires a joint's parent to precede it in the joints array
+        bones.sort(key=lambda bone: len(bone_ancestors(bone)))
 
         joint_tokens = {}
         for bone in bones:
             self._joint_token(bone, joint_tokens)
 
         joints = [joint_tokens[bone.name] for bone in bones]
-        bind_transforms = [matrix_to_gf(bone.matrix_local) for bone in bones]
-        rest_transforms = [self._local_rest_matrix(bone, bone_names) for bone in bones]
+        bind_transforms = [scaled_matrix_to_gf(bone.matrix_local, self.mesh_scale) for bone in bones]
+        rest_transforms = [self._local_rest_matrix(bone, bone_names, self.mesh_scale) for bone in bones]
 
         skeleton.CreateJointsAttr(joints)
         skeleton.CreateBindTransformsAttr(bind_transforms)
         skeleton.CreateRestTransformsAttr(rest_transforms)
-        skeleton.AddTransformOp().Set(matrix_to_gf(armature_obj.matrix_world))
+        skeleton.AddTransformOp().Set(scaled_matrix_to_gf(armature_obj.matrix_world, self.mesh_scale))
 
     @classmethod
     def _joint_token(cls, bone, joint_tokens):
@@ -145,7 +152,7 @@ class ArmatureLayerExporter:
         return token
 
     @staticmethod
-    def _local_rest_matrix(bone, included_bone_names):
+    def _local_rest_matrix(bone, included_bone_names, mesh_scale):
         if bone.parent is None or bone.parent.name not in included_bone_names:
-            return matrix_to_gf(bone.matrix_local)
-        return matrix_to_gf(bone.parent.matrix_local.inverted() @ bone.matrix_local)
+            return scaled_matrix_to_gf(bone.matrix_local, mesh_scale)
+        return scaled_matrix_to_gf(bone.parent.matrix_local.inverted() @ bone.matrix_local, mesh_scale)

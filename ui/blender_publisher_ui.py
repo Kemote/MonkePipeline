@@ -139,6 +139,15 @@ class MonkeUsdExportDialog(QDialog):
         units_per_meter_lay.addWidget(self.meter_per_unit)
         options_layout.addLayout(units_per_meter_lay)
 
+        # mesh scale
+        mesh_scale_lay = QHBoxLayout()
+        mesh_scale_lay.addWidget(QLabel("Mesh scale"))
+        self.mesh_scale = QLineEdit()
+        self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
+        self.mesh_scale.setText("100.0")
+        mesh_scale_lay.addWidget(self.mesh_scale)
+        options_layout.addLayout(mesh_scale_lay)
+
         # create proxy settings
         options_layout.addSpacing(25)
         options_layout.addWidget(QLabel("Auto Proxy Generation:"))
@@ -236,6 +245,7 @@ class MonkeUsdExportDialog(QDialog):
             "up_axis": self.up_axis_combo.currentText(),
             "collected_item": collected_items,
             "meter_per_unit": float(self.meter_per_unit.text()),
+            "mesh_scale": float(self.mesh_scale.text()),
             "generate_proxy": self.proxy_generator_check.isChecked(),
             "decimate_ratio": self.decimate_slider.value_float()
         }

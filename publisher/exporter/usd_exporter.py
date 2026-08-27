@@ -20,6 +20,7 @@ class UsdExporter:
         }.get(settings["up_axis"], UsdGeom.Tokens.z)
         self.extension = settings["extension"]
         self.meter_per_unit = settings["meter_per_unit"]
+        self.mesh_scale = settings.get("mesh_scale", 1.0)
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
@@ -63,17 +64,17 @@ class UsdExporter:
                 "project_name": fields["project_name"],
                 "name": fields["name"],
             }
-            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output)
+            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
 
         if self.export_mat:
-            materials_exporter = MaterialsLayerExporter(textures_output)
+            materials_exporter = MaterialsLayerExporter(textures_output, self.meter_per_unit)
             self._write_layer(look_file_path, materials_exporter, asset_item)
             layer_paths_dict["look"] = look_file_path
 
         if self.export_armature:
-            armature_exporter = ArmatureLayerExporter()
+            armature_exporter = ArmatureLayerExporter(self.meter_per_unit, self.mesh_scale)
             self._write_layer(rig_file_path, armature_exporter, asset_item)
             layer_paths_dict["rig"] = rig_file_path
 

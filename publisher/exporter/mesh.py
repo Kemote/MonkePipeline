@@ -8,10 +8,11 @@ from publisher.exporter.common import (
     asset_root_path,
     geom_scope_path,
     is_lod_set,
+    local_skeleton_path,
     lod_purpose,
-    matrix_to_gf,
     mesh_prim_path,
     sanitize_name,
+    scaled_matrix_to_gf,
     skel_root_path,
 )
 from templates.templates import Templates
@@ -29,15 +30,18 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir):
+    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
         self.variants_dir = variants_dir
-        self.binding_exporter = MaterialBindingLayerExporter()
+        self.meter_per_unit = meter_per_unit
+        self.mesh_scale = mesh_scale
+        self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
 
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         has_skeleton = bool(asset_item.armature_objects)
         if has_skeleton:
             UsdSkel.Root.Define(stage, skel_root_path(asset_item.name))
@@ -97,12 +101,12 @@ class MeshLayerExporter:
                     over_variant_set.SetVariantSelection(variant_name)
                 yield variant_data
 
-    def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False):
+    def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False, in_variant_layer=False):
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
             prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path, has_skeleton)
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
-            self._write_mesh(stage, prim_path, mesh, binding)
+            self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
 
     def _author_variant_sets(self,
                              stage: Usd.Stage,
@@ -153,6 +157,7 @@ class MeshLayerExporter:
         variant_layer_path = self.templates.get_new_file_path(self.variant_layer_template, fields)
         os.makedirs(os.path.dirname(variant_layer_path), exist_ok=True)
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
+        UsdGeom.SetStageMetersPerUnit(variant_stage, self.meter_per_unit)
         UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
 
@@ -163,7 +168,7 @@ class MeshLayerExporter:
             )
             purpose_scope.CreatePurposeAttr().Set(purpose)
 
-        self._write_meshes(variant_stage, asset_item, node.outliner_paths, skeleton_plan)
+        self._write_meshes(variant_stage, asset_item, node.outliner_paths, skeleton_plan, in_variant_layer=True)
         self._attach_binding_layer(variant_stage, asset_item, node.outliner_paths)
 
         if node.variant_sets:
@@ -191,14 +196,17 @@ class MeshLayerExporter:
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)
         geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
-    def _write_mesh(self, stage, prim_path, mesh_obj, skeleton_binding=None):
+    def _write_mesh(self, stage, prim_path, mesh_obj, asset_name, skeleton_binding=None, in_variant_layer=False):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
         mesh_data = mesh_obj.data
 
+        scale = self.mesh_scale
         usd_mesh.CreateFaceVertexCountsAttr([len(p.vertices) for p in mesh_data.polygons])
         usd_mesh.CreateFaceVertexIndicesAttr([idx for p in mesh_data.polygons for idx in p.vertices])
-        usd_mesh.CreatePointsAttr([Gf.Vec3f(v.co.x, v.co.y, v.co.z) for v in mesh_data.vertices])
-        usd_mesh.AddTransformOp().Set(matrix_to_gf(mesh_obj.matrix_world))
+        usd_mesh.CreatePointsAttr(
+            [Gf.Vec3f(v.co.x * scale, v.co.y * scale, v.co.z * scale) for v in mesh_data.vertices]
+        )
+        usd_mesh.AddTransformOp().Set(scaled_matrix_to_gf(mesh_obj.matrix_world, scale))
 
         if mesh_data.uv_layers.active:
             uv_attr = UsdGeom.PrimvarsAPI(usd_mesh).CreatePrimvar(
@@ -207,14 +215,16 @@ class MeshLayerExporter:
             uv_attr.Set([Gf.Vec2f(uv.uv.x, uv.uv.y) for uv in mesh_data.uv_layers.active.data])
 
         if skeleton_binding:
-            self._write_skin_binding(usd_mesh, mesh_obj, skeleton_binding)
+            self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
 
     @staticmethod
-    def _write_skin_binding(usd_mesh, mesh_obj, skeleton_binding):
+    def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):
         """
         create armature binding
         """
         skeleton_path, bone_names = skeleton_binding
+        if in_variant_layer:
+            skeleton_path = local_skeleton_path(asset_name, skeleton_path)
         bone_index = {name: index for index, name in enumerate(bone_names)}
 
         binding_api = UsdSkel.BindingAPI.Apply(usd_mesh.GetPrim())
@@ -223,7 +233,7 @@ class MeshLayerExporter:
         indices, weights = MeshLayerExporter._per_vertex_weights(mesh_obj, bone_index)
         binding_api.CreateJointIndicesPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(indices)
         binding_api.CreateJointWeightsPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(weights)
-        binding_api.CreateGeomBindTransformAttr().Set(matrix_to_gf(mesh_obj.matrix_world))
+        binding_api.CreateGeomBindTransformAttr().Set(scaled_matrix_to_gf(mesh_obj.matrix_world, mesh_scale))
 
     @staticmethod
     def _per_vertex_weights(mesh_obj, bone_index):

@@ -1,6 +1,7 @@
 #usda 1.0
 (
     framesPerSecond = 30
+    metersPerUnit = 1
     timeCodesPerSecond = 30
 )
 
