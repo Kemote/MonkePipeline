@@ -147,10 +147,18 @@ class MonkeUsdExportDialog(QDialog):
         self.mesh_scale.setText("100.0")
         mesh_scale_lay.addWidget(self.mesh_scale)
         options_layout.addLayout(mesh_scale_lay)
-
-        # create proxy settings
         options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Auto Proxy Generation:"))
+
+        # add apply modifiers checkbox
+        self.apply_modifiers_check = QCheckBox("Apply Modifiers")
+        self.apply_modifiers_check.setToolTip(
+            "Export the modifier-evaluated (viewport) mesh instead of the base mesh,"
+            " without destructively applying modifiers on the source objects."
+        )
+        self.apply_modifiers_check.setChecked(True)
+        options_layout.addWidget(self.apply_modifiers_check)
+
+        # create proxy options
         decimate_ratio_lay = QHBoxLayout()
         decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
         self.decimate_slider = FloatSlider()
@@ -166,7 +174,7 @@ class MonkeUsdExportDialog(QDialog):
         self.proxy_generator_check.setChecked(True)
         options_layout.addWidget(self.proxy_generator_check)
         options_layout.addLayout(decimate_ratio_lay)
-        
+
         # create export option checkers
         options_layout.addSpacing(25)
         options_layout.addWidget(QLabel("Include layers:"))
@@ -242,6 +250,7 @@ class MonkeUsdExportDialog(QDialog):
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
+            "apply_modifiers": self.apply_modifiers_check.isChecked(),
             "up_axis": self.up_axis_combo.currentText(),
             "collected_item": collected_items,
             "meter_per_unit": float(self.meter_per_unit.text()),

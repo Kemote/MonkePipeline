@@ -24,6 +24,7 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
+        self.apply_modifiers = settings.get("apply_modifiers", True)
 
     def export(self, asset_item):
         asset_name = asset_item.name
@@ -64,7 +65,9 @@ class UsdExporter:
                 "project_name": fields["project_name"],
                 "name": fields["name"],
             }
-            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale)
+            mesh_exporter = MeshLayerExporter(
+                variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale, self.apply_modifiers
+            )
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
 

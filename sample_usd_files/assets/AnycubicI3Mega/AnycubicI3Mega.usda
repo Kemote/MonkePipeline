@@ -1,0 +1,23 @@
+#usda 1.0
+(
+    customLayerData = {
+        string userName = "Name Surname"
+    }
+    defaultPrim = "AnycubicI3Mega"
+    framesPerSecond = 30
+    metersPerUnit = 1
+    subLayers = [
+        @monkeDisc://assets/AnycubicI3Mega/layers/AnycubicI3Mega_geom_<version>.usda:latest@,
+        @monkeDisc://assets/AnycubicI3Mega/layers/AnycubicI3Mega_look_<version>.usda:latest@,
+        @monkeDisc://assets/AnycubicI3Mega/layers/AnycubicI3Mega_rig_<version>.usda:latest@
+    ]
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+
+over "AnycubicI3Mega" (
+    kind = "component"
+)
+{
+}
+

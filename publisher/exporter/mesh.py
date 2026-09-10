@@ -1,5 +1,6 @@
 import os
 
+import bpy
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
 from publisher import collector
 from publisher.exporter.armature import SkeletonBindingPlan
@@ -30,13 +31,15 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0):
+    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0, apply_modifiers=True):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
         self.variants_dir = variants_dir
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
+        self.apply_modifiers = apply_modifiers
+        self._depsgraph = None
         self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
 
     def export(self, output_path, asset_item):
@@ -196,9 +199,21 @@ class MeshLayerExporter:
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)
         geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
+    def _get_evaluated_object(self, mesh_obj):
+        """
+        returns the modifier-evaluated version of mesh_obj (as seen in the viewport) when
+        apply_modifiers is enabled, without destructively applying anything to the source object
+        """
+        if not self.apply_modifiers or not mesh_obj.modifiers:
+            return mesh_obj
+        if self._depsgraph is None:
+            self._depsgraph = bpy.context.evaluated_depsgraph_get()
+        return mesh_obj.evaluated_get(self._depsgraph)
+
     def _write_mesh(self, stage, prim_path, mesh_obj, asset_name, skeleton_binding=None, in_variant_layer=False):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
-        mesh_data = mesh_obj.data
+        eval_obj = self._get_evaluated_object(mesh_obj)
+        mesh_data = eval_obj.data
 
         scale = self.mesh_scale
         usd_mesh.CreateFaceVertexCountsAttr([len(p.vertices) for p in mesh_data.polygons])
@@ -215,12 +230,14 @@ class MeshLayerExporter:
             uv_attr.Set([Gf.Vec2f(uv.uv.x, uv.uv.y) for uv in mesh_data.uv_layers.active.data])
 
         if skeleton_binding:
-            self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
+            self._write_skin_binding(usd_mesh, eval_obj, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
 
     @staticmethod
-    def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):
+    def _write_skin_binding(usd_mesh, eval_obj, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):
         """
-        create armature binding
+        create armature binding. eval_obj provides the vertices matching the geometry
+        actually written to USD (which may be modifier-evaluated), while mesh_obj is the
+        source object whose vertex group names are resolved against the skeleton's bones.
         """
         skeleton_path, bone_names = skeleton_binding
         if in_variant_layer:
@@ -230,21 +247,22 @@ class MeshLayerExporter:
         binding_api = UsdSkel.BindingAPI.Apply(usd_mesh.GetPrim())
         binding_api.CreateSkeletonRel().SetTargets([Sdf.Path(skeleton_path)])
 
-        indices, weights = MeshLayerExporter._per_vertex_weights(mesh_obj, bone_index)
+        indices, weights = MeshLayerExporter._per_vertex_weights(eval_obj, mesh_obj, bone_index)
         binding_api.CreateJointIndicesPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(indices)
         binding_api.CreateJointWeightsPrimvar(constant=False, elementSize=MAX_JOINT_INFLUENCES).Set(weights)
         binding_api.CreateGeomBindTransformAttr().Set(scaled_matrix_to_gf(mesh_obj.matrix_world, mesh_scale))
 
     @staticmethod
-    def _per_vertex_weights(mesh_obj, bone_index):
+    def _per_vertex_weights(eval_obj, mesh_obj, bone_index):
         indices = []
         weights = []
-        for vertex in mesh_obj.data.vertices:
+        for vertex in eval_obj.data.vertices:
             influences = sorted(
                 (
                     (bone_index[mesh_obj.vertex_groups[group.group].name], group.weight)
                     for group in vertex.groups
-                    if mesh_obj.vertex_groups[group.group].name in bone_index
+                    if group.group < len(mesh_obj.vertex_groups)
+                    and mesh_obj.vertex_groups[group.group].name in bone_index
                 ),
                 key=lambda pair: pair[1],
                 reverse=True,

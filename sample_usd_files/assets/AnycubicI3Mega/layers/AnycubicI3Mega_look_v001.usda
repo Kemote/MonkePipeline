@@ -1,0 +1,260 @@
+#usda 1.0
+(
+    framesPerSecond = 30
+    metersPerUnit = 1
+    timeCodesPerSecond = 30
+)
+
+def "AnycubicI3Mega"
+{
+    def Scope "Looks"
+    {
+        def Material "glass"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/glass/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.64745486, 0.77823246, 0.80000746)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 0.7
+                float inputs:roughness = 0
+                token outputs:surface
+            }
+        }
+
+        def Material "thermalpad"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/thermalpad/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.77246344, 0.7156333, 0.6109505)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "blackMetal"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/blackMetal/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.060198456, 0.060198456, 0.060198456)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0.7
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "blackPlastic"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/blackPlastic/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.02154738, 0.02154738, 0.02154738)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.21130955
+                token outputs:surface
+            }
+        }
+
+        def Material "steel"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/steel/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.7854229, 0.80000746, 0.567313)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5505952
+                token outputs:surface
+            }
+        }
+
+        def Material "screwMetal"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/screwMetal/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.08164829, 0.08164829, 0.08164829)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.6041667
+                token outputs:surface
+            }
+        }
+
+        def Material "LCDscreen"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/LCDscreen/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.014193131, 0.03579624, 0.044767126)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "powerSwitch"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/powerSwitch/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.45158496, 0, 0.000626265)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "polishedMetal"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/polishedMetal/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.8, 0.8, 0.8)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.3
+                token outputs:surface
+            }
+        }
+
+        def Material "brushedMetal"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/brushedMetal/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.8, 0.8, 0.8)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.4
+                token outputs:surface
+            }
+        }
+
+        def Material "coper"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/coper/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.8000157, 0.5687401, 0.060461305)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.7529762
+                token outputs:surface
+            }
+        }
+
+        def Material "adhesive_regular"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/adhesive_regular/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.02004344, 0.02004344, 0.02004344)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+
+        def Material "adhesive_thermalView"
+        {
+            token outputs:surface.connect = </AnycubicI3Mega/Looks/adhesive_thermalView/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0, 0.0014132658, 1)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+    }
+}
+
