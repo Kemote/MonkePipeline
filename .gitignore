@@ -31,3 +31,10 @@ dist/
 
 # machine-specific pipeline config (see pipeline.env.example)
 pipeline.env
+
+# 3D Assets
+*.blend
+*.usda
+*.usd
+*.usdc
+*.usda
