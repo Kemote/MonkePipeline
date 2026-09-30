@@ -31,3 +31,9 @@ dist/
 
 # machine-specific pipeline config (see pipeline.env.example)
 pipeline.env
+
+# OpenUSD files
+*.usd
+*.usda
+*.usdc
+*.usdz
