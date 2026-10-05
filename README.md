@@ -44,6 +44,8 @@ without hardcoded paths.
   interpreter can see (Blender doesn't ship PySide6; `run_blender.py` appends
   your venv's `site-packages` to `sys.path` at launch instead of installing
   into Blender itself).
+- **OdenGraphQt**, installed into a Python environment that Blender's own, it's 
+  important for exporting nodoes.
 - *(Optional)* **usdview**, if you want to inspect published assets outside
   Blender.
 - *(Optional)* **Omniverse Kit** (via `kit-app-template`), if you want to

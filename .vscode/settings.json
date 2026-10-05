@@ -9,5 +9,6 @@
             "name": "pxr",
             "depth": 10,
         }
-    ]
+    ],
+    "cmake.sourceDirectory": "/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver"
 }

@@ -87,13 +87,14 @@ QPushButton:pressed {
     background-color: #2a2a2a;
 }
 
-QPushButton:default {
+/* opt-in highlight for the main action: btn.setProperty("primary", True) */
+QPushButton[primary="true"] {
     background-color: #5680c2;
     border: 1px solid #3d5f8f;
     color: #ffffff;
 }
 
-QPushButton:default:hover {
+QPushButton[primary="true"]:hover {
     background-color: #6690d2;
 }
 
