@@ -2,7 +2,7 @@ import sys
 import bpy
 import logging
 
-from ui.node_exporter import MonkeNodeGraphWidget
+from ui.node_exporter import MonkeNodeGraphWidget, AssetNode, UsdOutputNode
 
 from pathlib import Path
 from publisher.exporter import UsdExporter
@@ -75,6 +75,55 @@ class FloatSlider(QSlider):
     def set_value_float(self, val: float):
         self.setValue(int(round(val * self.factor)))
 
+
+class StandardGraphCreator:
+    def __init__(self, node_graph):
+        self.node_graph = node_graph
+        self.asset_collector = AssetsCollector()
+        self.asset_collector.collect()
+        
+    def create(self):
+        # create export nodes
+        assets_node_list = []
+        assets_usd_out_list = []
+        asset_node_h_margin = 50
+        new_asset_node_pos = [0.0, 0.0]
+
+        for item in self.asset_collector.items:
+            asset_node : AssetNode = self.node_graph.create_node("nodes.asset.AssetNode")
+            asset_node.set_name(item.name)
+            asset_node.set_collection_path(item.path)
+            asset_node.collected_item = item
+            asset_node.set_pos(*new_asset_node_pos)
+            new_asset_node_pos[1] += (asset_node.get_size()[1] + asset_node_h_margin)
+            assets_node_list.append(asset_node)
+
+            # add separate usd output nodes for every asset
+            for output_name, output_port in asset_node.outputs().items():
+                usd_out_node : UsdOutputNode = self.node_graph.create_node("nodes.output.UsdOutputNode")
+                usd_out_node.set_input(0, output_port)
+                assets_usd_out_list.append(usd_out_node)
+
+            # add backdrop for this asset outputs
+            # self.node_graph.auto_layout_nodes()
+            asset_out_backdrop = self.node_graph.create_node("Backdrop")
+            asset_out_backdrop.set_name(f"{item.name} output layers")
+            asset_out_backdrop.wrap_nodes(assets_usd_out_list)
+
+            asset_main_layer = self.node_graph.create_node("nodes.output.UsdOutputNode")
+            for idx, out_node in enumerate(assets_usd_out_list):
+                out_port = out_node.get_output("output path")
+                asset_main_layer.set_input(idx + 1, out_port)
+
+            assets_usd_out_list = []
+                
+        if assets_node_list:
+            # self.node_graph.auto_layout_nodes()
+            assets_backdrop = self.node_graph.create_node("Backdrop")
+            assets_backdrop.set_name("Assets")
+            assets_backdrop.wrap_nodes(assets_node_list)
+
+
 class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -138,25 +187,10 @@ class MonkeUsdExportDialog(QDialog):
         main_layout.addLayout(main_view_layout)
         main_layout.addLayout(btn_layout)
 
-        # collect asset items
-        self.asset_collector = AssetsCollector()
-        self.asset_collector.collect()
+        graph_creator = StandardGraphCreator(self.node_graph)
+        graph_creator.create()
 
-        assed_nodes = []
-        for item in self.asset_collector.items:
-            asset_node = self.node_graph.create_node("nodes.asset.AssetNode")
-            asset_node.set_name(item.name)
-            asset_node.set_collection_path(item.path)
-            asset_node.collected_item = item
-            assed_nodes.append(asset_node)
-
-        if assed_nodes:
-            self.node_graph.auto_layout_nodes()
-            asset_backdrop = self.node_graph.create_node("Backdrop")
-            asset_backdrop.wrap_nodes(assed_nodes)
-
-
-
+        
     def export(self):
         logger.info("Exporting...")
         return
