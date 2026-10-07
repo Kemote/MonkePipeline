@@ -108,8 +108,9 @@ class MonkeUsdExportDialog(QDialog):
         self.splitter.addWidget(log_panel)
 
         # add node graph
-        self.node_graph = MonkeNodeGraphWidget()
-        self.splitter.addWidget(self.node_graph)
+        self.node_graph_widget = MonkeNodeGraphWidget()
+        self.node_graph = self.node_graph_widget.node_graph
+        self.splitter.addWidget(self.node_graph_widget)
         self.splitter.setCollapsible(1, False)
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 1)
@@ -130,13 +131,31 @@ class MonkeUsdExportDialog(QDialog):
         # add buttons
         export_btn = QPushButton("Export")
         export_btn.setFixedWidth(200)
-        # export_btn.setAutoDefault(False)
         export_btn.clicked.connect(self.export)
         btn_layout.addStretch()
         btn_layout.addWidget(export_btn)
 
         main_layout.addLayout(main_view_layout)
         main_layout.addLayout(btn_layout)
+
+        # collect asset items
+        self.asset_collector = AssetsCollector()
+        self.asset_collector.collect()
+
+        assed_nodes = []
+        for item in self.asset_collector.items:
+            asset_node = self.node_graph.create_node("nodes.asset.AssetNode")
+            asset_node.set_name(item.name)
+            asset_node.set_collection_path(item.path)
+            asset_node.collected_item = item
+            assed_nodes.append(asset_node)
+
+        if assed_nodes:
+            self.node_graph.auto_layout_nodes()
+            asset_backdrop = self.node_graph.create_node("Backdrop")
+            asset_backdrop.wrap_nodes(assed_nodes)
+
+
 
     def export(self):
         logger.info("Exporting...")

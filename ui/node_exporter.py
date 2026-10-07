@@ -18,6 +18,8 @@ class AssetNode(BaseNode):
     
     def __init__(self):
         super(AssetNode, self).__init__()
+        self.collected_item = None
+        
         self.add_text_input(
             name="collection_path",
             label="Collection path",
@@ -29,13 +31,17 @@ class AssetNode(BaseNode):
             state=True
         )
         self.add_checkbox(
-            name="separate_variants",
-            label="Separate variants",
+            name="generate_lod",
+            label="Generate LOD",
             state=True
         )
+        # TODO: dodaj suwak
         self.add_output("geometry", color=ASSET_COL)
         self.add_output("look", color=ASSET_COL)
         self.add_output("armature", color=ASSET_COL)
+
+    def set_collection_path(self, path_str):
+        self.set_property("collection_path", path_str)
 
 
 class UsdOutputNode(BaseNode):
