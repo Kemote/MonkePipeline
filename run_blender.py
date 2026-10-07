@@ -16,11 +16,11 @@ def get_pipeline_env(env):
     }
 
 
-def write_bootstrap_script(pyside6_site_packages):
+def write_bootstrap_script(MONKE_SITE_PACKAGES):
     script = textwrap.dedent(f"""\
         import sys
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
-        sys.path.append({pyside6_site_packages!r})
+        sys.path.append({MONKE_SITE_PACKAGES!r})
 
         from publisher_plugin import register
         register()
@@ -36,7 +36,7 @@ def write_bootstrap_script(pyside6_site_packages):
 
 def run_blender():
     env = load_pipeline_env()
-    bootstrap_script = write_bootstrap_script(env["PYSIDE6_SITE_PACKAGES"])
+    bootstrap_script = write_bootstrap_script(env["MONKE_SITE_PACKAGES"])
     command = ["flatpak", "run"]
     for name, value in get_pipeline_env(env).items():
         command.append(f"--env={name}={value}")

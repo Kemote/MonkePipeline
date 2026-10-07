@@ -2,6 +2,8 @@ import sys
 import bpy
 import logging
 
+from ui.node_exporter import MonkeNodeGraphWidget
+
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
@@ -20,7 +22,10 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QComboBox,
-    QSlider
+    QSlider,
+    QSizePolicy,
+    QSplitter,
+    QWidget
 )
 
 
@@ -70,24 +75,48 @@ class FloatSlider(QSlider):
     def set_value_float(self, val: float):
         self.setValue(int(round(val * self.factor)))
 
-
 class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("USD Export")
-        self.setMinimumWidth(400)
+        self.setWindowTitle("Monke OpenUSD Exporter")
+        self.setMinimumWidth(1000)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
 
-        options_layout = QVBoxLayout()
-        logging_layout = QVBoxLayout()
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(25, 25, 25, 25)
-        main_layout.addLayout(options_layout)
-        main_layout.addLayout(logging_layout)
-        
+        main_layout = QVBoxLayout(self)
+        main_view_layout = QHBoxLayout()
+        main_view_layout.setContentsMargins(25, 25, 25, 25)
+        btn_layout = QHBoxLayout()
+
+        # toggle button to roll the log panel up to the side
+        self.log_toggle_btn = QPushButton("◀")
+        self.log_toggle_btn.setFixedWidth(20)
+        self.log_toggle_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.log_toggle_btn.setToolTip("Collapse / expand logs")
+        self.log_toggle_btn.setAutoDefault(False)
+        self.log_toggle_btn.clicked.connect(self._toggle_log_panel)
+        main_view_layout.addWidget(self.log_toggle_btn)
+
+        # splitter lets the user drag the log panel width
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.setChildrenCollapsible(True)
+        self.splitter.splitterMoved.connect(self._update_log_toggle_btn)
+        main_view_layout.addWidget(self.splitter)
+
+        log_panel = QWidget()
+        logging_layout = QVBoxLayout(log_panel)
+        logging_layout.setContentsMargins(0, 0, 0, 0)
+        self.splitter.addWidget(log_panel)
+
+        # add node graph
+        self.node_graph_widget = MonkeNodeGraphWidget()
+        self.node_graph = self.node_graph_widget.node_graph
+        self.splitter.addWidget(self.node_graph_widget)
+        self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
+
         # add logging
         self.log_display = QPlainTextEdit()
-        self.log_display.setMinimumWidth(500)
         self.log_display.setDisabled(True)
         logging_layout.addWidget(self.log_display)
         self.log_handler = QtLogHandler()
@@ -97,162 +126,212 @@ class MonkeUsdExportDialog(QDialog):
         pipeline_logger = logging.getLogger("mainMonkeLogger")
         pipeline_logger.addHandler(self.log_handler)
 
+        self.splitter.setSizes([400, 1500])
+
+        # add buttons
+        export_btn = QPushButton("Export")
+        export_btn.setFixedWidth(200)
+        export_btn.clicked.connect(self.export)
+        btn_layout.addStretch()
+        btn_layout.addWidget(export_btn)
+
+        main_layout.addLayout(main_view_layout)
+        main_layout.addLayout(btn_layout)
+
         # collect asset items
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
 
-        # extension combo box
-        extension_row = QHBoxLayout()
-        self.extension_combo = QComboBox()
-        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
-        extension_row.addWidget(QLabel("Extension:"))
-        extension_row.addWidget(self.extension_combo)
-        options_layout.addLayout(extension_row)
-
-        # assets selector
-        options_layout.addWidget(QLabel("Assets to export:"))
-        self.assets_checkboxes = []
-        assets_column = QVBoxLayout()
+        assed_nodes = []
         for item in self.asset_collector.items:
-            asseet_checkbox = QCheckBox(item.name)
-            asseet_checkbox.setChecked(True)
-            self.assets_checkboxes.append(asseet_checkbox)
-            assets_column.addWidget(asseet_checkbox)
-        options_layout.addLayout(assets_column)
+            asset_node = self.node_graph.create_node("nodes.asset.AssetNode")
+            asset_node.set_name(item.name)
+            asset_node.set_collection_path(item.path)
+            asset_node.collected_item = item
+            assed_nodes.append(asset_node)
 
-        # up axis combo box
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Stage settings:"))
-        up_axis_row = QHBoxLayout()
-        self.up_axis_combo = QComboBox()
-        self.up_axis_combo.addItems(["z", "y"])
-        up_axis_row.addWidget(QLabel("Up Axis"))
-        up_axis_row.addWidget(self.up_axis_combo)
-        options_layout.addLayout(up_axis_row)
+        if assed_nodes:
+            self.node_graph.auto_layout_nodes()
+            asset_backdrop = self.node_graph.create_node("Backdrop")
+            asset_backdrop.wrap_nodes(assed_nodes)
 
-        # units per meter
-        units_per_meter_lay = QHBoxLayout()
-        units_per_meter_lay.addWidget(QLabel("Units per meter"))
-        self.meter_per_unit = QLineEdit()
-        self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
-        self.meter_per_unit.setText("1.0")
-        units_per_meter_lay.addWidget(self.meter_per_unit)
-        options_layout.addLayout(units_per_meter_lay)
 
-        # mesh scale
-        mesh_scale_lay = QHBoxLayout()
-        mesh_scale_lay.addWidget(QLabel("Mesh scale"))
-        self.mesh_scale = QLineEdit()
-        self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
-        self.mesh_scale.setText("100.0")
-        mesh_scale_lay.addWidget(self.mesh_scale)
-        options_layout.addLayout(mesh_scale_lay)
 
-        # create proxy settings
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Auto Proxy Generation:"))
-        decimate_ratio_lay = QHBoxLayout()
-        decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
-        self.decimate_slider = FloatSlider()
-        self.decimate_slider.set_value_float(0.025)
-        self.ratio_txt = QLineEdit("0.025")
-        self.ratio_txt.setValidator(self._create_double_validator(0.00001, 1.0))
-        self.ratio_txt.setFixedWidth(100)
-        self.ratio_txt.editingFinished.connect(self._sync_ratio_slider)
-        decimate_ratio_lay.addWidget(self.decimate_slider)
-        decimate_ratio_lay.addWidget(self.ratio_txt)
-        self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
-        self.proxy_generator_check = QCheckBox("Generate proxy LOD")
-        self.proxy_generator_check.setChecked(True)
-        options_layout.addWidget(self.proxy_generator_check)
-        options_layout.addLayout(decimate_ratio_lay)
+    def export(self):
+        logger.info("Exporting...")
+        return
+    
+#         # collect asset items
+#         self.asset_collector = AssetsCollector()
+#         self.asset_collector.collect()
+
+#         # extension combo box
+#         extension_row = QHBoxLayout()
+#         self.extension_combo = QComboBox()
+#         self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
+#         extension_row.addWidget(QLabel("Extension:"))
+#         extension_row.addWidget(self.extension_combo)
+#         options_layout.addLayout(extension_row)
+
+#         # assets selector
+#         options_layout.addWidget(QLabel("Assets to export:"))
+#         self.assets_checkboxes = []
+#         assets_column = QVBoxLayout()
+#         for item in self.asset_collector.items:
+#             asseet_checkbox = QCheckBox(item.name)
+#             asseet_checkbox.setChecked(True)
+#             self.assets_checkboxes.append(asseet_checkbox)
+#             assets_column.addWidget(asseet_checkbox)
+#         options_layout.addLayout(assets_column)
+
+#         # up axis combo box
+#         options_layout.addSpacing(25)
+#         options_layout.addWidget(QLabel("Stage settings:"))
+#         up_axis_row = QHBoxLayout()
+#         self.up_axis_combo = QComboBox()
+#         self.up_axis_combo.addItems(["z", "y"])
+#         up_axis_row.addWidget(QLabel("Up Axis"))
+#         up_axis_row.addWidget(self.up_axis_combo)
+#         options_layout.addLayout(up_axis_row)
+
+#         # units per meter
+#         units_per_meter_lay = QHBoxLayout()
+#         units_per_meter_lay.addWidget(QLabel("Units per meter"))
+#         self.meter_per_unit = QLineEdit()
+#         self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
+#         self.meter_per_unit.setText("1.0")
+#         units_per_meter_lay.addWidget(self.meter_per_unit)
+#         options_layout.addLayout(units_per_meter_lay)
+
+#         # mesh scale
+#         mesh_scale_lay = QHBoxLayout()
+#         mesh_scale_lay.addWidget(QLabel("Mesh scale"))
+#         self.mesh_scale = QLineEdit()
+#         self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
+#         self.mesh_scale.setText("100.0")
+#         mesh_scale_lay.addWidget(self.mesh_scale)
+#         options_layout.addLayout(mesh_scale_lay)
+
+#         # create proxy settings
+#         options_layout.addSpacing(25)
+#         options_layout.addWidget(QLabel("Auto Proxy Generation:"))
+#         decimate_ratio_lay = QHBoxLayout()
+#         decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
+#         self.decimate_slider = FloatSlider()
+#         self.decimate_slider.set_value_float(0.025)
+#         self.ratio_txt = QLineEdit("0.025")
+#         self.ratio_txt.setValidator(self._create_double_validator(0.00001, 1.0))
+#         self.ratio_txt.setFixedWidth(100)
+#         self.ratio_txt.editingFinished.connect(self._sync_ratio_slider)
+#         decimate_ratio_lay.addWidget(self.decimate_slider)
+#         decimate_ratio_lay.addWidget(self.ratio_txt)
+#         self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
+#         self.proxy_generator_check = QCheckBox("Generate proxy LOD")
+#         self.proxy_generator_check.setChecked(True)
+#         options_layout.addWidget(self.proxy_generator_check)
+#         options_layout.addLayout(decimate_ratio_lay)
         
-        # create export option checkers
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Include layers:"))
-        self.geometry_check = QCheckBox("Geometry")
-        self.materials_check = QCheckBox("Materials")
-        self.armature_check = QCheckBox("Armature")
-        for check in (
-            self.geometry_check,
-            self.materials_check,
-            self.armature_check,
-        ):
-            check.setChecked(True)
-            options_layout.addWidget(check)
+#         # create export option checkers
+#         options_layout.addSpacing(25)
+#         options_layout.addWidget(QLabel("Include layers:"))
+#         self.geometry_check = QCheckBox("Geometry")
+#         self.materials_check = QCheckBox("Materials")
+#         self.armature_check = QCheckBox("Armature")
+#         for check in (
+#             self.geometry_check,
+#             self.materials_check,
+#             self.armature_check,
+#         ):
+#             check.setChecked(True)
+#             options_layout.addWidget(check)
 
-        # buttons row
-        options_layout.addSpacing(25)
-        export_button = QPushButton("Export")
-        export_button.setDefault(True)
-        cancel_button = QPushButton("Cancel")
-        export_button.clicked.connect(self._export)
-        cancel_button.clicked.connect(self.reject)
-        button_row = QHBoxLayout()
-        button_row.addWidget(export_button)
-        button_row.addWidget(cancel_button)
-        options_layout.addLayout(button_row)
+#         # buttons row
+#         options_layout.addSpacing(25)
+#         export_button = QPushButton("Export")
+#         export_button.setDefault(True)
+#         cancel_button = QPushButton("Cancel")
+#         export_button.clicked.connect(self._export)
+#         cancel_button.clicked.connect(self.reject)
+#         button_row = QHBoxLayout()
+#         button_row.addWidget(export_button)
+#         button_row.addWidget(cancel_button)
+#         options_layout.addLayout(button_row)
 
-    def _export(self):
-        settings = self.collect()
-        logger.info("Exporting asset items...")
-        usd_exporter = UsdExporter(settings)
-        asset_items = settings["collected_item"]
-        for asset_item in asset_items:
-            proxy_generator = None
-            if settings["generate_proxy"]:
-                decimate_ratio = settings["decimate_ratio"]
-                proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
-                proxy_generator.add_proxy()
-            usd_exporter.export(asset_item)
-            if proxy_generator:
-                proxy_generator.clear()
-        logger.info("Exporting completed!")
-        # self.accept()
+#     def _export(self):
+#         settings = self.collect()
+#         logger.info("Exporting asset items...")
+#         usd_exporter = UsdExporter(settings)
+#         asset_items = settings["collected_item"]
+#         for asset_item in asset_items:
+#             proxy_generator = None
+#             if settings["generate_proxy"]:
+#                 decimate_ratio = settings["decimate_ratio"]
+#                 proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
+#                 proxy_generator.add_proxy()
+#             usd_exporter.export(asset_item)
+#             if proxy_generator:
+#                 proxy_generator.clear()
+#         logger.info("Exporting completed!")
+#         # self.accept()
 
-    def _create_double_validator(self, min_val, max_val):
-        validator = QDoubleValidator(min_val, max_val, 5, self)
-        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
-        locale = QLocale(QLocale.Language.C)
-        validator.setLocale(locale)
-        return validator
+#     def _create_double_validator(self, min_val, max_val):
+#         validator = QDoubleValidator(min_val, max_val, 5, self)
+#         validator.setNotation(QDoubleValidator.Notation.StandardNotation)
+#         locale = QLocale(QLocale.Language.C)
+#         validator.setLocale(locale)
+#         return validator
 
-    def _sync_ratio_slider(self):
-        try:
-            val = float(self.ratio_txt.text())
-            # prevents recursion
-            self.decimate_slider.blockSignals(True)
-            self.decimate_slider.set_value_float(val)
-            self.decimate_slider.blockSignals(False)
-        except ValueError:
-            pass
+#     def _sync_ratio_slider(self):
+#         try:
+#             val = float(self.ratio_txt.text())
+#             # prevents recursion
+#             self.decimate_slider.blockSignals(True)
+#             self.decimate_slider.set_value_float(val)
+#             self.decimate_slider.blockSignals(False)
+#         except ValueError:
+#             pass
 
-    def _sync_slider_to_text(self, val: float):
-        # prevents recursion
-        self.ratio_txt.blockSignals(True)
-        self.ratio_txt.setText(f"{val:.4f}".rstrip('0').rstrip('.'))
-        self.ratio_txt.blockSignals(False)
+#     def _sync_slider_to_text(self, val: float):
+#         # prevents recursion
+#         self.ratio_txt.blockSignals(True)
+#         self.ratio_txt.setText(f"{val:.4f}".rstrip('0').rstrip('.'))
+#         self.ratio_txt.blockSignals(False)
 
-    def collect(self):
-        logger.info("Collecting asset items...")
-        selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
-        collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
-        return {
-            "extension": self.extension_combo.currentText(),
-            "export_geometry": self.geometry_check.isChecked(),
-            "export_materials": self.materials_check.isChecked(),
-            "export_armature": self.armature_check.isChecked(),
-            "up_axis": self.up_axis_combo.currentText(),
-            "collected_item": collected_items,
-            "meter_per_unit": float(self.meter_per_unit.text()),
-            "mesh_scale": float(self.mesh_scale.text()),
-            "generate_proxy": self.proxy_generator_check.isChecked(),
-            "decimate_ratio": self.decimate_slider.value_float()
-        }
+#     def collect(self):
+#         logger.info("Collecting asset items...")
+#         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
+#         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
+#         return {
+#             "extension": self.extension_combo.currentText(),
+#             "export_geometry": self.geometry_check.isChecked(),
+#             "export_materials": self.materials_check.isChecked(),
+#             "export_armature": self.armature_check.isChecked(),
+#             "up_axis": self.up_axis_combo.currentText(),
+#             "collected_item": collected_items,
+#             "meter_per_unit": float(self.meter_per_unit.text()),
+#             "mesh_scale": float(self.mesh_scale.text()),
+#             "generate_proxy": self.proxy_generator_check.isChecked(),
+#             "decimate_ratio": self.decimate_slider.value_float()
+#         }
 
     @Slot(str)
     def append_log(self, text: str):
         self.log_display.appendPlainText(text)
+
+    def _toggle_log_panel(self):
+        log_width, graph_width = self.splitter.sizes()
+        total = log_width + graph_width
+        if log_width > 0:
+            self._last_log_width = log_width
+            self.splitter.setSizes([0, total])
+        else:
+            restored = min(self._last_log_width, total - 100)
+            self.splitter.setSizes([restored, total - restored])
+        self._update_log_toggle_btn()
+
+    def _update_log_toggle_btn(self, *args):
+        collapsed = self.splitter.sizes()[0] == 0
+        self.log_toggle_btn.setText("▶" if collapsed else "◀")
 
     def generate_logs(self):
         logger.debug("DEBUG message.")

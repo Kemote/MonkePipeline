@@ -37,3 +37,6 @@ pipeline.env
 *.usda
 *.usdc
 *.usdz
+
+# local UI work
+ui/blender_publisher_ui.py
