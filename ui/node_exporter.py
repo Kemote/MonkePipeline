@@ -13,6 +13,14 @@ class NodeProperties:
     def __init__(self):
         pass
 
+    @property
+    def width(self):
+        return self.get_size()[0]
+
+    @property
+    def height(self):
+        return self.get_size()[1]
+    
     def get_size(self):  
         node_size = self.view.boundingRect().size()
         width = node_size.width()
@@ -56,7 +64,7 @@ class AssetNode(BaseNode, NodeProperties):
         self.set_property("collection_path", path_str)
 
 
-class UsdOutputNode(BaseNode):
+class UsdOutputNode(BaseNode, NodeProperties):
     """
     node representation of otuput OpenUSD file
     """

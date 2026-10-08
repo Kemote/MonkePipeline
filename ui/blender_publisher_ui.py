@@ -86,43 +86,69 @@ class StandardGraphCreator:
         # create export nodes
         assets_node_list = []
         assets_usd_out_list = []
-        asset_node_h_margin = 50
+        node_h_margin = 50
+        group_h_margin = 100
+        node_dist = 500
         new_asset_node_pos = [0.0, 0.0]
+        output_height = 0
 
         for item in self.asset_collector.items:
+            asset_node_list = []
+            assets_usd_out_list = []
+
             asset_node : AssetNode = self.node_graph.create_node("nodes.asset.AssetNode")
             asset_node.set_name(item.name)
             asset_node.set_collection_path(item.path)
             asset_node.collected_item = item
             asset_node.set_pos(*new_asset_node_pos)
-            new_asset_node_pos[1] += (asset_node.get_size()[1] + asset_node_h_margin)
-            assets_node_list.append(asset_node)
+            new_asset_node_pos[1] += (asset_node.height + node_h_margin)
+            asset_node_list.append(asset_node)
 
             # add separate usd output nodes for every asset
-            for output_name, output_port in asset_node.outputs().items():
+            output_pos = [new_asset_node_pos[0] + asset_node.width + node_dist, None]
+            for output_port in asset_node.output_ports():
                 usd_out_node : UsdOutputNode = self.node_graph.create_node("nodes.output.UsdOutputNode")
                 usd_out_node.set_input(0, output_port)
+                usd_out_node.set_name(f"USD {output_port.name()} layer")
                 assets_usd_out_list.append(usd_out_node)
 
+                if not output_pos[1]:
+                    output_height = usd_out_node.height
+                    output_pos[1] = (new_asset_node_pos[1] - (asset_node.height / 2)) - (2 * (output_height + node_h_margin))
+                usd_out_node.set_pos(*output_pos)
+                output_pos[1] += (output_height + node_h_margin)
+
+            new_asset_node_pos[1] = usd_out_node.pos()[1] + (2 * (output_height + node_h_margin)) + group_h_margin
+            
             # add backdrop for this asset outputs
-            # self.node_graph.auto_layout_nodes()
             asset_out_backdrop = self.node_graph.create_node("Backdrop")
             asset_out_backdrop.set_name(f"{item.name} output layers")
             asset_out_backdrop.wrap_nodes(assets_usd_out_list)
+            asset_node_list.append(asset_out_backdrop)
 
+            # add assets  main layer
+            asset_main_layer_pos = asset_node.pos()
+            asset_main_layer_pos[0] = output_pos[0] + node_dist + usd_out_node.width
             asset_main_layer = self.node_graph.create_node("nodes.output.UsdOutputNode")
             for idx, out_node in enumerate(assets_usd_out_list):
                 out_port = out_node.get_output("output path")
                 asset_main_layer.set_input(idx + 1, out_port)
+            asset_main_layer.set_pos(*asset_main_layer_pos)
+            asset_main_layer.set_name(f"{item.name} main USD layer")
+            
+            asset_node_list.extend(assets_usd_out_list)
+            asset_node_list.append(asset_main_layer)
+            assets_node_list.extend(asset_node_list)
+            asset_backdrop = self.node_graph.create_node("Backdrop")
+            asset_backdrop.wrap_nodes(assets_node_list)
+            asset_backdrop.set_name(f"Asset {item.name} group")
+            asset_backdrop.color
+            assets_node_list.append(asset_backdrop)
 
-            assets_usd_out_list = []
-                
-        if assets_node_list:
-            # self.node_graph.auto_layout_nodes()
-            assets_backdrop = self.node_graph.create_node("Backdrop")
-            assets_backdrop.set_name("Assets")
-            assets_backdrop.wrap_nodes(assets_node_list)
-
+        assets_backdrop = self.node_graph.create_node("Backdrop")
+        assets_backdrop.wrap_nodes(assets_node_list)
+        assets_backdrop.set_name(f"Collected assets")
+            
 
 class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
