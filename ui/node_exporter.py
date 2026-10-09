@@ -1,8 +1,9 @@
 import sys
 
-from PySide6 import QtWidgets
-from OdenGraphQt import NodeGraph, BaseNode, Port
+from PySide6 import QtCore, QtWidgets
+from OdenGraphQt import NodeGraph, BaseNode, Port, NodeGraphMenu
 from OdenGraphQt.constants import PortTypeEnum
+from publisher.collector import AssetsCollector
 
 
 ASSET_COL = [160, 210, 255]
@@ -63,6 +64,9 @@ class AssetNode(BaseNode, NodeProperties):
     def set_collection_path(self, path_str):
         self.set_property("collection_path", path_str)
 
+    def get_collection_path(self):
+        return self.get_property("collection_path")
+
 
 class UsdOutputNode(BaseNode, NodeProperties):
     """
@@ -117,11 +121,11 @@ class UsdOutputNode(BaseNode, NodeProperties):
 
     def on_input_disconnected(self, in_port, out_port):
         result = super().on_input_disconnected(in_port, out_port)
-        input_name = in_port.name()
 
-        base_name = self._dynamic_base_name(input_name)
-        if base_name and input_name != base_name and not in_port.connected_ports():
-            self.delete_input(in_port)
+        # ports can't be deleted right away - this is called while the graph
+        # iterates over node ports (node deletion) or runs undo commands
+        if self._dynamic_base_name(in_port.name()):
+            QtCore.QTimer.singleShot(0, self._prune_dynamic_inputs)
 
         return result
 
@@ -152,6 +156,31 @@ class UsdOutputNode(BaseNode, NodeProperties):
         settings["restrict"](new_input)
         self._sort_dynamic_inputs()
         return new_input
+
+    def _prune_dynamic_inputs(self):
+        # node was deleted from the graph in the meantime
+        if not self.graph or self.view.scene() is None:
+            return
+
+        removed = False
+        for base_name in self.dynamic_inputs:
+            free_ports = [
+                port for port in self._dynamic_ports(base_name)
+                if not port.connected_ports()
+            ]
+            # keep a single free port in the group (base port is never removed)
+            if free_ports and free_ports[0].name() != base_name:
+                free_ports = free_ports[:-1]
+            for port in free_ports:
+                if port.name() == base_name:
+                    continue
+                self.delete_input(port)
+                removed = True
+
+        # undo commands keep references to the deleted ports,
+        # undoing them would crash the application
+        if removed:
+            self.graph.clear_undo_stack()
 
     def _dynamic_sort_key(self, port_name):
         # group order follows self.dynamic_inputs (data above sublayers),
@@ -200,19 +229,67 @@ class MonkeNodeGraphWidget(QtWidgets.QWidget):
         # create node graph (keep a reference so it isn't garbage collected)
         self.node_graph = NodeGraph()
 
-        # nodes registring
+        # nodes registring and adding them to menu
+        graph_menu : NodeGraphMenu = self.node_graph.get_context_menu("graph")
+        graph_menu.add_command(
+            "Search node", self._search_node, "Tab"
+        )
+
+        # create node submenu
+        node_menu = graph_menu.add_menu("Add Node")
+        menu_cache = {}
         for node in (AssetNode, UsdOutputNode):
             self.node_graph.register_node(node)
+            node_identifier = node.__identifier__
+            menu = menu_cache.get(node_identifier)
+            if not menu:
+                menu = self._create_submenus(node_menu, node_identifier)
+                menu_cache[node_identifier] = menu
 
-        graph_menu = self.node_graph.get_context_menu("graph")
-        graph_menu.add_command(
-            "Add Node...", lambda graph: graph.toggle_node_search(), "Tab"
-        )
+            menu.add_command(
+                node.NODE_NAME,
+                lambda graph, node_type=node.type_: graph.create_node(node_type)
+            )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.node_graph.widget)
+        graph_menu.add_separator()
 
+        # add functions
+        graph_menu.add_command(
+            "Add assets from selected", self._add_assets_from_selection
+        )
+        graph_menu.add_separator()
+        graph_menu.add_command(
+            "Delete selected",
+            lambda graph: graph.delete_nodes(graph.selected_nodes()),
+            "Del"
+        )
+        
+    def _create_submenus(self, node_menu, identifier):
+        current_menu = node_menu
+        for part in identifier.split(".")[1:-1]:
+            submenu = current_menu._menus.get(part)
+            if not submenu:
+                submenu = current_menu.add_menu(part)
+            current_menu = submenu
+        return current_menu
+
+    def _search_node(self):
+        self.node_graph.toggle_node_search()
+
+    def _add_assets_from_selection(self):
+        asset_collector = AssetsCollector()
+        asset_collector.collect()
+        current_pos = list(self.node_graph.cursor_pos())
+        for idx, item in enumerate(asset_collector.items):
+            asset_node = self.node_graph.create_node("nodes.asset.AssetNode")
+            asset_node.set_name(item.name)
+            asset_node.set_collection_path(item.path)
+            asset_node.collected_item = item
+            if idx > 0:
+                current_pos[1] = current_pos[1] + asset_node.height + 50
 
 class MonkeDialog(QtWidgets.QDialog):
     """

@@ -13,6 +13,8 @@ def get_pipeline_env(env):
         "LD_LIBRARY_PATH": env["LD_LIBRARY_PATH"],
         "PROJECTNAME": env["PROJECTNAME"],
         "PXR_PLUGINPATH_NAME": env["PXR_PLUGINPATH_NAME_BLENDER"],
+        # Qt on Wayland ignores WindowStaysOnTopHint, run the Qt UI through XWayland
+        "QT_QPA_PLATFORM": env["QT_QPA_PLATFORM"],
     }
 
 
@@ -37,7 +39,8 @@ def write_bootstrap_script(MONKE_SITE_PACKAGES):
 def run_blender():
     env = load_pipeline_env()
     bootstrap_script = write_bootstrap_script(env["MONKE_SITE_PACKAGES"])
-    command = ["flatpak", "run"]
+    # flatpak only grants X11 as fallback-x11, xcb needs the socket explicitly
+    command = ["flatpak", "run", "--nosocket=fallback-x11", "--socket=x11"]
     for name, value in get_pipeline_env(env).items():
         command.append(f"--env={name}={value}")
     command.append(env["BLENDER_FLATPAK_APP_ID"])

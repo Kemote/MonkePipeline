@@ -2,11 +2,11 @@ import bpy
 
 from abc import ABC, abstractmethod
 from publisher.monke_logging import get_logger
+from utils.blender import BlenderCollection
 
 
 logger = get_logger(__name__)
 VARIANT_SEPARATOR = "_VAR_"
-ASSETS_ROOT = "/Scene Collection/assets"
 ARMATURE_COLLECTION_NAME = "armature"
 
 
@@ -28,7 +28,7 @@ class VariantNode:
             node = variant_set[variant_name] = VariantNode()
         return node
 
-
+    
 class CollectedItem():
     def __init__(self, name, outliner_path):
         self.name = name
@@ -66,24 +66,33 @@ class Collector(ABC):
         self.items = []
 
     @abstractmethod
-    def collect(self, outliner_base_path: str, object_type: str):
+    def collect(self, outliner_base_path: str, object_type: str, is_asset_path=False):
         """
         method assets gathering data for publish purpose
         """
         if not outliner_base_path.startswith("/"):
             raise ValueError(f"Outliner base path: {outliner_base_path}, should starts with '/'")
-
-        self.items = [] 
-        assets_collection = self.find_collection(outliner_base_path)
-        if assets_collection:
+        assets_collection = BlenderCollection.find_collection(outliner_base_path)
+        if not assets_collection:
+            return False
+        
+        if is_asset_path:
+            asset_name = outliner_base_path.split("/")[-1]
+            asset_group = BlenderCollection.find_collection(outliner_base_path)
+            if asset_group:
+                self._collect_item(asset_name, outliner_base_path, asset_group, object_type)
+        else:
             for asset_group in assets_collection.children:
                 asset_name = asset_group.name
                 group_path = f"{outliner_base_path}/{asset_name}"
-                asset_item = CollectedAssetItem(asset_name, group_path)
-                self.collect_variants(asset_group, group_path, object_type, asset_item, asset_item.variant_root)
-                self._post_collect(asset_group, group_path, asset_item)
-                self.items.append(asset_item)
-        return
+                self._collect_item(asset_name, group_path, asset_group, object_type)
+        return True
+
+    def _collect_item(self, asset_name, group_path, asset_group, object_type):
+        asset_item = CollectedAssetItem(asset_name, group_path)
+        self.collect_variants(asset_group, group_path, object_type, asset_item, asset_item.variant_root)
+        self._post_collect(asset_group, group_path, asset_item)
+        self.items.append(asset_item)
 
     def _post_collect(self, asset_group, group_path, asset_item):
         pass
@@ -111,27 +120,18 @@ class Collector(ABC):
             else:
                 self.collect_variants(child, child_path, obj_type, asset_item, node)
 
-    def find_collection(self, path: str):
-        parts = [part for part in path.split("/") if part]
-        if not parts:
-            return None
-
-        collection = bpy.context.scene.collection
-        for index, part in enumerate(parts):
-            if index == 0 and collection.name == part:
-                continue
-            collection = collection.children.get(part)
-            if collection is None:
-                return None
-        return collection
-    
 
 class AssetsCollector(Collector):
     def __init__(self):
         super().__init__()
 
-    def collect(self, assets_path=ASSETS_ROOT):
-        super().collect(assets_path, "MESH")
+    def collect(self, collection_outliner_path=None):
+        if collection_outliner_path:
+            super().collect(collection_outliner_path, "MESH")
+        else:
+            selected_collections = BlenderCollection.get_selected_colections()
+            for collection_path in selected_collections:
+                super().collect(collection_path, "MESH", is_asset_path=True)
         return
 
     def _post_collect(self, asset_group, group_path, asset_item):

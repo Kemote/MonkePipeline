@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 
 
 STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
+ASSETS_ROOT = "/Scene Collection/assets"
 current_dialog = None
 configure_logging()
 logger = get_logger(__name__)
@@ -80,12 +81,14 @@ class StandardGraphCreator:
     def __init__(self, node_graph):
         self.node_graph = node_graph
         self.asset_collector = AssetsCollector()
-        self.asset_collector.collect()
+        self.asset_collector.collect(ASSETS_ROOT)
         
     def create(self):
+        self.create_asset_group()
+
+    def create_asset_group(self):
         # create export nodes
         assets_node_list = []
-        assets_usd_out_list = []
         node_h_margin = 50
         group_h_margin = 100
         node_dist = 500
@@ -155,6 +158,7 @@ class MonkeUsdExportDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Monke OpenUSD Exporter")
         self.setMinimumWidth(1000)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
 
         main_layout = QVBoxLayout(self)
