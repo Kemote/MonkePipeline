@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pxr import Usd, Sdf, UsdGeom, UsdShade
+from pxr import Usd, Sdf, UsdGeom, UsdShade, Kind
 from nodes.nodes import UsdOutputNode
 from OdenGraphQt import Port
 from publisher.collector import CollectedAssetItem
@@ -38,36 +38,38 @@ class UsdOutputExecutor:
         asset_main_prim = self.assets_main_prims.get(asset_name)
         if not asset_main_prim:
             asset_main_prim = self._create_asset_main_prim(asset_name)
-            self.assets_main_prims[asset_name] = asset_main_prim
+            # TODO rest of exproting logic now its getting or creating main prim
 
     def _create_asset_main_prim(self, asset_name):
         # here we need assume that if there is more than one asset all of them should be under "assets" prim
         number_of_assets = len(self.assets_main_prims)
         if  number_of_assets == 1:
             # we need to chang already created prims
-            usd_namespacee_editor = Usd.NamespaceEditor(self.stage)
+            usd_namespace_editor = Usd.NamespaceEditor(self.stage)
             cached_dict = {}
             for key, item in self.assets_main_prims.items():
                 current_prim_path = item.GetPath()
                 new_path = f"/Assets{current_prim_path}"
                 assets_scope = UsdGeom.Scope.Define(self.stage, "/Assets")
                 self.stage.SetDefaultPrim(assets_scope)
-                usd_namespacee_editor.MovePrimAtPath(current_prim_path, new_path)
+                usd_namespace_editor.MovePrimAtPath(current_prim_path, new_path)
                 moved_prim = self.stage.GetPrimAtPath(new_path)
                 cached_dict[key] = moved_prim
         
         if number_of_assets == 0:
-            main_prim_path = f"/{asset_name}"
-            main_prim = UsdGeom.Xform.Define(self.stage, main_prim_path)
-            self.stage.SetDefaultPrim(main_prim_path)
+            main_xform_path = f"/{asset_name}"
+            main_xform = UsdGeom.Xform.Define(self.stage, main_xform_path)
+            self.stage.SetDefaultPrim(main_xform_path)
 
         else:
-            main_prim_path = f"/Assets/{asset_name}"
-            main_prim = UsdGeom.Xform.Define(self.stage, main_prim_path)
+            main_xform_path = f"/Assets/{asset_name}"
+            main_xform = UsdGeom.Xform.Define(self.stage, main_xform_path)
 
-        self.assets_main_prims[asset_name] = main_prim
-            
+        # get and set asset main prim
+        main_prim = self.stage.GetPrimAtPath(main_xform_path)
+        main_prim.SetKind(Kind.Tokens.component)
         
+        self.assets_main_prims[asset_name] = main_prim
         return main_prim     
-            
 
+        # TODO !!!!! check if pathes are generated correctly and if dfile is created,!!!

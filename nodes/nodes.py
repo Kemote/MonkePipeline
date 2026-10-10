@@ -1,7 +1,14 @@
+import os
+
 from PySide6 import QtCore
 from OdenGraphQt import BaseNode, Port
 from OdenGraphQt.constants import PortTypeEnum
 from nodes.nodes_logic import UsdOutputExecutor
+from publisher.monke_logging import get_logger
+from templates.templates import Templates
+
+
+logger = get_logger(__name__)
 
 
 ASSET_COL = [160, 210, 255]
@@ -38,6 +45,7 @@ class AssetNode(BaseNode, NodeProperties):
     def __init__(self):
         super(AssetNode, self).__init__()
         self.collected_item = None
+        self.asset_name = None
         
         self.add_text_input(
             name="collection_path",
@@ -60,6 +68,15 @@ class AssetNode(BaseNode, NodeProperties):
         self.add_output("armature", color=ASSET_COL)
         self.add_output("physic", color=ASSET_COL)
 
+    @property
+    def collected_item(self):
+        return self.collected_item
+
+    @property.setter
+    def collected_item(self, item):
+        self.collected_item = item
+        self.asset_name = item.name
+        
     def set_collection_path(self, path_str):
         self.set_property("collection_path", path_str)
 
@@ -87,13 +104,21 @@ class UsdOutputNode(BaseNode, NodeProperties):
     
     def __init__(self):
         super(UsdOutputNode, self).__init__()
+        self.templates = Templates()
         self.set_port_deletion_allowed(True)
         self.add_text_input(
             name="output_path",
             label="Output path",
             placeholder_text="./TEST_layer"
         )
-        
+
+        # add autopath checkbox
+        self.add_checkbox(
+            name="auto_path",
+            lable="Auto generated path",
+            state=True
+        )   
+
         # USD format combo menu
         self.add_combo_menu(
             name="export_format",
@@ -122,6 +147,9 @@ class UsdOutputNode(BaseNode, NodeProperties):
             if all(port.connected_ports() for port in group_ports):
                 self._add_dynamic_input(base_name, self._next_dynamic_name(base_name))
 
+        if self.get_property("auto_path").isChecked():
+            self._generate_path
+
         return result
 
     def on_input_disconnected(self, in_port, out_port):
@@ -141,6 +169,47 @@ class UsdOutputNode(BaseNode, NodeProperties):
     
     def get_format(self):
         return self.get_property("export_format")
+
+    def _generate_path(self):
+        assets_names = []
+        port_names = []
+        ports = self.ports()
+        input_types = []
+        fields = {"project_name": os.environ.get("PROJECTNAME")}
+        
+        if len(ports) > 0:
+            connected_data_ports = [x for x in ports if x.name().startswith("data")]
+            for connected_port in connected_data_ports:
+                connected_node = connected_port.parent()
+                assets_names.append(connected_node.asset_name)
+                port_names.append(connected_port.name())
+                input_type = connected_node.DATA_TYPE
+                if input_type not in input_types:
+                    input_types.append(input_type)
+
+            if len(assets_names) > 1:
+                template = self.templates.get_template_by_name("asset_main_file")
+                fields["name"] = "assetCollection"
+            else:
+                template = self.templates.get_template_by_name("asset_sublayer_file")
+
+                # TODO: for assets if more type come it need to be changed
+                ports_len = len(port_names)
+                types_len = len(input_types)
+
+                # if types_len == 1:
+                #     input_type = input_types
+                # else:
+                #     input_type = "multipleTypes"
+                # TODO: its need to be rethinked
+
+                if ports_len == 1:
+                    fields["step"] = port_names[0]
+                elif ports_len > 1:
+                    fields["step"] = "multipleSteps"
+                
+        file_path = self.templates.resolve_template(template, fields)
+        self.get_property("output_path").setText(file_path)
 
     def _dynamic_base_name(self, port_name):
         for base_name in self.dynamic_inputs:
