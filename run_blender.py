@@ -13,7 +13,6 @@ def get_pipeline_env(env):
         "LD_LIBRARY_PATH": env["LD_LIBRARY_PATH"],
         "PROJECTNAME": env["PROJECTNAME"],
         "PXR_PLUGINPATH_NAME": env["PXR_PLUGINPATH_NAME_BLENDER"],
-        # Qt on Wayland ignores WindowStaysOnTopHint, run the Qt UI through XWayland
         "QT_QPA_PLATFORM": env["QT_QPA_PLATFORM"],
     }
 
