@@ -2,8 +2,7 @@ import sys
 import bpy
 import logging
 
-from ui.node_exporter import MonkeNodeGraphWidget, AssetNode, UsdOutputNode
-
+from nodes.node_graph_widget import MonkeNodeGraphWidget, AssetNode, UsdOutputNode
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
