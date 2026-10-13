@@ -44,7 +44,7 @@ class AssetNode(BaseNode, NodeProperties):
     
     def __init__(self):
         super(AssetNode, self).__init__()
-        self.collected_item = None
+        self._collected_item = None
         self.asset_name = None
         
         self.add_text_input(
@@ -70,11 +70,11 @@ class AssetNode(BaseNode, NodeProperties):
 
     @property
     def collected_item(self):
-        return self.collected_item
+        return self._collected_item
 
-    @property.setter
+    @collected_item.setter
     def collected_item(self, item):
-        self.collected_item = item
+        self._collected_item = item
         self.asset_name = item.name
         
     def set_collection_path(self, path_str):
@@ -115,7 +115,7 @@ class UsdOutputNode(BaseNode, NodeProperties):
         # add autopath checkbox
         self.add_checkbox(
             name="auto_path",
-            lable="Auto generated path",
+            label="Auto generated path",
             state=True
         )   
 
@@ -147,14 +147,13 @@ class UsdOutputNode(BaseNode, NodeProperties):
             if all(port.connected_ports() for port in group_ports):
                 self._add_dynamic_input(base_name, self._next_dynamic_name(base_name))
 
-        if self.get_property("auto_path").isChecked():
-            self._generate_path
+        if self.get_property("auto_path"):
+            self._generate_output_path()
 
         return result
 
     def on_input_disconnected(self, in_port, out_port):
         result = super().on_input_disconnected(in_port, out_port)
-
         # ports can't be deleted right away - this is called while the graph
         # iterates over node ports (node deletion) or runs undo commands
         if self._dynamic_base_name(in_port.name()):
@@ -170,46 +169,70 @@ class UsdOutputNode(BaseNode, NodeProperties):
     def get_format(self):
         return self.get_property("export_format")
 
-    def _generate_path(self):
-        assets_names = []
-        port_names = []
-        ports = self.ports()
-        input_types = []
+    def _generate_output_path(self):
+        assets_names = {"data": [], "sublayers": []}
+        port_names = {"data": [], "sublayers": []}
+        input_types = {"data": [], "sublayers": []}
         fields = {"project_name": os.environ.get("PROJECTNAME")}
-        
-        if len(ports) > 0:
-            connected_data_ports = [x for x in ports if x.name().startswith("data")]
-            for connected_port in connected_data_ports:
-                connected_node = connected_port.parent()
-                assets_names.append(connected_node.asset_name)
-                port_names.append(connected_port.name())
-                input_type = connected_node.DATA_TYPE
-                if input_type not in input_types:
-                    input_types.append(input_type)
 
-            if len(assets_names) > 1:
+        input_ports = self.input_ports()
+        # data_input_port = [x for x in input_ports if x.name().startswith("data")]
+        # sublayer_input_nodes = [x for x in input_ports if x.name().startswith("sublayer")]
+        
+        for input_port in input_ports:
+            port_type = input_port.name().split("_")[0]
+            connected_ports = input_port.connected_ports()
+            if connected_ports:
+                for connected_port in connected_ports:
+                    # itterate thorugh ports connected to node                    
+                    connected_node = connected_port.node()
+
+                    # obtain asset name
+                    asset_name = connected_node.asset_name
+                    if asset_name not in assets_names[port_type]:
+                        assets_names[port_type].append(asset_name)
+
+                    # obtain data type
+                    input_type = connected_node.DATA_TYPE
+                    if input_type not in input_types[port_type]:
+                        input_types[port_type].append(input_type)
+
+                    # obtain ports names
+                    port_name = connected_port.name()
+                    if port_name not in port_names[port_type]:
+                        port_names[port_type].append(port_name)
+
+        template = None
+        fields = {}
+
+        data_assets_names = assets_names["data"]
+        sublayered_assets_names = assets_names["sublayers"]
+
+        if data_assets_names:
+            if len(data_assets_names) > 1:
                 template = self.templates.get_template_by_name("asset_main_file")
                 fields["name"] = "assetCollection"
             else:
                 template = self.templates.get_template_by_name("asset_sublayer_file")
+                fields["name"] = data_assets_names[0]
 
                 # TODO: for assets if more type come it need to be changed
-                ports_len = len(port_names)
-                types_len = len(input_types)
-
-                # if types_len == 1:
-                #     input_type = input_types
-                # else:
-                #     input_type = "multipleTypes"
-                # TODO: its need to be rethinked
-
+                # need to rethink that solution
+                ports_len = len(data_port_names)
+                types_len = len(data_input_types)
                 if ports_len == 1:
-                    fields["step"] = port_names[0]
+                    fields["step"] = data_port_names[0]
                 elif ports_len > 1:
                     fields["step"] = "multipleSteps"
-                
-        file_path = self.templates.resolve_template(template, fields)
-        self.get_property("output_path").setText(file_path)
+
+        elif sublayered_assets_names:
+            sublayered_assets_names
+            template = self.templates.get_template_by_name("asset_main_file")
+            fields["name"] = sublayered_assets_names[0]
+
+        if template and fields:    
+            file_path = self.templates.get_new_file_path(template, fields)
+            self.set_property("output_path", file_path)
 
     def _dynamic_base_name(self, port_name):
         for base_name in self.dynamic_inputs:

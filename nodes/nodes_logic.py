@@ -2,7 +2,6 @@ import os
 import sys
 
 from pxr import Usd, Sdf, UsdGeom, UsdShade, Kind
-from nodes.nodes import UsdOutputNode
 from OdenGraphQt import Port
 from publisher.collector import CollectedAssetItem
 
@@ -11,7 +10,7 @@ class UsdOutputExecutor:
     """
     Execution logic for USD ouptu node
     """
-    def __init__(self, node : UsdOutputNode):
+    def __init__(self, node):
         output_path = node.get_property("output_path").text()
         output_format = node.get_property("export_format").current_text()
         self.output_path = f"{output_path}.{output_format}"
