@@ -105,6 +105,9 @@ class UsdOutputNode(BaseNode, NodeProperties):
     def __init__(self):
         super(UsdOutputNode, self).__init__()
         self.templates = Templates()
+        self.output_type = None
+        self.inputs_names = []
+        
         self.set_port_deletion_allowed(True)
         self.add_text_input(
             name="output_path",
@@ -147,6 +150,14 @@ class UsdOutputNode(BaseNode, NodeProperties):
             if all(port.connected_ports() for port in group_ports):
                 self._add_dynamic_input(base_name, self._next_dynamic_name(base_name))
 
+        inputed_node = out_port.node()
+        if inputed_node.type_ == "nodes.asset.AssetNode":
+            if not self.output_type:
+                self.output_type = "Asset"
+                self.inputs_names.append(inputed_node.asset_name)
+            elif self.output_type != "Asset":
+                self.output_type = "Mixed"
+
         if self.get_property("auto_path"):
             self._generate_output_path()
 
@@ -161,7 +172,7 @@ class UsdOutputNode(BaseNode, NodeProperties):
 
         return result
 
-    def execute_graph(self):
+    def execute(self):
         usd_output_executor = UsdOutputExecutor(self)
         result = usd_output_executor.execute()
         return result
@@ -170,15 +181,12 @@ class UsdOutputNode(BaseNode, NodeProperties):
         return self.get_property("export_format")
 
     def _generate_output_path(self):
-        assets_names = {"data": [], "sublayers": []}
-        port_names = {"data": [], "sublayers": []}
-        input_types = {"data": [], "sublayers": []}
+        assets_names = {"data": [], "sublayer": []}
+        port_names = {"data": [], "sublayer": []}
+        nodes_identifiers = {"data": [], "sublayer": []}
         fields = {"project_name": os.environ.get("PROJECTNAME")}
 
         input_ports = self.input_ports()
-        # data_input_port = [x for x in input_ports if x.name().startswith("data")]
-        # sublayer_input_nodes = [x for x in input_ports if x.name().startswith("sublayer")]
-        
         for input_port in input_ports:
             port_type = input_port.name().split("_")[0]
             connected_ports = input_port.connected_ports()
@@ -186,16 +194,23 @@ class UsdOutputNode(BaseNode, NodeProperties):
                 for connected_port in connected_ports:
                     # itterate thorugh ports connected to node                    
                     connected_node = connected_port.node()
+                    identifier = connected_node.type_
 
                     # obtain asset name
-                    asset_name = connected_node.asset_name
-                    if asset_name not in assets_names[port_type]:
-                        assets_names[port_type].append(asset_name)
+                    if identifier == "nodes.asset.AssetNode":
+                        asset_name = connected_node.asset_name
+                        if asset_name not in assets_names[port_type]:
+                            assets_names[port_type].append(asset_name)
+
+                    elif identifier == "nodes.output.UsdOutputNode":
+                        if connected_node.output_type == "Asset":
+                            for asset_name in connected_node.inputs_names:
+                                if asset_name not in assets_names[port_type]:
+                                    assets_names[port_type].append(asset_name)
 
                     # obtain data type
-                    input_type = connected_node.DATA_TYPE
-                    if input_type not in input_types[port_type]:
-                        input_types[port_type].append(input_type)
+                    if identifier not in nodes_identifiers[port_type]:
+                        nodes_identifiers[port_type].append(identifier)
 
                     # obtain ports names
                     port_name = connected_port.name()
@@ -203,10 +218,8 @@ class UsdOutputNode(BaseNode, NodeProperties):
                         port_names[port_type].append(port_name)
 
         template = None
-        fields = {}
-
         data_assets_names = assets_names["data"]
-        sublayered_assets_names = assets_names["sublayers"]
+        sublayered_assets_names = assets_names["sublayer"]
 
         if data_assets_names:
             if len(data_assets_names) > 1:
@@ -218,19 +231,18 @@ class UsdOutputNode(BaseNode, NodeProperties):
 
                 # TODO: for assets if more type come it need to be changed
                 # need to rethink that solution
-                ports_len = len(data_port_names)
-                types_len = len(data_input_types)
+                ports_len = len(port_names["data"])
+                types_len = len(nodes_identifiers["data"])
                 if ports_len == 1:
-                    fields["step"] = data_port_names[0]
+                    fields["step"] = port_names["data"][0]
                 elif ports_len > 1:
                     fields["step"] = "multipleSteps"
 
-        elif sublayered_assets_names:
-            sublayered_assets_names
+        if sublayered_assets_names:
             template = self.templates.get_template_by_name("asset_main_file")
             fields["name"] = sublayered_assets_names[0]
 
-        if template and fields:    
+        if template and fields:
             file_path = self.templates.get_new_file_path(template, fields)
             self.set_property("output_path", file_path)
 

@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+__libs
 *.py[cod]
 *$py.class
 *.so

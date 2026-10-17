@@ -1,3 +1,4 @@
+from platform import node
 import sys
 import bpy
 import logging
@@ -222,7 +223,9 @@ class MonkeUsdExportDialog(QDialog):
         
     def export(self):
         logger.info("Exporting...")
-        return
+        output_nodes = [node for node in self.node_graph.all_nodes() if node.__identifier__ == "nodes.output"]
+        for node in output_nodes:
+            node.execute()
     
 #         # collect asset items
 #         self.asset_collector = AssetsCollector()
