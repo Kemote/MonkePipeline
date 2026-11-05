@@ -3,7 +3,8 @@ import sys
 from PySide6 import QtWidgets
 from OdenGraphQt import NodeGraph, NodeGraphMenu
 from publisher.collector import AssetsCollector
-from nodes.nodes import AssetNode, UsdOutputNode
+from nodes.nodes import UsdOutputNode, ArmatureToIsaacNode
+from nodes.collection_node import CollectionNode
 
 
 class MonkeNodeGraphWidget(QtWidgets.QWidget):
@@ -22,7 +23,7 @@ class MonkeNodeGraphWidget(QtWidgets.QWidget):
         # register nodes and create submenus
         node_menu = graph_menu.add_menu("Add Node")
         menu_cache = {}
-        for node in (AssetNode, UsdOutputNode):
+        for node in (CollectionNode, UsdOutputNode, ArmatureToIsaacNode):
             self.node_graph.register_node(node)
             node_identifier = node.__identifier__
             menu = menu_cache.get(node_identifier)
@@ -68,12 +69,13 @@ class MonkeNodeGraphWidget(QtWidgets.QWidget):
         asset_collector.collect()
         current_pos = list(self.node_graph.cursor_pos())
         for idx, item in enumerate(asset_collector.items):
-            asset_node = self.node_graph.create_node("nodes.asset.AssetNode")
-            asset_node.set_name(item.name)
-            asset_node.set_collection_path(item.path)
-            asset_node.collected_item = item
+            collection_node = self.node_graph.create_node("nodes.asset.CollectionNode")
+            collection_node.set_name(item.name)
+            collection_node.set_collection_path(item.path)
+            collection_node.collected_item = item
             if idx > 0:
-                current_pos[1] = current_pos[1] + asset_node.height + 50
+                current_pos[1] = current_pos[1] + collection_node.height + 50
+
 
 class MonkeDialog(QtWidgets.QDialog):
     """
@@ -82,7 +84,7 @@ class MonkeDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("USD Export")
-        self.setMinimumWidth(1000)
+        self.setMinimumWidth(1500)
 
         options_layout = QtWidgets.QVBoxLayout()
         logging_layout = QtWidgets.QVBoxLayout()

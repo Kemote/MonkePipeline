@@ -41,3 +41,4 @@ pipeline.env
 
 # local UI work
 ui/blender_publisher_ui.py
+.claude/

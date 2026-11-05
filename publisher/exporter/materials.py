@@ -4,7 +4,7 @@ import bpy
 
 from pxr import UsdGeom, UsdShade, Sdf, Gf, Usd
 from publisher.exporter.common import looks_scope_path, material_prim_name, sanitize_name
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
@@ -36,10 +36,16 @@ class MaterialsLayerExporter:
         os.makedirs(self.textures_dir, exist_ok=True)
 
     def export(self, output_path, asset_item):
-        logger.debug("Exporting materials...")
         stage = Usd.Stage.CreateNew(output_path)
         UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
-        looks_path = looks_scope_path(asset_item.name, bool(asset_item.armature_objects))
+        return self.write(stage, asset_item)
+
+    def write(self, stage, asset_item):
+        """
+        write asset materials into provided stage
+        """
+        logger.debug("Exporting materials...")
+        looks_path = looks_scope_path(asset_item.name, asset_item.has_skeleton)
         UsdGeom.Scope.Define(stage, looks_path)
 
         for material in asset_item.materials.values():
@@ -156,7 +162,7 @@ class MaterialsLayerExporter:
         return None
 
     def _connect_texture(self, stage, material_path, shader, usd_input, image, value_type, output_channel, scale_bias=False):
-        texture_asset_path = self._copy_texture(image)
+        texture_asset_path = self._copy_texture(stage, image)
 
         texture_shader = UsdShade.Shader.Define(stage, f"{material_path}/{sanitize_name(image.name)}_Texture")
         texture_shader.CreateIdAttr("UsdUVTexture")
@@ -179,11 +185,16 @@ class MaterialsLayerExporter:
 
         shader.CreateInput(usd_input, value_type).ConnectToSource(texture_output)
 
-    def _copy_texture(self, image):
+    def _copy_texture(self, stage, image):
+        """
+        copy texture into asset textures folder, returned path is relative to the written layer
+        so textures are found no matter in which folder the layer is saved
+        """
         source_path = bpy.path.abspath(image.filepath)
-        basename = os.path.basename(source_path)
-        shutil.copy2(source_path, os.path.join(self.textures_dir, basename))
-        return os.path.join("../textures", basename)
+        texture_path = os.path.join(self.textures_dir, os.path.basename(source_path))
+        shutil.copy2(source_path, texture_path)
+        layer_dir = os.path.dirname(stage.GetRootLayer().realPath)
+        return os.path.relpath(texture_path, layer_dir)
 
     @staticmethod
     def _get_uv_reader(stage, material_path):

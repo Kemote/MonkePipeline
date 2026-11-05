@@ -7,7 +7,7 @@ from nodes.node_graph_widget import MonkeNodeGraphWidget, AssetNode, UsdOutputNo
 from pathlib import Path
 from publisher.exporter import UsdExporter
 from publisher.collector import AssetsCollector
-from publisher.monke_logging import configure_logging, get_logger
+from utils.monke_logging import configure_logging, get_logger
 from publisher.proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator

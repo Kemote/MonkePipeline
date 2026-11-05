@@ -36,7 +36,7 @@
       "root": "main"
     },
     "asset_mesh_variant_layer": {
-      "template": "/assets/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>",
+      "template": "/assets/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>.<ext>",
       "root": "main"
     },
     "asset_textures_output": {

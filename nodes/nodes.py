@@ -1,10 +1,10 @@
 import os
 
-from PySide6 import QtCore
+from PySide6 import QtCore, QtGui
 from OdenGraphQt import BaseNode, Port
 from OdenGraphQt.constants import PortTypeEnum
 from nodes.nodes_logic import UsdOutputExecutor
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 from templates.templates import Templates
 
 
@@ -33,66 +33,53 @@ class NodeProperties:
         height = node_size.height()
         return width, height
 
-    
-class AssetNode(BaseNode, NodeProperties):
+    def add_float_input(self, name, label, value, min_val=0.0001, max_val=1000.0):
+        self.add_text_input(name=name, label=label, text=str(value))
+        line_edit = self.get_widget(name).get_custom_widget()
+        validator = QtGui.QDoubleValidator(min_val, max_val, 5, line_edit)
+        validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
+        validator.setLocale(QtCore.QLocale(QtCore.QLocale.Language.C))
+        line_edit.setValidator(validator)
+
+    def fit_widget_label(self, name):
+        # node widgets are limited to 140px width, which clips longer labels
+        group_box = self.get_widget(name).widget()
+        group_box.ensurePolished()
+        label_width = group_box.fontMetrics().horizontalAdvance(group_box.title()) + 10
+        if label_width > group_box.minimumWidth():
+            group_box.setMaximumWidth(max(group_box.maximumWidth(), label_width))
+            group_box.setMinimumWidth(label_width)
+
+    def set_widget_enabled(self, name, enabled):
+        # node widgets have text colors set in style sheets, opacity makes disabled widget grayed out
+        widget = self.get_widget(name)
+        widget.setEnabled(enabled)
+        widget.setOpacity(1.0 if enabled else 0.4)
+
+    def get_float_property(self, name):
+        value = self.get_property(name)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"Node '{self.name()}' property '{name}' is not a number: '{value}'")
+
+
+class ArmatureToIsaacNode(BaseNode, NodeProperties):
     """
-    node representation of scene asset
+    node representation of armature to Isaac conversion
     """
-    __identifier__ = "nodes.asset"
-    NODE_NAME = "Asset node"
-    DATA_TYPE = "Asset"
+    __identifier__ = "nodes.armature_to_isaac"
+    NODE_NAME = "Armature to Isaac"
     
     def __init__(self):
-        super(AssetNode, self).__init__()
-        self._collected_item = None
-        self.asset_name = None
-        
-        self.add_text_input(
-            name="collection_path",
-            label="Collection path",
-            placeholder_text=""
+        super(ArmatureToIsaacNode, self).__init__()
+        self.add_output("isaac", color=ASSET_COL)
+        armature_input = self.add_input("armature", color=ASSET_COL)
+        armature_input.add_accept_port_type(
+            port_name="armature",
+            port_type=PortTypeEnum.OUT.value,
+            node_type="nodes.asset.AssetNode"
         )
-        self.add_checkbox(
-            name="separate_variants",
-            label="Separate variants",
-            state=True
-        )
-        self.add_checkbox(
-            name="generate_lod",
-            label="Generate LOD",
-            state=True
-        )
-        # TODO: dodaj suwak
-        self.add_output("geometry", color=ASSET_COL)
-        self.add_output("look", color=ASSET_COL)
-        self.add_output("armature", color=ASSET_COL)
-        self.add_output("physic", color=ASSET_COL)
-
-    @property
-    def collected_item(self):
-        return self._collected_item
-
-    @collected_item.setter
-    def collected_item(self, item):
-        self._collected_item = item
-        self.asset_name = item.name
-        
-    def set_collection_path(self, path_str):
-        self.set_property("collection_path", path_str)
-
-    def get_collection_path(self):
-        return self.get_property("collection_path")
-
-    def compute(self, port_name=None):
-        if port_name == "geometry":
-            return self._return_geom_data()
-
-
-    def _return_geom_data(self):
-        if self.collected_item:
-            return self.collected_item.mesh_objects
-        else:
-            return False
 
 
 class UsdOutputNode(BaseNode, NodeProperties):
@@ -140,6 +127,11 @@ class UsdOutputNode(BaseNode, NodeProperties):
         # outputs
         self.add_output("output path", color=USD_COL)
 
+    def execute(self):
+        usd_output_executor = UsdOutputExecutor(self)
+        result = usd_output_executor.execute()
+        return result
+    
     # node signals
     def on_input_connected(self, in_port: Port, out_port: Port):
         result = super().on_input_connected(in_port, out_port)
@@ -170,11 +162,6 @@ class UsdOutputNode(BaseNode, NodeProperties):
         if self._dynamic_base_name(in_port.name()):
             QtCore.QTimer.singleShot(0, self._prune_dynamic_inputs)
 
-        return result
-
-    def execute(self):
-        usd_output_executor = UsdOutputExecutor(self)
-        result = usd_output_executor.execute()
         return result
     
     def get_format(self):

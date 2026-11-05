@@ -1,7 +1,7 @@
 import bpy
 
 from abc import ABC, abstractmethod
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 from utils.blender import BlenderCollection
 
 
@@ -51,6 +51,13 @@ class CollectedAssetItem(CollectedItem):
         self.materials = {}
         self.material_variants = {}
         self.type = "ASSET_ITEM"
+
+    @property
+    def has_skeleton(self):
+        """
+        asset with armature data is exported as skinned (SkelRoot + skeleton)
+        """
+        return bool(self.armature_objects)
 
     def add_material(self, material):
         splited_name = material.name.split(VARIANT_SEPARATOR)

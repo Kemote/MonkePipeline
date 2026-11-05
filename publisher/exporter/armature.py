@@ -6,7 +6,7 @@ from publisher.exporter.common import (
     sanitize_name,
     scaled_matrix_to_gf,
 )
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
@@ -87,7 +87,13 @@ class ArmatureLayerExporter:
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
         UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
-        if not asset_item.armature_objects:
+        return self.write(stage, asset_item)
+
+    def write(self, stage, asset_item):
+        """
+        write asset skeletons into provided stage, returns None when there is nothing to export
+        """
+        if not asset_item.has_skeleton:
             return None
 
         plan = SkeletonBindingPlan(asset_item)

@@ -6,7 +6,7 @@ from publisher.exporter.common import FPS, sanitize_name
 from publisher.exporter.materials import MaterialsLayerExporter
 from publisher.exporter.mesh import MeshLayerExporter
 from templates.templates import Templates
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)

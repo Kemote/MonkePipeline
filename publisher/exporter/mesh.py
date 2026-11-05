@@ -17,7 +17,7 @@ from publisher.exporter.common import (
 )
 from templates.templates import Templates
 from publisher.exporter.material_binding import MaterialBindingLayerExporter
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
@@ -30,23 +30,32 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0):
+    def __init__(self, base_fields, variants_dir, meter_per_unit=1.0, mesh_scale=1.0, lod_to_sublayers=True):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
         self.variants_dir = variants_dir
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
+        # False writes LOD meshes directly into the layer instead of separate LOD layers
+        self.lod_to_sublayers = lod_to_sublayers
         self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
 
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
         UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
-        has_skeleton = bool(asset_item.armature_objects)
+        return self.write(stage, asset_item)
+
+    def write(self, stage, asset_item):
+        """
+        write asset meshes into provided stage, its root layer has to have a path on disk
+        because variant and binding layers are written next to it
+        """
+        has_skeleton = asset_item.has_skeleton
+        UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name))
         if has_skeleton:
             UsdSkel.Root.Define(stage, skel_root_path(asset_item.name))
 
-        UsdGeom.Xform.Define(stage, asset_root_path(asset_item.name, has_skeleton))
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name, has_skeleton))
         skeleton_plan = SkeletonBindingPlan(asset_item) if has_skeleton else None
 
@@ -68,8 +77,25 @@ class MeshLayerExporter:
             if asset_item.material_variants:
                 logger.debug("Promote materials variants")
                 self._promote_materials_variants(stage, asset_item, promoted_sets)
+            self._clear_skel_root_selections(stage, asset_item.name)
 
         return stage
+
+    @staticmethod
+    def _clear_skel_root_selections(stage, asset_name):
+        """
+        promoted variant sets select SkelRoot variants through variant opinions, which are weaker
+        than selections authored on SkelRoot in this layer stack (inline LOD, binding layers)
+        """
+        prim_path = skel_root_path(asset_name)
+        for layer in stage.GetLayerStack(includeSessionLayers=False):
+            prim_spec = layer.GetPrimAtPath(prim_path)
+            if not prim_spec or not prim_spec.variantSelections:
+                continue
+            prim_spec.ClearInfo("variantSelection")
+            # binding layers are already saved, root layer is saved by the caller
+            if layer != stage.GetRootLayer():
+                layer.Save()
 
     def _promote_mesh_variants(self, stage: Usd.Stage, asset_name, promoted_sets, variant_node):
         for variant_set_name, variants in variant_node.variant_sets.items():
@@ -115,9 +141,10 @@ class MeshLayerExporter:
                              variant_sets,
                              variants_dir,
                              skeleton_plan=None,
-                             variant_path=""):
+                             variant_path="",
+                             in_variant_layer=False):
         """
-        authors variant sets from Blender collection names. 
+        authors variant sets from Blender collection names.
         The "lod" set is the only exception: LODs use render purposes instead of standard USD variants.
         """
         os.makedirs(variants_dir, exist_ok=True)
@@ -132,6 +159,11 @@ class MeshLayerExporter:
 
             if is_lod_set(set_name):
                 for variant_name, node in variants.items():
+                    if not self.lod_to_sublayers:
+                        self._write_lod(
+                            stage, asset_item, prim, set_dir, variant_name, node, set_variant_path, skeleton_plan, in_variant_layer
+                        )
+                        continue
                     lod_layer_path = self._write_variant_layer(
                         asset_item, set_dir, variant_name, node, set_variant_path, skeleton_plan, purpose=lod_purpose(variant_name)
                     )
@@ -177,13 +209,38 @@ class MeshLayerExporter:
             nested_dir = os.path.join(set_dir, variant_segment)
             nested_variant_path = os.path.join(variant_path, variant_segment)
             self._author_variant_sets(
-                variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir, skeleton_plan, nested_variant_path
+                variant_stage, asset_item, asset_prim, node.variant_sets, nested_dir, skeleton_plan, nested_variant_path,
+                in_variant_layer=True
             )
 
         # a defaultPrim lets the parent layer reference this file without naming a prim
         variant_stage.GetRootLayer().defaultPrim = sanitize_name(asset_item.name)
         variant_stage.GetRootLayer().Save()
         return variant_layer_path
+
+    def _write_lod(self, stage, asset_item, prim, set_dir, variant_name, node, variant_path, skeleton_plan=None, in_variant_layer=False):
+        """
+        write LOD meshes directly into the stage instead of a separate LOD layer,
+        variants nested in the LOD are authored on the same prim the LOD layer would be referenced to
+        """
+        logger.debug(f"Writing LOD into layer: {variant_path}/{variant_name}")
+        # variant layers are referenced into SkelRoot, so they always use paths without it
+        has_skeleton = asset_item.has_skeleton and not in_variant_layer
+        purpose = lod_purpose(variant_name)
+        # meshes inherit purpose from the parent prim path
+        purpose_scope = UsdGeom.Scope.Define(stage, f"{geom_scope_path(asset_item.name, has_skeleton)}/{purpose}")
+        purpose_scope.CreatePurposeAttr().Set(purpose)
+
+        self._write_meshes(stage, asset_item, node.outliner_paths, skeleton_plan, has_skeleton, in_variant_layer)
+        self._attach_binding_layer(stage, asset_item, node.outliner_paths, has_skeleton)
+
+        if node.variant_sets:
+            variant_segment = sanitize_name(variant_name)
+            nested_dir = os.path.join(set_dir, variant_segment)
+            nested_variant_path = os.path.join(variant_path, variant_segment)
+            self._author_variant_sets(
+                stage, asset_item, prim, node.variant_sets, nested_dir, skeleton_plan, nested_variant_path, in_variant_layer
+            )
 
     def _attach_binding_layer(self, stage, asset_item, outliner_paths, has_skeleton=False):
         """
@@ -194,7 +251,9 @@ class MeshLayerExporter:
             return
         geo_layer = stage.GetRootLayer()
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)
-        geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
+        binding_layer_name = os.path.basename(binding_layer_path)
+        if binding_layer_name not in geo_layer.subLayerPaths:
+            geo_layer.subLayerPaths.append(binding_layer_name)
 
     def _write_mesh(self, stage, prim_path, mesh_obj, asset_name, skeleton_binding=None, in_variant_layer=False):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)

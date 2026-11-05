@@ -9,7 +9,7 @@ from publisher.exporter.common import (
     mesh_prim_path,
     sanitize_name,
 )
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
@@ -27,7 +27,9 @@ class MaterialBindingLayerExporter:
         base_path, extension = os.path.splitext(geo_layer_path)
         binding_layer_path = f"{base_path}_binding{extension}"
 
-        stage = Usd.Stage.CreateNew(binding_layer_path)
+        # several assets written into one geometry layer share its binding layer
+        binding_layer = Sdf.Layer.Find(binding_layer_path)
+        stage = Usd.Stage.Open(binding_layer) if binding_layer else Usd.Stage.CreateNew(binding_layer_path)
         UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         self.export(stage, asset_item, outliner_paths, has_skeleton)
         stage.GetRootLayer().Save()

@@ -2,7 +2,7 @@ import bpy
 
 from publisher import collector
 from publisher.exporter.common import PROXY_POST_FIX
-from publisher.monke_logging import get_logger
+from utils.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
