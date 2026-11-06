@@ -226,6 +226,8 @@ class MonkeUsdExportDialog(QDialog):
         output_nodes = [node for node in self.node_graph.all_nodes() if node.__identifier__ == "nodes.output"]
         for node in output_nodes:
             node.execute()
+
+        # after exporting it should chnge is cooked status of all colelctions assets
     
 #         # collect asset items
 #         self.asset_collector = AssetsCollector()

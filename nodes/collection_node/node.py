@@ -4,16 +4,16 @@ from nodes.collection_node.collector import Collector
 from nodes.collection_node.layers.layers_creator import LayerCreator
 
 
-class CollectionNode(BaseNode, NodeProperties):
+class ComponentNode(BaseNode, NodeProperties):
     """
     node representation of scene asset
     """
-    __identifier__ = "nodes.collection"
-    NODE_NAME = "Collection node"
+    __identifier__ = "nodes.component"
+    NODE_NAME = "Component node"
 
     
     def __init__(self):
-        super(CollectionNode, self).__init__()
+        super(ComponentNode, self).__init__()
         self.is_cooked = False
 
         self.add_text_input(

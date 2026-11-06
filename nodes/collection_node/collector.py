@@ -1,6 +1,3 @@
-import bpy
-
-from pxr import Sdf
 from utils.blender import *
 from utils.monke_logging import get_logger
 from collections import deque
@@ -10,36 +7,51 @@ logger = get_logger(__name__)
 VARIANT_PREFIX = "VAR_"
 
 
-class Item:
-    def __init__(self, prim_path, objects):
-        self.prim_path = Sdf.Path(prim_path)
+class CollectionItem:
+    def __init__(self, parent, prim_path, objects):
+        if parent:
+            self.has_skeleton = parent.has_skeleton
+        else:
+            self.has_skeleton = False 
+        self.parent = parent
+        self.prim_path = prim_path
+        self.is_root = False
+        
         self.meshs = []
         self.lights = []
         self.curves = []
 
-        self.materials = []
         self.variants = []        
         self.children = []
     
         self.filter_objects(objects)
 
-    @property
-    def has_skeleton(self):
-        return (
-            any(m.is_skinned and m.armature for m in self.meshs)
-            or any(c.has_skeleton for c in self.children + self.variants)
-        )
-
     def filter_objects(self, objects):
         for obj in objects:
             if obj.type == "MESH":
-                self.meshs.append(MeshObject(obj))
+                mesh_obj = MeshObject(obj)
+                if mesh_obj.armature:
+                    self.has_skeleton = True
+                    if not self.parent.has_skeleton:
+                        splited_path = self.prim_path.split("/")
+                        start_path = "/".join(splited_path[:-1])
+                        self.prim_path += (f"{start_path}/Rig/{splited_path[-1]}")
+                self.meshs.append(mesh_obj)
+            
             elif obj.type == "LIGHT":
                 self.lights.append(BaseObject(obj))
+            
             elif obj.type == "CURVE":
                 self.curves.append(BaseObject(obj))
+            
             else:
                 logger.warning(f"Unsupported object type: {obj.type} for object {obj.name}")
+
+
+class CollectionRootItem(CollectionItem):
+    def __init__(self, parent, prim_path, objects):
+        super().__init__(parent, prim_path, objects)
+        self.is_root = True
 
 
 class BaseObject:
@@ -120,13 +132,13 @@ class Collector:
             logger.warning(f"Collection '{collection_path}' not found, skipping")
             return None
 
-        root_item = Item(f"/{collection_path.split('/')[-1]}", collection.objects)
+        root_item = CollectionRootItem(None, f"/{collection_path.split('/')[-1]}", collection.objects)
         queue = deque([(root_item, collection.children)])
-        
+
         while queue:
             current_item, current_children = queue.popleft()
             for child in current_children:
-                child_item = Item(f"{current_item.prim_path}/{child.name}", child.objects)
+                child_item = CollectionItem(current_item, f"{current_item.prim_path}/{child.name}", child.objects)
                 # here its decide if current collection is children prim or variant set
                 if child.name.startswith(VARIANT_PREFIX):
                     current_item.variants.append(child_item)
@@ -134,5 +146,6 @@ class Collector:
                     current_item.children.append(child_item)
                 
                 queue.append((child_item, child.children))
-
+        
         return root_item
+how a

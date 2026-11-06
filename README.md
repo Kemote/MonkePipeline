@@ -157,6 +157,8 @@ version, instead of `:latest` doing it for you automatically.
    the asset collection directly, or under `<set>_VAR_<variant>` sub-collections
    to define variant sets (LOD uses a reserved `lod` set with `render`/`proxy`
    variants). Armatures go in a child collection literally named `armature`.
+   Don't name a collection `Rig`: the exporter reserves that name for the
+   `SkelRoot` prim it creates for skinned meshes.
 2. Open **Monke Pipeline → USD Export** from the top bar.
 3. Pick which assets and layers (geometry/materials/armature) to export, set
    up axis, meters-per-unit, mesh scale, and (optionally) proxy LOD
