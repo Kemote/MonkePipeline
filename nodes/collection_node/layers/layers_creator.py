@@ -65,7 +65,7 @@ class LayerCreator:
             if item.has_skeleton:
                 root_prim = Sdf.PrimSpec(root_prim, "Rig", Sdf.SpecifierDef, "SkelRoot")
             
-            geom_scope = Sdf.CreatePrimInLayer(self.geom_layer, Sdf.Path(f"/{str(root_prim.prim_path)}/Geom"))
+            geom_scope = Sdf.CreatePrimInLayer(self.geom_layer, Sdf.Path(f"/{str(root_prim.path)}/Geom"))
             geom_scope.typeName = "Scope"
             geom_scope.specifier = Sdf.SpecifierDef
 
@@ -79,7 +79,7 @@ class LayerCreator:
             lights_scope.typeName = "Scope"
             lights_scope.specifier = Sdf.SpecifierDef
 
-        self.process_mehses(item)
+        self.process_mehses(item, geom_scope)
         self.process_lights(item)
         self.process_curves(item)
 
@@ -89,8 +89,8 @@ class LayerCreator:
         for child in item.children:
             self.create(child)
 
-    def process_mehses(self, item):
-        mesh_prim_creator = MeshPrimCreator(item, self.geom_layer, self.mat_layer, self.rig_layer, self.anim_layer, self.physic_layer)
+    def process_mehses(self, item, geom_scope):
+        mesh_prim_creator = MeshPrimCreator(item, geom_scope, self.geom_layer, self.mat_layer, self.rig_layer, self.anim_layer, self.physic_layer)
         mesh_prim_creator.create()
 
     def process_lights(self, item):
@@ -117,9 +117,9 @@ class LayerCreator:
 
 
 class MeshPrimCreator:
-    def __init__(self, item, geom_layer, mat_layer, rig_layer, anim_layer, physic_layer):
+    def __init__(self, item, geom_scope, geom_layer, mat_layer, rig_layer, anim_layer, physic_layer):
         self.main_prim = None
-
+        self.geom_scope = geom_scope
         self.item = item
         self.geom_layer = geom_layer
         self.mat_layer = mat_layer
@@ -128,8 +128,18 @@ class MeshPrimCreator:
         self.physic_layer = physic_layer
 
     def create(self):
-        split_path = self.item.prim_path.split("/")
-        skel_root_path = "/".join(split_path[:-2])
-        if split_path[-2] == "Rig" and not Sdf.Layer.GetPrimAtPath(skel_root_path):
-            skel_root_prim = 
+        split_prim_path = self.item.prim_path.split("/")
+        split_scope_path = str(self.geom_scope.path).split("/")
+        split_prim_path = split_scope_path + split_prim_path[2:]
+        skel_root_path = "/".join(split_prim_path[:-2])
+        
+        if split_prim_path[-2] == "Rig" and not Sdf.Layer.GetPrimAtPath(skel_root_path):
+            skel_prim = Sdf.CreatePrimInLayer(self.mat_layer, Sdf.Path(skel_root_path))
+            skel_prim.typeName = "SkelRoot"
+            skel_prim.specifier = Sdf.SpecifierDef
+
+        
+        for meshes in self.item.meshes:
+
             
+
