@@ -37,3 +37,9 @@ pipeline.env
 *.usda
 *.usdc
 *.usdz
+
+# Claude Code project files
+.claude/
+
+# Folders starting with "__" (local libs, sample files, caches)
+__*/
