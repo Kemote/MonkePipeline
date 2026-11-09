@@ -23,8 +23,8 @@ class MONKE_OT_usd_export(bpy.types.Operator):
 
 
 class MONKE_OT_convex_hull_generator(bpy.types.Operator):
-    bl_idname = "monke.usd_export"
-    bl_label = "USD Export"
+    bl_idname = "monke.convex_hull_generator"
+    bl_label = "Generate Collision Object"
     bl_options = {'REGISTER'}
 
     def execute(self, context):
@@ -44,7 +44,7 @@ class TOPBAR_MT_monke_pipeline(bpy.types.Menu):
 
 classes = (
     MONKE_OT_usd_export,
-    MONKE_OT_convex_hull_generator.
+    MONKE_OT_convex_hull_generator,
     TOPBAR_MT_monke_pipeline,
 )
 

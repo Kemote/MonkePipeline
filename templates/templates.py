@@ -3,7 +3,7 @@ import re
 import glob
 import json
 
-from publisher.monke_logging import get_logger
+from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)

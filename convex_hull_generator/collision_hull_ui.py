@@ -30,7 +30,7 @@ from typing import Optional
 import bpy
 from PySide6 import QtCore, QtWidgets
 
-from collision_hull import COLLISION_SUFFIX, CollisionHullBuilder, ConvexHullParams
+from convex_hull_generator.collision_hull import COLLISION_SUFFIX, CollisionHullBuilder, ConvexHullParams
 
 __all__ = ["CollisionHullWindow", "show"]
 
