@@ -3,10 +3,10 @@ import bpy
 import logging
 
 from pathlib import Path
-from publisher.exporter import UsdExporter
-from publisher.collector import AssetsCollector
-from publisher.monke_logging import configure_logging, get_logger
-from publisher.proxy_generator.app import ProxyGenerator
+from exporter.layers_exporters import UsdExporter
+from exporter.collector import AssetsCollector
+from exporter.monke_logging import configure_logging, get_logger
+from proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
@@ -293,28 +293,3 @@ def show_export_dialog():
 
     if not bpy.app.timers.is_registered(_pump_qt_events):
         bpy.app.timers.register(_pump_qt_events, first_interval=0.02)
-
-
-class MONKE_OT_usd_export(bpy.types.Operator):
-    bl_idname = "monke.usd_export"
-    bl_label = "USD Export"
-    bl_options = {'REGISTER'}
-
-    def execute(self, context):
-        show_export_dialog()
-        return {'FINISHED'}
-
-
-class TOPBAR_MT_monke_pipeline(bpy.types.Menu):
-    bl_idname = "TOPBAR_MT_monke_pipeline"
-    bl_label = "Monke Pipeline"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator(MONKE_OT_usd_export.bl_idname, text="USD Export")
-
-
-classes = (
-    MONKE_OT_usd_export,
-    TOPBAR_MT_monke_pipeline,
-)
