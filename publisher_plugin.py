@@ -10,7 +10,7 @@ bl_info = {
 
 import bpy
 from exporter.ui.exporter_ui import show_export_dialog
-from convex_hull_generator.collision_hull_ui import show
+from convex_hull_generator.collision_hull_ui import show_collisions_dialog
 
 class MONKE_OT_usd_export(bpy.types.Operator):
     bl_idname = "monke.usd_export"
@@ -28,7 +28,7 @@ class MONKE_OT_convex_hull_generator(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context):
-        show()
+        show_collisions_dialog()
         return {'FINISHED'}
 
 

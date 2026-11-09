@@ -24,7 +24,8 @@ from PySide6.QtWidgets import (
 )
 
 
-STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
+STYLE_SHEET_PATH = Path(__file__).resolve().parents[2] / "style" / "blender_dark_style.qss"
+PUMP_INTERVAL = 0.02  # seconds between Qt event passes
 current_dialog = None
 configure_logging()
 logger = get_logger(__name__)
@@ -75,8 +76,8 @@ class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("USD Export")
-        self.setMinimumWidth(400)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
+        self.setMinimumWidth(400)
 
         options_layout = QVBoxLayout()
         logging_layout = QVBoxLayout()
@@ -268,7 +269,7 @@ def _pump_qt_events():
 
     if current_dialog is None or not current_dialog.isVisible():
         return None
-    return 0.02
+    return PUMP_INTERVAL
 
 
 def _on_dialog_finished(result):
@@ -293,3 +294,7 @@ def show_export_dialog():
 
     if not bpy.app.timers.is_registered(_pump_qt_events):
         bpy.app.timers.register(_pump_qt_events, first_interval=0.02)
+
+
+if __name__ == "__main__":
+    show_export_dialog()

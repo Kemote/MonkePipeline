@@ -1,40 +1,15 @@
-"""
-collision_hull_gui.py
-
-PySide6 front-end for ``collision_hull.CollisionHullBuilder``.
-
-Usage inside Blender (Text Editor "Run Script" or the Python console):
-
-    import collision_hull_gui
-    collision_hull_gui.show()
-
-One-time setup: Blender does not ship PySide6, install it into Blender's own
-Python, e.g.
-
-    <blender>/<version>/python/bin/python3.11 -m pip install PySide6
-
-``collision_hull.py`` must be importable (same folder on sys.path, or a text
-block named ``collision_hull.py`` in the open .blend).
-
-Event loop: ``QApplication.exec()`` would freeze Blender, so a
-``bpy.app.timers`` callback calls ``processEvents()`` while the window is open.
-That keeps every button handler on Blender's main thread, which is required
-for touching ``bpy.data``.
-"""
-from __future__ import annotations
-
+import bpy
 import math
 import traceback
+
+from pathlib import Path
 from typing import Optional
-
-import bpy
 from PySide6 import QtCore, QtWidgets
-
 from convex_hull_generator.collision_hull import COLLISION_SUFFIX, CollisionHullBuilder, ConvexHullParams
 
-__all__ = ["CollisionHullWindow", "show"]
 
-_PUMP_INTERVAL = 0.02  # seconds between Qt event passes
+STYLE_SHEET_PATH = Path(__file__).resolve().parents[1] / "style" / "blender_dark_style.qss"
+PUMP_INTERVAL = 0.02  # seconds between Qt event passes
 
 
 class CollisionHullWindow(QtWidgets.QWidget):
@@ -49,16 +24,15 @@ class CollisionHullWindow(QtWidgets.QWidget):
         self._builder = builder or CollisionHullBuilder()
         self.setWindowTitle("Collision Hull Generator")
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
+        self.setStyleSheet(STYLE_SHEET_PATH.read_text())
         self.resize(380, 540)
         self._build_ui()
         self._on_defaults_toggled(self._defaults_cb.isChecked())
 
-    # ------------------------------------------------------------------ UI
     def _build_ui(self) -> None:
         defaults = ConvexHullParams()
         root = QtWidgets.QVBoxLayout(self)
 
-        # Sources
         src_box = QtWidgets.QGroupBox("Source meshes")
         src_lay = QtWidgets.QVBoxLayout(src_box)
         self._list = QtWidgets.QListWidget()
@@ -130,7 +104,6 @@ class CollisionHullWindow(QtWidgets.QWidget):
         self._status.setWordWrap(True)
         root.addWidget(self._status)
 
-    # ------------------------------------------------------------- helpers
     def _names(self) -> list[str]:
         return [self._list.item(i).text() for i in range(self._list.count())]
 
@@ -148,7 +121,6 @@ class CollisionHullWindow(QtWidgets.QWidget):
             max_vertices=self._max_verts.value() or None,
         )
 
-    # ------------------------------------------------------------ handlers
     def _on_defaults_toggled(self, use_defaults: bool) -> None:
         for w in (self._merge, self._angle, self._max_verts):
             w.setEnabled(not use_defaults)
@@ -207,20 +179,28 @@ class CollisionHullWindow(QtWidgets.QWidget):
         self._set_status(msg)
 
 
-# ------------------------------------------------------------ Blender glue
 _window: Optional[CollisionHullWindow] = None
 
 
-def _pump() -> Optional[float]:
+def _pump_qt_events() -> Optional[float]:
     """bpy.app.timers callback: run Qt events; stop when the window is gone."""
     app = QtWidgets.QApplication.instance()
     if app is None or _window is None or not _window.isVisible():
         return None  # unregisters the timer
     app.processEvents()
-    return _PUMP_INTERVAL
+    return PUMP_INTERVAL
 
 
-def show(builder: Optional[CollisionHullBuilder] = None) -> CollisionHullWindow:
+def _reapply_stays_on_top() -> None:
+    if _window is None or _window.windowHandle() is None:
+        return
+    handle = _window.windowHandle()
+    flags = handle.flags()
+    handle.setFlags(flags & ~QtCore.Qt.WindowStaysOnTopHint)
+    handle.setFlags(flags | QtCore.Qt.WindowStaysOnTopHint)
+
+
+def show_collisions_dialog(builder: Optional[CollisionHullBuilder] = None) -> CollisionHullWindow:
     """Open the window (replacing an already open one) and return it."""
     global _window
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(["blender"])
@@ -231,11 +211,16 @@ def show(builder: Optional[CollisionHullBuilder] = None) -> CollisionHullWindow:
     _window = CollisionHullWindow(builder)
     _window.show()
     _window.raise_()
+    # Qt writes _NET_WM_STATE_ABOVE before the window is mapped, and COSMIC
+    # ignores that. Setting the flag on the QWindow after mapping sends a
+    # _NET_WM_STATE client message instead. QWidget.setWindowFlag would
+    # hide and re-map the window, which loses the message.
+    QtCore.QTimer.singleShot(100, _reapply_stays_on_top)
 
-    if not bpy.app.timers.is_registered(_pump):
-        bpy.app.timers.register(_pump, first_interval=0.0)
+    if not bpy.app.timers.is_registered(_pump_qt_events):
+        bpy.app.timers.register(_pump_qt_events, first_interval=0.0)
     return _window
 
 
 if __name__ == "__main__":
-    show()
+    show_collisions_dialog()
