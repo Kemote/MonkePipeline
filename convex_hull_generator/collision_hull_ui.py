@@ -28,6 +28,7 @@ class CollisionHullWindow(QtWidgets.QWidget):
         self.resize(380, 540)
         self._build_ui()
         self._on_defaults_toggled(self._defaults_cb.isChecked())
+        self._add_selected_objects()
 
     def _build_ui(self) -> None:
         defaults = ConvexHullParams()
@@ -91,7 +92,12 @@ class CollisionHullWindow(QtWidgets.QWidget):
         self._name_edit.setPlaceholderText(f"<first object>{COLLISION_SUFFIX}")
         out_lay.addRow("Name", self._name_edit)
         self._parent_cb = QtWidgets.QCheckBox("Parent source objects to collision mesh")
+        self._parent_cb.setChecked(True)
         out_lay.addRow(self._parent_cb)
+        self._apply_cb = QtWidgets.QCheckBox("Apply transformation")
+        self._apply_cb.setToolTip("Bake location, rotation and scale into the collision mesh")
+        self._apply_cb.setChecked(True)
+        out_lay.addRow(self._apply_cb)
         root.addWidget(out_box)
 
         # Generate + status
@@ -126,6 +132,14 @@ class CollisionHullWindow(QtWidgets.QWidget):
             w.setEnabled(not use_defaults)
 
     def _add_selected(self) -> None:
+        added = self._add_selected_objects()
+        if added == 0:
+            self._set_status("No new selected mesh objects found.", error=True)
+        else:
+            self._set_status(f"Added {added} object(s).")
+
+    def _add_selected_objects(self) -> int:
+        """Add selected mesh objects not already listed; return how many were added."""
         known = set(self._names())
         added = 0
         for obj in bpy.context.view_layer.objects:
@@ -138,10 +152,7 @@ class CollisionHullWindow(QtWidgets.QWidget):
                 self._list.addItem(obj.name)
                 known.add(obj.name)
                 added += 1
-        if added == 0:
-            self._set_status("No new selected mesh objects found.", error=True)
-        else:
-            self._set_status(f"Added {added} object(s).")
+        return added
 
     def _remove_selected(self) -> None:
         for item in self._list.selectedItems():
@@ -162,6 +173,7 @@ class CollisionHullWindow(QtWidgets.QWidget):
                 objs,
                 hull_params=self._params(),
                 parent_to_final=self._parent_cb.isChecked(),
+                apply_transform=self._apply_cb.isChecked(),
                 name=self._name_edit.text().strip() or None,
             )
         except Exception as exc:  # show it in the UI, full trace in the console
