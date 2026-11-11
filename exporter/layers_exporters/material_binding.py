@@ -1,7 +1,7 @@
 import os
 
 from pxr import Usd, UsdGeom, UsdShade, Sdf
-from publisher.exporter.common import (
+from exporter.layers_exporters.common import (
     asset_root_path,
     base_material_name,
     looks_scope_path,
@@ -9,7 +9,7 @@ from publisher.exporter.common import (
     mesh_prim_path,
     sanitize_name,
 )
-from publisher.monke_logging import get_logger
+from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)

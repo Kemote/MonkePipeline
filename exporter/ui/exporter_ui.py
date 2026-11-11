@@ -3,10 +3,10 @@ import bpy
 import logging
 
 from pathlib import Path
-from publisher.exporter import UsdExporter
-from publisher.collector import AssetsCollector
-from publisher.monke_logging import configure_logging, get_logger
-from publisher.proxy_generator.app import ProxyGenerator
+from exporter.layers_exporters import UsdExporter
+from exporter.collector import AssetsCollector
+from exporter.monke_logging import configure_logging, get_logger
+from proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
@@ -24,7 +24,8 @@ from PySide6.QtWidgets import (
 )
 
 
-STYLE_SHEET_PATH = Path(__file__).parent / "blender_dark_style.qss"
+STYLE_SHEET_PATH = Path(__file__).resolve().parents[2] / "style" / "blender_dark_style.qss"
+PUMP_INTERVAL = 0.02  # seconds between Qt event passes
 current_dialog = None
 configure_logging()
 logger = get_logger(__name__)
@@ -75,8 +76,8 @@ class MonkeUsdExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("USD Export")
-        self.setMinimumWidth(400)
         self.setStyleSheet(STYLE_SHEET_PATH.read_text())
+        self.setMinimumWidth(400)
 
         options_layout = QVBoxLayout()
         logging_layout = QVBoxLayout()
@@ -268,7 +269,7 @@ def _pump_qt_events():
 
     if current_dialog is None or not current_dialog.isVisible():
         return None
-    return 0.02
+    return PUMP_INTERVAL
 
 
 def _on_dialog_finished(result):
@@ -295,26 +296,5 @@ def show_export_dialog():
         bpy.app.timers.register(_pump_qt_events, first_interval=0.02)
 
 
-class MONKE_OT_usd_export(bpy.types.Operator):
-    bl_idname = "monke.usd_export"
-    bl_label = "USD Export"
-    bl_options = {'REGISTER'}
-
-    def execute(self, context):
-        show_export_dialog()
-        return {'FINISHED'}
-
-
-class TOPBAR_MT_monke_pipeline(bpy.types.Menu):
-    bl_idname = "TOPBAR_MT_monke_pipeline"
-    bl_label = "Monke Pipeline"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator(MONKE_OT_usd_export.bl_idname, text="USD Export")
-
-
-classes = (
-    MONKE_OT_usd_export,
-    TOPBAR_MT_monke_pipeline,
-)
+if __name__ == "__main__":
+    show_export_dialog()

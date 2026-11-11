@@ -38,6 +38,12 @@ def run_blender():
     env = load_pipeline_env()
     bootstrap_script = write_bootstrap_script(env["PYSIDE6_SITE_PACKAGES"])
     command = ["flatpak", "run"]
+    if env.get("QT_QPA_PLATFORM") == "xcb":
+        # Wayland ignores Qt.WindowStaysOnTopHint, so run Qt through XWayland.
+        # The Blender Flatpak only has fallback-x11, which hides the X11
+        # socket on Wayland sessions, so expose it explicitly.
+        command.append("--socket=x11")
+        command.append("--env=QT_QPA_PLATFORM=xcb")
     for name, value in get_pipeline_env(env).items():
         command.append(f"--env={name}={value}")
     command.append(env["BLENDER_FLATPAK_APP_ID"])

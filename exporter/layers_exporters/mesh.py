@@ -1,9 +1,9 @@
 import os
 
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
-from publisher import collector
-from publisher.exporter.armature import SkeletonBindingPlan
-from publisher.exporter.common import (
+from exporter import collector
+from exporter.layers_exporters.armature import SkeletonBindingPlan
+from exporter.layers_exporters.common import (
     MAX_JOINT_INFLUENCES,
     asset_root_path,
     geom_scope_path,
@@ -16,8 +16,8 @@ from publisher.exporter.common import (
     skel_root_path,
 )
 from templates.templates import Templates
-from publisher.exporter.material_binding import MaterialBindingLayerExporter
-from publisher.monke_logging import get_logger
+from exporter.layers_exporters.material_binding import MaterialBindingLayerExporter
+from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)

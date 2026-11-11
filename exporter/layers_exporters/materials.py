@@ -3,8 +3,8 @@ import shutil
 import bpy
 
 from pxr import UsdGeom, UsdShade, Sdf, Gf, Usd
-from publisher.exporter.common import looks_scope_path, material_prim_name, sanitize_name
-from publisher.monke_logging import get_logger
+from exporter.layers_exporters.common import looks_scope_path, material_prim_name, sanitize_name
+from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)

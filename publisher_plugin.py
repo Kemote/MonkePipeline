@@ -9,7 +9,44 @@ bl_info = {
 }
 
 import bpy
-from ui.blender_publisher_ui import classes, TOPBAR_MT_monke_pipeline
+from exporter.ui.exporter_ui import show_export_dialog
+from convex_hull_generator.collision_hull_ui import show_collisions_dialog
+
+class MONKE_OT_usd_export(bpy.types.Operator):
+    bl_idname = "monke.usd_export"
+    bl_label = "USD Export"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        show_export_dialog()
+        return {'FINISHED'}
+
+
+class MONKE_OT_convex_hull_generator(bpy.types.Operator):
+    bl_idname = "monke.convex_hull_generator"
+    bl_label = "Generate Collision Object"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        show_collisions_dialog()
+        return {'FINISHED'}
+
+
+class TOPBAR_MT_monke_pipeline(bpy.types.Menu):
+    bl_idname = "TOPBAR_MT_monke_pipeline"
+    bl_label = "Monke Pipeline"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator(MONKE_OT_usd_export.bl_idname, text="USD Export")
+        layout.operator(MONKE_OT_convex_hull_generator.bl_idname, text="Generate Collision Object")
+
+
+classes = (
+    MONKE_OT_usd_export,
+    MONKE_OT_convex_hull_generator,
+    TOPBAR_MT_monke_pipeline,
+)
 
 
 def draw_monke_pipeline_menu(self, context):

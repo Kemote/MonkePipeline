@@ -1,5 +1,5 @@
 from pxr import Gf, UsdGeom
-from publisher.collector import VARIANT_SEPARATOR
+from exporter.collector import VARIANT_SEPARATOR
 
 
 FPS = 30

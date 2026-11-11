@@ -1,12 +1,12 @@
 import os
 
 from pxr import Usd, UsdGeom, Kind
-from publisher.exporter.armature import ArmatureLayerExporter
-from publisher.exporter.common import FPS, sanitize_name
-from publisher.exporter.materials import MaterialsLayerExporter
-from publisher.exporter.mesh import MeshLayerExporter
+from exporter.layers_exporters.armature import ArmatureLayerExporter
+from exporter.layers_exporters.common import FPS, sanitize_name
+from exporter.layers_exporters.materials import MaterialsLayerExporter
+from exporter.layers_exporters.mesh import MeshLayerExporter
 from templates.templates import Templates
-from publisher.monke_logging import get_logger
+from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
