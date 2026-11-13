@@ -8,12 +8,18 @@ from pipeline_config import PROJECT_ROOT, load_pipeline_env
 
 
 def get_pipeline_env(env):
-    return {
+    pipeline_env = {
         "MONKENAME": env["MONKENAME"],
         "LD_LIBRARY_PATH": env["LD_LIBRARY_PATH"],
-        "PROJECTNAME": env["PROJECTNAME"],
         "PXR_PLUGINPATH_NAME": env["PXR_PLUGINPATH_NAME_BLENDER"],
     }
+    # project vars are optional: when left empty the exporter falls back
+    # to a "<blend name>_usd" folder next to the .blend file
+    for name in ("PROJECTSROOT", "PROJECTNAME"):
+        value = env.get(name, "").strip()
+        if value:
+            pipeline_env[name] = value
+    return pipeline_env
 
 
 def write_bootstrap_script(pyside6_site_packages):
