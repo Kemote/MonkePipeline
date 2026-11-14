@@ -5,6 +5,7 @@ from exporter.layers_exporters.armature import ArmatureLayerExporter
 from exporter.layers_exporters.common import FPS, sanitize_name
 from exporter.layers_exporters.materials import MaterialsLayerExporter
 from exporter.layers_exporters.mesh import MeshLayerExporter
+from exporter.layers_exporters.physics import PhysicsLayerExporter
 from templates.templates import Templates
 from exporter.monke_logging import get_logger
 
@@ -29,6 +30,7 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
+        self.export_physics = settings["export_physics"]
         self.projects_root = settings["projects_root"]
         self.project_name = settings["project_name"]
         self.sublayer_resolver = settings.get("sublayer_resolver", SUBLAYER_RESOLVER_DEFAULT)
@@ -58,6 +60,8 @@ class UsdExporter:
         look_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "rig"
         rig_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        fields["step"] = "physics"
+        physics_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         mesh_variants_output = templates.get_new_file_path(mesh_variants_template, fields)
         textures_output = templates.get_new_file_path(textures_template, fields)
         layer_paths_dict = {
@@ -66,6 +70,11 @@ class UsdExporter:
             "rig": None,
         }
 
+        if self.export_physics:
+            physics_exporter = PhysicsLayerExporter(asset_name, physics_file_path)
+        else:
+            physics_exporter = None
+
         if self.export_geom:
             variant_base_fields = {
                 "ext": fields["ext"],
@@ -73,7 +82,7 @@ class UsdExporter:
                 "project_name": fields["project_name"],
                 "name": fields["name"],
             }
-            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale)
+            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale, physics_exporter)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
 
@@ -121,6 +130,9 @@ class UsdExporter:
                 continue
             final_sublayers.append(self._sublayer_asset_path(templates, sublayer_file_template, layer_path, main_dir))
 
+        if self.export_physics:
+            final_sublayers.append(physics_file_path)
+            
         root_layer.subLayerPaths = final_sublayers
         root_layer.Save()
 

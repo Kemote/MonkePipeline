@@ -30,7 +30,7 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0):
+    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0, physics_exporter=None):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
@@ -38,6 +38,7 @@ class MeshLayerExporter:
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
         self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
+        self.physics_exporter = physics_exporter
 
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
@@ -108,6 +109,12 @@ class MeshLayerExporter:
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
             self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
 
+            # check if mesh have any physic
+            if self.physics_exporter:
+                self.physics_exporter.export(mesh, prim_path)
+
+        self.physics_exporter.save()
+        
     def _author_variant_sets(self,
                              stage: Usd.Stage,
                              asset_item: collector.CollectedAssetItem,
