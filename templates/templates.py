@@ -73,6 +73,17 @@ class Templates:
 
         return sorted(version_numbers)
 
+    def get_latest_file_path(self, template, fields):
+        """
+        return the newest existing version of a versioned template, or None if none exist
+        """
+        existing_versions = self.get_existing_version_numbers(template, dict(fields))
+        if not existing_versions:
+            return None
+        latest_fields = dict(fields)
+        latest_fields["version"] = existing_versions[-1]
+        return self.resolve_template(template, latest_fields)
+
     def get_new_file_path(self, template, fields):
         template_str = template.rel_template if isinstance(template, Template) else template
         if "<version>" not in template_str:

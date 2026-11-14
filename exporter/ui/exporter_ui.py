@@ -1,9 +1,16 @@
+import os
 import sys
 import bpy
 import logging
 
 from pathlib import Path
+from pipeline_config import resolve_project_location
 from exporter.layers_exporters import UsdExporter
+from exporter.layers_exporters.usd_exporter import (
+    SUBLAYER_RESOLVER_DEFAULT,
+    SUBLAYER_RESOLVER_MONKE,
+    SUBLAYER_RESOLVERS,
+)
 from exporter.collector import AssetsCollector
 from exporter.monke_logging import configure_logging, get_logger
 from proxy_generator.app import ProxyGenerator
@@ -14,6 +21,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QDialog,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -101,6 +109,48 @@ class MonkeUsdExportDialog(QDialog):
         # collect asset items
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
+
+        # output folder - PROJECTSROOT/PROJECTNAME, or "<blend name>_usd" next to the .blend
+        _, _, self.location_from_env = resolve_project_location(bpy.data.filepath)
+        # True once the user picks/types a folder, so we stop following the .blend path
+        self.output_dir_edited = False
+        options_layout.addWidget(QLabel("Output:"))
+        output_row = QHBoxLayout()
+        self.output_dir_edit = QLineEdit()
+        self.output_dir_edit.setPlaceholderText("Save the .blend file or choose a folder")
+        self.output_dir_edit.textEdited.connect(self._on_output_dir_edited)
+        browse_button = QPushButton("Browse...")
+        browse_button.clicked.connect(self._browse_output_dir)
+        output_row.addWidget(QLabel("Folder"))
+        output_row.addWidget(self.output_dir_edit)
+        output_row.addWidget(browse_button)
+        options_layout.addLayout(output_row)
+        self._refresh_output_dir()
+        if self.location_from_env:
+            self.output_dir_edit.setDisabled(True)
+            browse_button.setDisabled(True)
+            env_note = QLabel(
+                "Project settings override this option "
+                "(PROJECTSROOT is set in environment variables)."
+            )
+            env_note.setWordWrap(True)
+            options_layout.addWidget(env_note)
+
+        # how the main file references its sublayers
+        resolver_row = QHBoxLayout()
+        self.sublayer_resolver_combo = QComboBox()
+        self.sublayer_resolver_combo.addItems(SUBLAYER_RESOLVERS)
+        self.sublayer_resolver_combo.setCurrentText(
+            SUBLAYER_RESOLVER_MONKE if self.location_from_env else SUBLAYER_RESOLVER_DEFAULT
+        )
+        self.sublayer_resolver_combo.setToolTip(
+            "MonkeResolver: monkeDisc:// paths, need the resolver plugin and PROJECTSROOT/PROJECTNAME.\n"
+            "Default: plain relative paths to the newest versions, load in any application."
+        )
+        resolver_row.addWidget(QLabel("Sublayers AssetResolver"))
+        resolver_row.addWidget(self.sublayer_resolver_combo)
+        options_layout.addLayout(resolver_row)
+        options_layout.addSpacing(25)
 
         # extension combo box
         extension_row = QHBoxLayout()
@@ -194,9 +244,58 @@ class MonkeUsdExportDialog(QDialog):
         button_row.addWidget(cancel_button)
         options_layout.addLayout(button_row)
 
+    def _refresh_output_dir(self):
+        """follow the .blend path (or env vars) unless the user chose a folder"""
+        if self.output_dir_edited and not self.location_from_env:
+            return
+        projects_root, project_name, _ = resolve_project_location(bpy.data.filepath)
+        if projects_root and project_name:
+            self.output_dir_edit.setText(os.path.join(projects_root, project_name))
+        else:
+            self.output_dir_edit.clear()
+
+    def _on_output_dir_edited(self, text):
+        self.output_dir_edited = bool(text.strip())
+
+    def _browse_output_dir(self):
+        start_dir = self.output_dir_edit.text() or os.path.dirname(bpy.data.filepath)
+        folder = QFileDialog.getExistingDirectory(self, "Choose output folder", start_dir)
+        if folder:
+            self.output_dir_edit.setText(folder)
+            self.output_dir_edited = True
+
+    def _ensure_blend_saved(self):
+        """ask the user to save an unsaved .blend, returns False if they cancel"""
+        if bpy.data.filepath:
+            return True
+        # Qt dialog + EXEC save instead of Blender's file browser: the browser is async
+        # and would open behind this always-on-top Qt window
+        blend_path, _ = QFileDialog.getSaveFileName(
+            self, "Save .blend file before export", os.path.expanduser("~"), "Blender files (*.blend)"
+        )
+        if not blend_path:
+            logger.warning("Export cancelled: the .blend file is not saved")
+            return False
+        if not blend_path.endswith(".blend"):
+            blend_path += ".blend"
+        bpy.ops.wm.save_as_mainfile(filepath=blend_path)
+        logger.info(f"Saved .blend file: {blend_path}")
+        return True
+
     def _export(self):
+        self._refresh_output_dir()
+        if not self.output_dir_edit.text().strip():
+            if not self._ensure_blend_saved():
+                return
+            self._refresh_output_dir()
+
         settings = self.collect()
-        logger.info("Exporting asset items...")
+        if settings["sublayer_resolver"] == SUBLAYER_RESOLVER_MONKE and not self.location_from_env:
+            logger.warning(
+                "MonkeResolver selected without PROJECTSROOT set: to load these files set "
+                f"PROJECTSROOT={settings['projects_root']} and PROJECTNAME={settings['project_name']}"
+            )
+        logger.info(f"Exporting asset items to: {self.output_dir_edit.text()}")
         usd_exporter = UsdExporter(settings)
         asset_items = settings["collected_item"]
         for asset_item in asset_items:
@@ -238,7 +337,11 @@ class MonkeUsdExportDialog(QDialog):
         logger.info("Collecting asset items...")
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
+        output_dir = os.path.normpath(os.path.expanduser(self.output_dir_edit.text().strip()))
         return {
+            "projects_root": os.path.dirname(output_dir),
+            "project_name": os.path.basename(output_dir),
+            "sublayer_resolver": self.sublayer_resolver_combo.currentText(),
             "extension": self.extension_combo.currentText(),
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),

@@ -1,8 +1,11 @@
 {
   "roots": {
-    "main": "/home/kemot/Documents/Dev/MonkePipeline/<project_name>"
+    "main": "<projects_root>/<project_name>"
   },
   "tokens": {
+    "projects_root": {
+      "type": "str"
+    },
     "name": {
       "type": "str"
     },
