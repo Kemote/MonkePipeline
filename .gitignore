@@ -43,3 +43,6 @@ pipeline.env
 
 # Folders starting with "__" (local libs, sample files, caches)
 __*/
+
+# personal notes
+TODO.md
