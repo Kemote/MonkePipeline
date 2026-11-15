@@ -113,8 +113,6 @@ class MeshLayerExporter:
             if self.physics_exporter:
                 self.physics_exporter.export(mesh, prim_path)
 
-        self.physics_exporter.save()
-        
     def _author_variant_sets(self,
                              stage: Usd.Stage,
                              asset_item: collector.CollectedAssetItem,

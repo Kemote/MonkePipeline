@@ -12,7 +12,7 @@ from exporter.monke_logging import get_logger
 
 logger = get_logger(__name__)
 
-# how the main file references its geom/look/rig sublayers
+# how the main file references its geom/look/rig/physics sublayers
 SUBLAYER_RESOLVER_MONKE = "MonkeResolver"
 SUBLAYER_RESOLVER_DEFAULT = "Default"
 SUBLAYER_RESOLVERS = (SUBLAYER_RESOLVER_MONKE, SUBLAYER_RESOLVER_DEFAULT)
@@ -68,12 +68,17 @@ class UsdExporter:
             "geom": None,
             "look": None,
             "rig": None,
+            "physics": None,
         }
 
+        physics_exporter = None
         if self.export_physics:
-            physics_exporter = PhysicsLayerExporter(asset_name, physics_file_path)
-        else:
-            physics_exporter = None
+            if self.export_geom:
+                physics_exporter = PhysicsLayerExporter(
+                    asset_name, physics_file_path, self.meter_per_unit, self.mesh_scale, self.up_axis
+                )
+            else:
+                logger.warning("Physics export needs geometry export: rigid bodies are read from the exported meshes")
 
         if self.export_geom:
             variant_base_fields = {
@@ -85,6 +90,11 @@ class UsdExporter:
             mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale, physics_exporter)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
+
+        if physics_exporter:
+            # joints need every rigid body, which the mesh export above has collected
+            physics_exporter.save()
+            layer_paths_dict["physics"] = physics_file_path
 
         if self.export_mat:
             materials_exporter = MaterialsLayerExporter(textures_output, self.meter_per_unit)
@@ -116,7 +126,7 @@ class UsdExporter:
 
         # setting sublayers, strongest first
         root_layer = main_stage.GetRootLayer()
-        step_order = ("geom", "look", "rig")
+        step_order = ("geom", "look", "rig", "physics")
         main_dir = os.path.dirname(main_file_path)
 
         final_sublayers = []
@@ -130,9 +140,6 @@ class UsdExporter:
                 continue
             final_sublayers.append(self._sublayer_asset_path(templates, sublayer_file_template, layer_path, main_dir))
 
-        if self.export_physics:
-            final_sublayers.append(physics_file_path)
-            
         root_layer.subLayerPaths = final_sublayers
         root_layer.Save()
 
