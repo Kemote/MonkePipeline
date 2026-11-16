@@ -11,15 +11,15 @@ from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
-COLLISIONS_PREFIX = "collisions"
+COLLISIONS_COLLECTION_PREFIX = "collisions"
 MOTORS_JSON_FILENAME = "isaac_sim.json"
 
 # prim_path: the prim holding RigidBodyAPI, matrix_world: that prim's world matrix in Blender space
 RigidBody = namedtuple("RigidBody", ["prim_path", "matrix_world"])
 
 
-def is_collisions_name(name):
-    return name.lower().startswith(COLLISIONS_PREFIX)
+def is_collisions_collection_name(name):
+    return name.lower().startswith(COLLISIONS_COLLECTION_PREFIX)
 
 
 def joint_local_frame(frame_matrix, body, mesh_scale):
@@ -265,11 +265,11 @@ class PhysicsLayerExporter:
         that link, so the link's visuals move with it in the simulation.
         Any other rigid body mesh is its own body.
         """
-        if not (is_collisions_name(mesh_path.name) or is_collisions_name(mesh_path.GetParentPath().name)):
+        if not (is_collisions_collection_name(mesh_path.name) or is_collisions_collection_name(mesh_path.GetParentPath().name)):
             return mesh_path
 
         body_path = mesh_path.GetParentPath()
-        while is_collisions_name(body_path.name):
+        while is_collisions_collection_name(body_path.name):
             body_path = body_path.GetParentPath()
 
         geom_scopes = [Sdf.Path(geom_scope_path(self.asset_name, has_skeleton)) for has_skeleton in (False, True)]
