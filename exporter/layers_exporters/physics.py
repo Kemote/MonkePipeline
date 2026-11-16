@@ -227,10 +227,6 @@ class PhysicsLayerExporter:
         body = self._create_rigid_body(blender_obj, blender_rb, Sdf.Path(prim_path))
         self.bodies[blender_obj.name_full] = body
 
-        # handle passive rigid body
-        if blender_rb.type == "PASSIVE":
-            self._add_world_fixed_joint(blender_obj, body)
-
     def _create_rigid_body(self, blender_obj, blender_rb, mesh_path):
         # overs only: this layer adds APIs to prims the geom layer defines. A def with a type here
         # would replace the Mesh type whenever this layer is the stronger one
@@ -250,12 +246,18 @@ class PhysicsLayerExporter:
         # sets rigid bodies APIs and mass
         rb_api = UsdPhysics.RigidBodyAPI.Apply(body_prim)
         rb_api.CreateRigidBodyEnabledAttr(True)
+        
+        # if blender rb type is passive set it as kinematic
+        if blender_rb.type == "PASSIVE":
+            rb_api.GetKinematicEnabledAttr().Set(True)
+        
         mass_api = UsdPhysics.MassAPI.Apply(body_prim)
         mass_api.CreateMassAttr(blender_rb.mass)
 
         UsdPhysics.CollisionAPI.Apply(collision_prim)
         mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(collision_prim)
         mesh_collision.CreateApproximationAttr(UsdPhysics.Tokens.convexDecomposition)
+
         return RigidBody(body_path, body_matrix)
 
     def _rigid_body_path(self, mesh_path):
