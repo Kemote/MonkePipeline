@@ -1,7 +1,7 @@
 import os
 
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
-from exporter import collector
+from exporter.collectors import collector
 from exporter.layers_exporters.armature import SkeletonBindingPlan
 from exporter.layers_exporters.physics import is_collisions_collection_name
 from exporter.layers_exporters.common import (

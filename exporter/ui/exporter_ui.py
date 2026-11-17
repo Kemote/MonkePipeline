@@ -11,7 +11,7 @@ from exporter.layers_exporters.usd_exporter import (
     SUBLAYER_RESOLVER_MONKE,
     SUBLAYER_RESOLVERS,
 )
-from exporter.collector import AssetsCollector
+from exporter.collectors.collector import AssetsCollector
 from exporter.monke_logging import configure_logging, get_logger
 from proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt

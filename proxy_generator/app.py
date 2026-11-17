@@ -1,6 +1,6 @@
 import bpy
 
-from exporter import collector
+from exporter.collectors import collector
 from exporter.layers_exporters.common import PROXY_POST_FIX
 from exporter.monke_logging import get_logger
 
