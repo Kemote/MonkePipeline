@@ -61,6 +61,10 @@ def armature_scope_path(asset_name, has_skeleton=False):
     return f"{asset_root_path(asset_name, has_skeleton)}/Rig"
 
 
+def joints_scope_path(asset_name):
+    return f"/{sanitize_name(asset_name)}/Joints"
+
+
 def local_skeleton_path(asset_name, skeleton_path):
     """
     per-variant mesh files get referenced into SkelRoot with defaultPrim remapping, which

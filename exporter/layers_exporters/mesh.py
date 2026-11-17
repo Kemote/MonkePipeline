@@ -3,6 +3,7 @@ import os
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
 from exporter import collector
 from exporter.layers_exporters.armature import SkeletonBindingPlan
+from exporter.layers_exporters.physics import is_collisions_collection_name
 from exporter.layers_exporters.common import (
     MAX_JOINT_INFLUENCES,
     asset_root_path,
@@ -30,7 +31,7 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0):
+    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0, physics_exporter=None):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
@@ -38,6 +39,7 @@ class MeshLayerExporter:
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
         self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
+        self.physics_exporter = physics_exporter
 
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
@@ -108,6 +110,10 @@ class MeshLayerExporter:
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
             self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
 
+            # check if mesh have any physic
+            if self.physics_exporter:
+                self.physics_exporter.export(mesh, prim_path)
+
     def _author_variant_sets(self,
                              stage: Usd.Stage,
                              asset_item: collector.CollectedAssetItem,
@@ -149,7 +155,7 @@ class MeshLayerExporter:
             variant_set.SetVariantSelection(next(iter(variants)))
         return stage
 
-    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, variant_path, skeleton_plan=None, purpose=None):
+    def _write_variant_layer(self, asset_item, set_dir, variant_name, node, variant_path, skeleton_plan=None, purpose=UsdGeom.Tokens.render):
         logger.debug(f"Writing variant layer: {variant_path}")
         fields = dict(self.base_fields)
         fields["variant_path"] = variant_path
@@ -196,7 +202,7 @@ class MeshLayerExporter:
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)
         geo_layer.subLayerPaths.append(os.path.basename(binding_layer_path))
 
-    def _write_mesh(self, stage, prim_path, mesh_obj, asset_name, skeleton_binding=None, in_variant_layer=False):
+    def _write_mesh(self, stage : Usd.Stage, prim_path, mesh_obj, asset_name, skeleton_binding=None, in_variant_layer=False):
         usd_mesh = UsdGeom.Mesh.Define(stage, prim_path)
         mesh_data = mesh_obj.data
 
@@ -216,6 +222,13 @@ class MeshLayerExporter:
 
         if skeleton_binding:
             self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
+
+        # check if its collision object if yes set purpose as guide, else set purpose as render
+        parent_prim_name = prim_path.split("/")[-2]
+        if is_collisions_collection_name(parent_prim_name):
+            usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.guide)
+        else:
+            usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.render)
 
     @staticmethod
     def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):

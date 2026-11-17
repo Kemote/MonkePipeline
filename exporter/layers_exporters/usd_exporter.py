@@ -5,13 +5,14 @@ from exporter.layers_exporters.armature import ArmatureLayerExporter
 from exporter.layers_exporters.common import FPS, sanitize_name
 from exporter.layers_exporters.materials import MaterialsLayerExporter
 from exporter.layers_exporters.mesh import MeshLayerExporter
+from exporter.layers_exporters.physics import PhysicsLayerExporter
 from templates.templates import Templates
 from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
 
-# how the main file references its geom/look/rig sublayers
+# how the main file references its geom/look/rig/physics sublayers
 SUBLAYER_RESOLVER_MONKE = "MonkeResolver"
 SUBLAYER_RESOLVER_DEFAULT = "Default"
 SUBLAYER_RESOLVERS = (SUBLAYER_RESOLVER_MONKE, SUBLAYER_RESOLVER_DEFAULT)
@@ -29,6 +30,7 @@ class UsdExporter:
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
+        self.export_physics = settings["export_physics"]
         self.projects_root = settings["projects_root"]
         self.project_name = settings["project_name"]
         self.sublayer_resolver = settings.get("sublayer_resolver", SUBLAYER_RESOLVER_DEFAULT)
@@ -58,13 +60,25 @@ class UsdExporter:
         look_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "rig"
         rig_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        fields["step"] = "physics"
+        physics_file_path = templates.get_new_file_path(sublayer_file_template, fields)
         mesh_variants_output = templates.get_new_file_path(mesh_variants_template, fields)
         textures_output = templates.get_new_file_path(textures_template, fields)
         layer_paths_dict = {
             "geom": None,
             "look": None,
             "rig": None,
+            "physics": None,
         }
+
+        physics_exporter = None
+        if self.export_physics:
+            if self.export_geom:
+                physics_exporter = PhysicsLayerExporter(
+                    asset_name, physics_file_path, self.meter_per_unit, self.mesh_scale, self.up_axis
+                )
+            else:
+                logger.warning("Physics export needs geometry export: rigid bodies are read from the exported meshes")
 
         if self.export_geom:
             variant_base_fields = {
@@ -73,9 +87,14 @@ class UsdExporter:
                 "project_name": fields["project_name"],
                 "name": fields["name"],
             }
-            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale)
+            mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale, physics_exporter)
             self._write_layer(geom_file_path, mesh_exporter, asset_item)
             layer_paths_dict["geom"] = geom_file_path
+
+        if physics_exporter:
+            # joints need every rigid body, which the mesh export above has collected
+            physics_exporter.save()
+            layer_paths_dict["physics"] = physics_file_path
 
         if self.export_mat:
             materials_exporter = MaterialsLayerExporter(textures_output, self.meter_per_unit)
@@ -107,7 +126,7 @@ class UsdExporter:
 
         # setting sublayers, strongest first
         root_layer = main_stage.GetRootLayer()
-        step_order = ("geom", "look", "rig")
+        step_order = ("geom", "look", "rig", "physics")
         main_dir = os.path.dirname(main_file_path)
 
         final_sublayers = []

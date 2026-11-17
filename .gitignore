@@ -29,6 +29,9 @@ build_kit/
 dist/
 *.egg-info/
 
+# temporary bootstrap scripts written by run_blender.py
+monke_bootstrap_*.py
+
 # machine-specific pipeline config (see pipeline.env.example)
 pipeline.env
 

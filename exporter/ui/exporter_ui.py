@@ -224,10 +224,12 @@ class MonkeUsdExportDialog(QDialog):
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
+        self.physics_check = QCheckBox("Physics")
         for check in (
             self.geometry_check,
             self.materials_check,
             self.armature_check,
+            self.physics_check,
         ):
             check.setChecked(True)
             options_layout.addWidget(check)
@@ -346,6 +348,7 @@ class MonkeUsdExportDialog(QDialog):
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
+            "export_physics": self.physics_check.isChecked(),
             "up_axis": self.up_axis_combo.currentText(),
             "collected_item": collected_items,
             "meter_per_unit": float(self.meter_per_unit.text()),
