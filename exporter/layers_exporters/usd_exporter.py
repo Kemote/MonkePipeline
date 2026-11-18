@@ -13,7 +13,6 @@ from exporter.monke_logging import get_logger
 
 logger = get_logger(__name__)
 
-# how the main file references its geom/look/rig/physics sublayers
 SUBLAYER_RESOLVER_MONKE = "MonkeResolver"
 SUBLAYER_RESOLVER_DEFAULT = "Default"
 SUBLAYER_RESOLVERS = (SUBLAYER_RESOLVER_MONKE, SUBLAYER_RESOLVER_DEFAULT)
