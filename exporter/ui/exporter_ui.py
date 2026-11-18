@@ -11,7 +11,8 @@ from exporter.layers_exporters.usd_exporter import (
     SUBLAYER_RESOLVER_MONKE,
     SUBLAYER_RESOLVERS,
 )
-from exporter.collectors.collector import AssetsCollector
+from exporter.collectors.collector_assets import AssetsCollector
+from exporter.collectors.collector_world import WorldCollector
 from exporter.monke_logging import configure_logging, get_logger
 from proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
@@ -21,6 +22,8 @@ from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QDialog,
+    QFormLayout,
+    QGroupBox,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -110,21 +113,47 @@ class MonkeUsdExportDialog(QDialog):
         self.asset_collector = AssetsCollector()
         self.asset_collector.collect()
 
+        # collect world
+        self.world_collector = WorldCollector()
+        self.world_collector.collect()
+
         # output folder - PROJECTSROOT/PROJECTNAME, or "<blend name>_usd" next to the .blend
         _, _, self.location_from_env = resolve_project_location(bpy.data.filepath)
         # True once the user picks/types a folder, so we stop following the .blend path
         self.output_dir_edited = False
-        options_layout.addWidget(QLabel("Output:"))
+
+        options_layout.addWidget(self._build_output_group())
+        options_layout.addWidget(self._build_content_group())
+        options_layout.addWidget(self._build_layers_group())
+        options_layout.addWidget(self._build_stage_group())
+        options_layout.addWidget(self._build_proxy_group())
+        options_layout.addStretch()
+
+        # buttons row
+        export_button = QPushButton("Export")
+        export_button.setDefault(True)
+        cancel_button = QPushButton("Cancel")
+        export_button.clicked.connect(self._export)
+        cancel_button.clicked.connect(self.reject)
+        button_row = QHBoxLayout()
+        button_row.addWidget(export_button)
+        button_row.addWidget(cancel_button)
+        options_layout.addLayout(button_row)
+
+    def _build_output_group(self):
+        """where files go and how they reference each other"""
+        group = QGroupBox("Output")
+        form = QFormLayout(group)
+
         output_row = QHBoxLayout()
         self.output_dir_edit = QLineEdit()
         self.output_dir_edit.setPlaceholderText("Save the .blend file or choose a folder")
         self.output_dir_edit.textEdited.connect(self._on_output_dir_edited)
         browse_button = QPushButton("Browse...")
         browse_button.clicked.connect(self._browse_output_dir)
-        output_row.addWidget(QLabel("Folder"))
         output_row.addWidget(self.output_dir_edit)
         output_row.addWidget(browse_button)
-        options_layout.addLayout(output_row)
+        form.addRow("Folder", output_row)
         self._refresh_output_dir()
         if self.location_from_env:
             self.output_dir_edit.setDisabled(True)
@@ -134,10 +163,13 @@ class MonkeUsdExportDialog(QDialog):
                 "(PROJECTSROOT is set in environment variables)."
             )
             env_note.setWordWrap(True)
-            options_layout.addWidget(env_note)
+            form.addRow(env_note)
+
+        self.extension_combo = QComboBox()
+        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
+        form.addRow("Extension", self.extension_combo)
 
         # how the main file references its sublayers
-        resolver_row = QHBoxLayout()
         self.sublayer_resolver_combo = QComboBox()
         self.sublayer_resolver_combo.addItems(SUBLAYER_RESOLVERS)
         self.sublayer_resolver_combo.setCurrentText(
@@ -147,80 +179,35 @@ class MonkeUsdExportDialog(QDialog):
             "MonkeResolver: monkeDisc:// paths, need the resolver plugin and PROJECTSROOT/PROJECTNAME.\n"
             "Default: plain relative paths to the newest versions, load in any application."
         )
-        resolver_row.addWidget(QLabel("Sublayers AssetResolver"))
-        resolver_row.addWidget(self.sublayer_resolver_combo)
-        options_layout.addLayout(resolver_row)
-        options_layout.addSpacing(25)
+        form.addRow("Sublayers AssetResolver", self.sublayer_resolver_combo)
+        return group
 
-        # extension combo box
-        extension_row = QHBoxLayout()
-        self.extension_combo = QComboBox()
-        self.extension_combo.addItems(["usda", "usd", "usdc", "usdz"])
-        extension_row.addWidget(QLabel("Extension:"))
-        extension_row.addWidget(self.extension_combo)
-        options_layout.addLayout(extension_row)
+    def _build_content_group(self):
+        """what gets exported: the world and/or individual assets"""
+        group = QGroupBox("Content")
+        column = QVBoxLayout(group)
 
-        # assets selector
-        options_layout.addWidget(QLabel("Assets to export:"))
+        self.export_world_check = QCheckBox("Export world")
+        self.export_world_check.setChecked(True)
+        self.export_world_check.setToolTip("Export the scene layout gathered by the world collector.")
+        column.addWidget(self.export_world_check)
+
+        column.addSpacing(8)
+        column.addWidget(QLabel("Assets:"))
         self.assets_checkboxes = []
-        assets_column = QVBoxLayout()
         for item in self.asset_collector.items:
-            asseet_checkbox = QCheckBox(item.name)
-            asseet_checkbox.setChecked(True)
-            self.assets_checkboxes.append(asseet_checkbox)
-            assets_column.addWidget(asseet_checkbox)
-        options_layout.addLayout(assets_column)
+            asset_checkbox = QCheckBox(item.name)
+            asset_checkbox.setChecked(True)
+            self.assets_checkboxes.append(asset_checkbox)
+            column.addWidget(asset_checkbox)
+        if not self.assets_checkboxes:
+            column.addWidget(QLabel("No assets found."))
+        return group
 
-        # up axis combo box
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Stage settings:"))
-        up_axis_row = QHBoxLayout()
-        self.up_axis_combo = QComboBox()
-        self.up_axis_combo.addItems(["z", "y"])
-        up_axis_row.addWidget(QLabel("Up Axis"))
-        up_axis_row.addWidget(self.up_axis_combo)
-        options_layout.addLayout(up_axis_row)
-
-        # units per meter
-        units_per_meter_lay = QHBoxLayout()
-        units_per_meter_lay.addWidget(QLabel("Units per meter"))
-        self.meter_per_unit = QLineEdit()
-        self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
-        self.meter_per_unit.setText("1.0")
-        units_per_meter_lay.addWidget(self.meter_per_unit)
-        options_layout.addLayout(units_per_meter_lay)
-
-        # mesh scale
-        mesh_scale_lay = QHBoxLayout()
-        mesh_scale_lay.addWidget(QLabel("Mesh scale"))
-        self.mesh_scale = QLineEdit()
-        self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
-        self.mesh_scale.setText("100.0")
-        mesh_scale_lay.addWidget(self.mesh_scale)
-        options_layout.addLayout(mesh_scale_lay)
-
-        # create proxy settings
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Auto Proxy Generation:"))
-        decimate_ratio_lay = QHBoxLayout()
-        decimate_ratio_lay.addWidget(QLabel("Decimate ratio"))
-        self.decimate_slider = FloatSlider()
-        self.decimate_slider.set_value_float(0.025)
-        self.ratio_txt = QLineEdit("0.025")
-        self.ratio_txt.setValidator(self._create_double_validator(0.00001, 1.0))
-        self.ratio_txt.setFixedWidth(100)
-        self.ratio_txt.editingFinished.connect(self._sync_ratio_slider)
-        decimate_ratio_lay.addWidget(self.decimate_slider)
-        decimate_ratio_lay.addWidget(self.ratio_txt)
-        self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
-        self.proxy_generator_check = QCheckBox("Generate proxy LOD")
-        self.proxy_generator_check.setChecked(True)
-        options_layout.addWidget(self.proxy_generator_check)
-        options_layout.addLayout(decimate_ratio_lay)
-        
-        # create export option checkers
-        options_layout.addSpacing(25)
-        options_layout.addWidget(QLabel("Include layers:"))
+    def _build_layers_group(self):
+        """which data layers each asset gets"""
+        group = QGroupBox("Asset layers")
+        column = QVBoxLayout(group)
         self.geometry_check = QCheckBox("Geometry")
         self.materials_check = QCheckBox("Materials")
         self.armature_check = QCheckBox("Armature")
@@ -232,19 +219,59 @@ class MonkeUsdExportDialog(QDialog):
             self.physics_check,
         ):
             check.setChecked(True)
-            options_layout.addWidget(check)
+            column.addWidget(check)
+        return group
 
-        # buttons row
-        options_layout.addSpacing(25)
-        export_button = QPushButton("Export")
-        export_button.setDefault(True)
-        cancel_button = QPushButton("Cancel")
-        export_button.clicked.connect(self._export)
-        cancel_button.clicked.connect(self.reject)
-        button_row = QHBoxLayout()
-        button_row.addWidget(export_button)
-        button_row.addWidget(cancel_button)
-        options_layout.addLayout(button_row)
+    def _build_stage_group(self):
+        """stage metadata and unit conversion"""
+        group = QGroupBox("Stage")
+        form = QFormLayout(group)
+
+        self.up_axis_combo = QComboBox()
+        self.up_axis_combo.addItems(["z", "y"])
+        form.addRow("Up axis", self.up_axis_combo)
+
+        # authored as the stage's metersPerUnit
+        self.meter_per_unit = QLineEdit()
+        self.meter_per_unit.setValidator(self._create_double_validator(0.0001, 1000))
+        self.meter_per_unit.setText("1.0")
+        self.meter_per_unit.setToolTip("Written as the stage's metersPerUnit metadata.")
+        form.addRow("Meters per unit", self.meter_per_unit)
+
+        self.mesh_scale = QLineEdit()
+        self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
+        self.mesh_scale.setText("100.0")
+        self.mesh_scale.setToolTip("Multiplier applied to points and translations on export.")
+        form.addRow("Mesh scale", self.mesh_scale)
+        return group
+
+    def _build_proxy_group(self):
+        """automatic decimated proxy LOD"""
+        group = QGroupBox("Proxy LOD")
+        form = QFormLayout(group)
+
+        self.proxy_generator_check = QCheckBox("Generate proxy LOD")
+        self.proxy_generator_check.setChecked(True)
+        form.addRow(self.proxy_generator_check)
+
+        decimate_ratio_lay = QHBoxLayout()
+        self.decimate_slider = FloatSlider()
+        self.decimate_slider.set_value_float(0.025)
+        self.ratio_txt = QLineEdit("0.025")
+        self.ratio_txt.setValidator(self._create_double_validator(0.00001, 1.0))
+        self.ratio_txt.setFixedWidth(100)
+        self.ratio_txt.editingFinished.connect(self._sync_ratio_slider)
+        self.decimate_slider.floatValueChanged.connect(self._sync_slider_to_text)
+        decimate_ratio_lay.addWidget(self.decimate_slider)
+        decimate_ratio_lay.addWidget(self.ratio_txt)
+        form.addRow("Decimate ratio", decimate_ratio_lay)
+
+        # the ratio is meaningless without proxy generation
+        def _toggle_ratio(enabled):
+            self.decimate_slider.setEnabled(enabled)
+            self.ratio_txt.setEnabled(enabled)
+        self.proxy_generator_check.toggled.connect(_toggle_ratio)
+        return group
 
     def _refresh_output_dir(self):
         """follow the .blend path (or env vars) unless the user chose a folder"""
@@ -345,6 +372,7 @@ class MonkeUsdExportDialog(QDialog):
             "project_name": os.path.basename(output_dir),
             "sublayer_resolver": self.sublayer_resolver_combo.currentText(),
             "extension": self.extension_combo.currentText(),
+            "export_world": self.export_world_check.isChecked(),
             "export_geometry": self.geometry_check.isChecked(),
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),

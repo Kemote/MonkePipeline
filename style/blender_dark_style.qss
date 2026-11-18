@@ -119,3 +119,23 @@ QCheckBox::indicator:checked {
 QCheckBox::indicator:hover {
     border: 1px solid #5680c2;
 }
+
+QGroupBox {
+    color: #dcdcdc;
+    border: 1px solid #191919;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding: 12px 8px 8px 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    padding: 0 4px;
+    color: #a0a0a0;
+}
+
+QLineEdit:disabled, QPushButton:disabled, QComboBox:disabled {
+    color: #7a7a7a;
+}

@@ -39,7 +39,7 @@ class InstancerItem:
         return rot, loc, scale
 
 
-class CollectorWorld:
+class WorldCollector:
     """
     collects Geometry Nodes instancers (objects with an empty base geometry and a
     GN modifier) and the asset placements they generate, with world-space transforms.
@@ -218,7 +218,7 @@ class CollectorWorld:
 
         return self.instances_dict
 
-
+# TODO remove it
 if __name__ == "__main__":
     import pprint
-    pprint.pprint(CollectorWorld().collect())
+    pprint.pprint(WorldCollector().collect())
