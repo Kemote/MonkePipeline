@@ -324,18 +324,26 @@ class MonkeUsdExportDialog(QDialog):
                 "MonkeResolver selected without PROJECTSROOT set: to load these files set "
                 f"PROJECTSROOT={settings['projects_root']} and PROJECTNAME={settings['project_name']}"
             )
-        logger.info(f"Exporting asset items to: {self.output_dir_edit.text()}")
+        
+        logger.info(f"Exporting USD layers to: {self.output_dir_edit.text()}")
         usd_exporter = UsdExporter(settings)
-        asset_items = settings["collected_item"]
+        
+        # exporting assets
+        asset_items = settings["collected_assets_item"]
         for asset_item in asset_items:
+            logger.info(f"Exporting asset: {asset_item.name}")
             proxy_generator = None
             if settings["generate_proxy"]:
                 decimate_ratio = settings["decimate_ratio"]
                 proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
                 proxy_generator.add_proxy()
-            usd_exporter.export(asset_item)
+            usd_exporter.export_assets(asset_item)
             if proxy_generator:
                 proxy_generator.clear()
+
+        # exporting world collection
+        usd_exporter.export_world()
+
         logger.info("Exporting completed!")
         # self.accept()
 
@@ -365,7 +373,8 @@ class MonkeUsdExportDialog(QDialog):
     def collect(self):
         logger.info("Collecting asset items...")
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
-        collected_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
+        collected_assets_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
+        collected_world_dict = self.world_collector.instances_dict if self.export_world_check.isChecked() else None
         output_dir = os.path.normpath(os.path.expanduser(self.output_dir_edit.text().strip()))
         return {
             "projects_root": os.path.dirname(output_dir),
@@ -377,8 +386,10 @@ class MonkeUsdExportDialog(QDialog):
             "export_materials": self.materials_check.isChecked(),
             "export_armature": self.armature_check.isChecked(),
             "export_physics": self.physics_check.isChecked(),
+            "export_world": self.export_world_check.isChecked(),
             "up_axis": self.up_axis_combo.currentText(),
-            "collected_item": collected_items,
+            "collected_assets_item": collected_assets_items,
+            "collected_world_item": collected_world_dict,
             "meter_per_unit": float(self.meter_per_unit.text()),
             "mesh_scale": float(self.mesh_scale.text()),
             "generate_proxy": self.proxy_generator_check.isChecked(),

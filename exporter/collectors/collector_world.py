@@ -1,7 +1,7 @@
 import bpy
 
+from pxr import Tf
 from mathutils import Matrix
-
 from exporter.monke_logging import get_logger
 
 
@@ -18,7 +18,9 @@ class InstancerItem:
     instancer_name: name of the object carrying the GN modifier that generated it
     point_name: name of the empty that defines the instance point (read into GN with
                 Collection Info / Object Info), None when no empty matches
-    transform: (location, rotation_quaternion, scale) of the whole asset, from Matrix.decompose()
+    transform: (location, rotation_quaternion, scale) of the whole asset, from Matrix.decompose().
+               It maps the asset as authored in its own file (meshes at their source
+               matrix_world) onto this placement, so it can go straight onto the referencing prim.
     """
     def __init__(self, asset_name: str, instancer_name: str, point_name: str | None, transform):
         self.asset_name = asset_name
@@ -149,7 +151,7 @@ class WorldCollector:
         """
         for name, matrix in point_empties:
             if self.matrices_match(asset_matrix, matrix):
-                return name
+                return Tf.MakeValidIdentifier(name)
         return None
 
     @staticmethod
@@ -212,13 +214,18 @@ class WorldCollector:
             seen_placements.add(key)
 
             point_name = self.find_point_name(asset_matrix, point_empties)
+            # asset_matrix includes the collection instance_offset so it lines up with the
+            # point empty, but the asset file authors its meshes at their plain matrix_world
+            # with no offset, so the reference needs the transform without it
+            placement_matrix = inst.matrix_world @ source_obj.matrix_world.inverted_safe()
             self.instances_dict.setdefault(instancer_paths[0], []).append(
-                InstancerItem(asset_name, instancer.name, point_name, asset_matrix.decompose())
+                InstancerItem(asset_name, instancer.name, point_name, placement_matrix.decompose())
             )
 
         return self.instances_dict
 
-# TODO remove it
+
 if __name__ == "__main__":
+    # only for test purpose
     import pprint
     pprint.pprint(WorldCollector().collect())

@@ -1,6 +1,7 @@
+import math
 import os
 
-from pxr import Usd, UsdGeom, Kind
+from pxr import Usd, UsdGeom, Kind, Gf, Sdf
 from exporter.layers_exporters.armature import ArmatureLayerExporter
 from exporter.layers_exporters.common import FPS, sanitize_name
 from exporter.layers_exporters.materials import MaterialsLayerExporter
@@ -16,10 +17,13 @@ logger = get_logger(__name__)
 SUBLAYER_RESOLVER_MONKE = "MonkeResolver"
 SUBLAYER_RESOLVER_DEFAULT = "Default"
 SUBLAYER_RESOLVERS = (SUBLAYER_RESOLVER_MONKE, SUBLAYER_RESOLVER_DEFAULT)
+REFERENCE_PREFIX = "REF"
+INSTANCE_PREFIX = "INST"
 
 
 class UsdExporter:
     def __init__(self, settings):
+        self.templates = Templates()
         self.up_axis = {
             "y": UsdGeom.Tokens.y,
             "z": UsdGeom.Tokens.z
@@ -33,13 +37,107 @@ class UsdExporter:
         self.export_physics = settings["export_physics"]
         self.projects_root = settings["projects_root"]
         self.project_name = settings["project_name"]
+        self.world_collection = settings["collected_world_item"]
         self.sublayer_resolver = settings.get("sublayer_resolver", SUBLAYER_RESOLVER_DEFAULT)
         if not self.projects_root or not self.project_name:
             err = "No output folder set: save the .blend file or choose an output folder"
             logger.error(err)
             raise RuntimeError(err)
 
-    def export(self, asset_item):
+    def export_world(self, name=""):
+        if not self.world_collection:
+            return None
+
+        fields = {
+            "ext": self.extension,
+            "projects_root": self.projects_root,
+            "project_name": self.project_name,
+            "name": name
+        }
+
+        asset_main_template = self.templates.get_template_by_name("asset_main_file")
+        world_main_template = self.templates.get_template_by_name("world_main_file")
+        world_main_path = self.templates.resolve_template(world_main_template, fields)
+        world_main_dir = os.path.dirname(world_main_path)
+
+        stage = Usd.Stage.CreateNew(world_main_path)
+        self._set_fps(stage)
+        self._set_metadata(stage)
+        UsdGeom.SetStageUpAxis(stage, self.up_axis)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
+
+        root_prim = UsdGeom.Xform.Define(stage, "/World").GetPrim()
+        root_prim.SetKind(Kind.Tokens.group)
+        stage.SetDefaultPrim(root_prim)
+        assets_ref_class = stage.CreateClassPrim("/World/__assets")
+
+        for collection_path, instancer_items_list in self.world_collection.items():
+            # instanced assets are components, and a component can't contain models,
+            # so every prim above them is a group to keep the model hierarchy valid
+            group_path = Sdf.Path("/World")
+            for part in collection_path.split("/"):
+                group_path = group_path.AppendChild(sanitize_name(part))
+                if not stage.GetPrimAtPath(group_path):
+                    UsdGeom.Xform.Define(stage, group_path).GetPrim().SetKind(Kind.Tokens.group)
+
+            for instancer_item in instancer_items_list:
+                if instancer_item.asset_name is None:
+                    logger.warning(f"Skipping {instancer_item}: the instanced mesh is not under an asset collection")
+                    continue
+
+                asset_prim_name = sanitize_name(instancer_item.asset_name)
+                asset_file_ref_path = assets_ref_class.GetPath().AppendChild(asset_prim_name)
+                if not stage.GetPrimAtPath(asset_file_ref_path):
+                    asset_ref_prim = stage.DefinePrim(asset_file_ref_path, "Xform")
+                    fields["name"] = instancer_item.asset_name
+                    asset_file_path = self.templates.resolve_template(asset_main_template, fields)
+                    asset_rel_path = os.path.relpath(asset_file_path, world_main_dir)
+                    logger.debug(f"World references asset {instancer_item.asset_name} from {asset_rel_path}")
+                    asset_ref_prim.GetReferences().AddReference(
+                        assetPath=f"./{asset_rel_path}",
+                        position=Usd.ListPositionFrontOfPrependList
+                    )
+
+                # placements with no matching point empty, or several instancers in one
+                instance_name = sanitize_name(instancer_item.point_name or asset_prim_name)
+                instance_path = self._unique_child_path(stage, group_path, instance_name)
+                instance_prim = UsdGeom.Xform.Define(stage, instance_path).GetPrim()
+                instance_prim.GetReferences().AddInternalReference(
+                    asset_file_ref_path,
+                    position=Usd.ListPositionFrontOfPrependList
+                )
+
+                if instancer_item.instancer_name.startswith(INSTANCE_PREFIX):
+                    instance_prim.SetInstanceable(True)
+                elif instancer_item.instancer_name.startswith(REFERENCE_PREFIX):
+                    instance_prim.SetInstanceable(False)
+
+                self._set_instance_transform(instance_prim, instancer_item)
+
+        stage.GetRootLayer().Save()
+        return world_main_path
+
+    @staticmethod
+    def _unique_child_path(stage, parent_path, name):
+        path = parent_path.AppendChild(name)
+        index = 1
+        while stage.GetPrimAtPath(path):
+            path = parent_path.AppendChild(f"{name}_{index:03d}")
+            index += 1
+        return path
+
+    def _set_instance_transform(self, prim, instancer_item):
+        rot, loc, scale = instancer_item.decompose_transform()
+        xform_api = UsdGeom.XformCommonAPI(prim)
+        xform_api.SetTranslate(Gf.Vec3d(loc.x, loc.y, loc.z) * self.mesh_scale)
+        xform_api.SetRotate(
+            Gf.Vec3f(math.degrees(rot.x), math.degrees(rot.y), math.degrees(rot.z)),
+            UsdGeom.XformCommonAPI.RotationOrderXYZ
+        )
+        xform_api.SetScale(Gf.Vec3f(scale.x, scale.y, scale.z))
+
+
+    def export_assets(self, asset_item):
         asset_name = asset_item.name
         fields = {
             "ext": self.extension,
@@ -47,23 +145,22 @@ class UsdExporter:
             "project_name": self.project_name,
             "name": asset_name
         }
-        templates = Templates()
-        main_file_template = templates.get_template_by_name("asset_main_file")
-        sublayer_file_template = templates.get_template_by_name("asset_sublayer_file")
-        mesh_variants_template = templates.get_template_by_name("asset_mesh_variants_output")
-        textures_template = templates.get_template_by_name("asset_textures_output")
+        asset_main_file_template = self.templates.get_template_by_name("asset_main_file")
+        sublayer_file_template = self.templates.get_template_by_name("asset_sublayer_file")
+        mesh_variants_template = self.templates.get_template_by_name("asset_mesh_variants_output")
+        textures_template = self.templates.get_template_by_name("asset_textures_output")
 
-        main_file_path = templates.resolve_template(main_file_template, fields)
+        main_file_path = self.templates.resolve_template(asset_main_file_template, fields)
         fields["step"] = "geom"
-        geom_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        geom_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "look"
-        look_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        look_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "rig"
-        rig_file_path = templates.get_new_file_path(sublayer_file_template, fields)
+        rig_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
         fields["step"] = "physics"
-        physics_file_path = templates.get_new_file_path(sublayer_file_template, fields)
-        mesh_variants_output = templates.get_new_file_path(mesh_variants_template, fields)
-        textures_output = templates.get_new_file_path(textures_template, fields)
+        physics_file_path = self.templates.get_new_file_path(sublayer_file_template, fields)
+        mesh_variants_output = self.templates.get_new_file_path(mesh_variants_template, fields)
+        textures_output = self.templates.get_new_file_path(textures_template, fields)
         layer_paths_dict = {
             "geom": None,
             "look": None,
@@ -135,10 +232,10 @@ class UsdExporter:
             if not layer_path:
                 # step not exported this run: point at its newest version on disk,
                 # so the main file never keeps a stale or other-resolver entry
-                layer_path = templates.get_latest_file_path(sublayer_file_template, dict(fields, step=step))
+                layer_path = self.templates.get_latest_file_path(sublayer_file_template, dict(fields, step=step))
             if not layer_path:
                 continue
-            final_sublayers.append(self._sublayer_asset_path(templates, sublayer_file_template, layer_path, main_dir))
+            final_sublayers.append(self._sublayer_asset_path(self.templates, sublayer_file_template, layer_path, main_dir))
 
         root_layer.subLayerPaths = final_sublayers
         root_layer.Save()

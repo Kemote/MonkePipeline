@@ -1,6 +1,6 @@
 import bpy
 
-from exporter.collectors import collector_assets as collector
+from exporter.collectors import collector_assets
 from exporter.layers_exporters.common import PROXY_POST_FIX
 from exporter.monke_logging import get_logger
 
@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 
 class ProxyGenerator:
-    def __init__(self, asset_item: collector.CollectedAssetItem , decimate_ratio=0.025):
+    def __init__(self, asset_item: collector_assets.CollectedAssetItem , decimate_ratio=0.025):
         self.asset_item = asset_item
         self.mesh_objects = asset_item.mesh_objects
         self.decimate_ratio = decimate_ratio
@@ -19,19 +19,19 @@ class ProxyGenerator:
     def add_proxy(self):
         for var_set_name, var_dict in self.asset_item.variant_root.variant_sets.items():
             if var_set_name == "lod":
-                render_node: collector.VariantNode = var_dict.get("render")
+                render_node: collector_assets.VariantNode = var_dict.get("render")
                 if not render_node:
                     logger.error("Cannot find 'render' group in 'lod' variant collection")
                     raise KeyError("Cannot find 'render' group in 'lod' variant collection")
                 logger.debug("Creating proxy meshes for lod...")
-                proxy_node = collector.VariantNode()
+                proxy_node = collector_assets.VariantNode()
                 var_dict[f"proxy"] = proxy_node
                 for outliner_path in render_node.outliner_paths:
                     self._add_proxy_mesh(outliner_path, proxy_node, add_postfix=False)
 
                 self._add_subvariants(render_node.variant_sets, proxy_node)
 
-    def _add_subvariants(self, variant_sets_dict, proxy_node: collector.VariantNode):
+    def _add_subvariants(self, variant_sets_dict, proxy_node: collector_assets.VariantNode):
         for variant_set_name, variant_dict in variant_sets_dict.items():
             for variant_name, variant_node in variant_dict.items():
                 proxy_variant_node = proxy_node.add_variant(variant_set_name, variant_name)
@@ -55,8 +55,8 @@ class ProxyGenerator:
         method which generate lod proxy mesh and put it to the appropriate collection
         return mesh object and it's scene path
         """
-        target_path = source_path.replace(f"{collector.VARIANT_SEPARATOR}render", 
-                                          f"{collector.VARIANT_SEPARATOR}proxy")
+        target_path = source_path.replace(f"{collector_assets.VARIANT_SEPARATOR}render", 
+                                          f"{collector_assets.VARIANT_SEPARATOR}proxy")
         target_collection_parts = target_path.split("/")
         target_collection_path = "/".join(target_collection_parts[:-1])
         if add_postfix:
@@ -68,7 +68,7 @@ class ProxyGenerator:
         self.proxy_collections.append(target_collection)
         return mesh, scene_path
 
-    def _add_proxy_mesh(self, source_path, proxy_node: collector.VariantNode, add_postfix=True):
+    def _add_proxy_mesh(self, source_path, proxy_node: collector_assets.VariantNode, add_postfix=True):
         src_mesh = self.mesh_objects[source_path]
         proxy_mesh, proxy_scene_path = self.generate_proxy(src_mesh, source_path, add_postfix)
         # add proxy paths to item

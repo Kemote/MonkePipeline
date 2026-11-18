@@ -1,7 +1,7 @@
 import os
 
 from pxr import Usd, UsdGeom, UsdSkel, Sdf, Gf
-from exporter.collectors import collector_assets as collector
+from exporter.collectors import collector_assets
 from exporter.layers_exporters.armature import SkeletonBindingPlan
 from exporter.layers_exporters.physics import is_collisions_collection_name
 from exporter.layers_exporters.common import (
@@ -52,7 +52,7 @@ class MeshLayerExporter:
         UsdGeom.Scope.Define(stage, geom_scope_path(asset_item.name, has_skeleton))
         skeleton_plan = SkeletonBindingPlan(asset_item) if has_skeleton else None
 
-        root : collector.VariantNode = asset_item.variant_root
+        root : collector_assets.VariantNode = asset_item.variant_root
         self._write_meshes(stage, asset_item, root.outliner_paths, skeleton_plan, has_skeleton)
         self._attach_binding_layer(stage, asset_item, root.outliner_paths, has_skeleton)
 
@@ -116,7 +116,7 @@ class MeshLayerExporter:
 
     def _author_variant_sets(self,
                              stage: Usd.Stage,
-                             asset_item: collector.CollectedAssetItem,
+                             asset_item: collector_assets.CollectedAssetItem,
                              prim: Usd.Prim,
                              variant_sets,
                              variants_dir,
