@@ -1,6 +1,7 @@
 {
   "roots": {
-    "main": "<projects_root>/<project_name>"
+    "main": "<projects_root>/<project_name>",
+    "assets": "<projects_root>/<project_name>/assets"
   },
   "tokens": {
     "projects_root": {
@@ -26,25 +27,29 @@
     }
   },
   "templates": {
-    "asset_main_file": {
-      "template": "/assets/<name>/<name>.<ext>",
+    "world_main_file": {
+      "template": "/<project_name>.<ext>",
       "root": "main"
+    },
+    "asset_main_file": {
+      "template": "/<name>/<name>.<ext>",
+      "root": "assets"
     },
     "asset_sublayer_file": {
-      "template": "/assets/<name>/layers/<name>_<step>_<version>.<ext>",
-      "root": "main"
+      "template": "/<name>/layers/<name>_<step>_<version>.<ext>",
+      "root": "assets"
     },
     "asset_mesh_variants_output": {
-      "template": "/assets/<name>/layers/mesh_variants",
-      "root": "main"
+      "template": "/<name>/layers/mesh_variants",
+      "root": "assets"
     },
     "asset_mesh_variant_layer": {
-      "template": "/assets/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>.<ext>",
-      "root": "main"
+      "template": "/<name>/layers/mesh_variants/<variant_path>/<variant>_<version>.<ext>",
+      "root": "assets"
     },
     "asset_textures_output": {
-      "template": "/assets/<name>/textures",
-      "root": "main"
+      "template": "/<name>/textures",
+      "root": "assets"
     }
   }
 }
