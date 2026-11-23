@@ -5,6 +5,7 @@ from exporter.collectors import collector_assets
 from exporter.layers_exporters.armature import SkeletonBindingPlan
 from exporter.layers_exporters.physics import is_collisions_collection_name
 from exporter.layers_exporters.common import (
+    DEFORM_MODIFIER_TYPES,
     MAX_JOINT_INFLUENCES,
     asset_root_path,
     geom_scope_path,
@@ -23,6 +24,26 @@ from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
+
+# Blender Subdivision Surface modifier settings -> UsdGeom.Mesh subdivision tokens.
+# The boundary and UV tables follow the OpenSubdiv options Blender itself passes for each setting
+SUBDIVISION_SCHEMES = {
+    "CATMULL_CLARK": UsdGeom.Tokens.catmullClark,
+    "SIMPLE": UsdGeom.Tokens.bilinear,
+}
+INTERPOLATE_BOUNDARY = {
+    # "All" smooths boundaries and corners, "Keep Corners" keeps corners sharp
+    "ALL": UsdGeom.Tokens.edgeOnly,
+    "PRESERVE_CORNERS": UsdGeom.Tokens.edgeAndCorner,
+}
+FACE_VARYING_INTERPOLATION = {
+    "NONE": UsdGeom.Tokens.all,
+    "PRESERVE_CORNERS": UsdGeom.Tokens.cornersOnly,
+    "PRESERVE_CORNERS_AND_JUNCTIONS": UsdGeom.Tokens.cornersPlus1,
+    "PRESERVE_CORNERS_JUNCTIONS_AND_CONCAVE": UsdGeom.Tokens.cornersPlus2,
+    "PRESERVE_BOUNDARIES": UsdGeom.Tokens.boundaries,
+    "SMOOTH_ALL": UsdGeom.Tokens.none,
+}
 
 
 class MeshLayerExporter:
@@ -106,11 +127,22 @@ class MeshLayerExporter:
                 yield variant_data
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False, in_variant_layer=False):
+        generated_proxies = set(asset_item.proxy_paths.values())
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
             prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path, has_skeleton)
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
-            self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
+            usd_mesh = self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
+
+            proxy_path = asset_item.proxy_paths.get(outliner_path)
+            if outliner_path in generated_proxies:
+                usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.proxy)
+            elif proxy_path:
+                # a render mesh is only hidden in proxy views when it has a proxy, proxyPrim
+                # tells renderers which prim stands in for it
+                usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.render)
+                proxy_prim_path = mesh_prim_path(asset_item.name, asset_item.path, proxy_path, has_skeleton)
+                usd_mesh.CreateProxyPrimRel().SetTargets([Sdf.Path(proxy_prim_path)])
 
             # check if mesh have any physic
             if self.physics_exporter:
@@ -222,15 +254,45 @@ class MeshLayerExporter:
             )
             uv_attr.Set([Gf.Vec2f(uv.uv.x, uv.uv.y) for uv in mesh_data.uv_layers.active.data])
 
+        self._write_subdivision(usd_mesh, mesh_obj)
+
         if skeleton_binding:
             self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
 
-        # check if its collision object if yes set purpose as guide, else set purpose as render
+        # collisions are guides. Other meshes author no purpose here: a purpose on the mesh beats the
+        # one inherited from its parent, so authoring render would make meshes in the lod proxy
+        # scope draw as render. _write_meshes sets render/proxy on visuals proxy pairs
         parent_prim_name = prim_path.split("/")[-2]
         if is_collisions_collection_name(parent_prim_name):
             usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.guide)
-        else:
-            usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.render)
+        return usd_mesh
+
+    @staticmethod
+    def _write_subdivision(usd_mesh, mesh_obj):
+        """
+        subdivisionScheme falls back to catmullClark, so a mesh without a Subdivision Surface modifier
+        has to say "none", or renderers that refine meshes round off hard-surface parts. The modifier
+        isn't applied (points come from mesh_obj.data): the receiving app subdivides the cage
+        """
+        subsurf = MeshLayerExporter._subsurf_modifier(mesh_obj)
+        if subsurf is None:
+            usd_mesh.CreateSubdivisionSchemeAttr().Set(UsdGeom.Tokens.none)
+            return
+        usd_mesh.CreateSubdivisionSchemeAttr().Set(SUBDIVISION_SCHEMES[subsurf.subdivision_type])
+        usd_mesh.CreateInterpolateBoundaryAttr().Set(INTERPOLATE_BOUNDARY[subsurf.boundary_smooth])
+        usd_mesh.CreateFaceVaryingLinearInterpolationAttr().Set(FACE_VARYING_INTERPOLATION[subsurf.uv_smooth])
+
+    @staticmethod
+    def _subsurf_modifier(mesh_obj):
+        """
+        the last render-enabled Subdivision Surface modifier, or None. Deform modifiers after it are
+        fine, USD skinning moves the cage before it's subdivided. Other modifiers aren't exported
+        """
+        enabled = [modifier for modifier in mesh_obj.modifiers if modifier.show_render]
+        skipped = [modifier.type for modifier in enabled if modifier.type not in DEFORM_MODIFIER_TYPES | {"SUBSURF"}]
+        if skipped:
+            logger.warning(f"Mesh '{mesh_obj.name}': {', '.join(skipped)} modifiers aren't applied, it's exported without them")
+        return next((modifier for modifier in reversed(enabled) if modifier.type == "SUBSURF"), None)
 
     @staticmethod
     def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):
