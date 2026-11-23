@@ -33,9 +33,10 @@ class MaterialsLayerExporter:
     def __init__(self, textures_dir, meter_per_unit):
         self.textures_dir = textures_dir
         self.meter_per_unit = meter_per_unit
-        os.makedirs(self.textures_dir, exist_ok=True)
 
     def export(self, output_path, asset_item):
+        if not asset_item.has_materials:
+            return None
         logger.debug("Exporting materials...")
         stage = Usd.Stage.CreateNew(output_path)
         UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
@@ -182,6 +183,8 @@ class MaterialsLayerExporter:
     def _copy_texture(self, image):
         source_path = bpy.path.abspath(image.filepath)
         basename = os.path.basename(source_path)
+        # created here so the folder only exists when it holds a texture
+        os.makedirs(self.textures_dir, exist_ok=True)
         shutil.copy2(source_path, os.path.join(self.textures_dir, basename))
         return os.path.join("../textures", basename)
 

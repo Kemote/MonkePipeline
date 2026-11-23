@@ -206,7 +206,9 @@ class PhysicsLayerExporter:
         self.asset_name = asset_name
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
-        self.stage = Usd.Stage.CreateNew(output_path)
+        self.output_path = output_path
+        # kept in memory until save(), so assets without rigid bodies write no file
+        self.stage = Usd.Stage.CreateInMemory()
         UsdGeom.SetStageMetersPerUnit(self.stage, meter_per_unit)
         UsdGeom.SetStageUpAxis(self.stage, up_axis)
         self.joints_path = UsdGeom.Scope.Define(self.stage, joints_scope_path(asset_name)).GetPath()
@@ -215,8 +217,12 @@ class PhysicsLayerExporter:
         self.bodies = {}
 
     def save(self):
+        """writes the layer and returns its path, or None when the asset has no rigid bodies"""
+        if not self.bodies:
+            return None
         self._add_constraints()
-        self.stage.Save()
+        self.stage.GetRootLayer().Export(self.output_path)
+        return self.output_path
 
     def export(self, blender_obj, prim_path):
         # export rigid body
