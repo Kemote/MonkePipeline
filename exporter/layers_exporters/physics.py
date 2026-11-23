@@ -19,6 +19,9 @@ from exporter.monke_logging import get_logger
 logger = get_logger(__name__)
 COLLISIONS_COLLECTION_PREFIX = "collisions"
 MOTORS_JSON_FILENAME = "isaac_sim.json"
+# custom property on a slider constraint Empty driven by a rotary motor through a mechanism (crank,
+# cam, rack and pinion): metres the slider moves per radian of the motor, averaged over the stroke
+TRAVEL_PER_RAD_PROPERTY = "finger_travel_per_rad_m"
 ROOT_JOINT_NAME = "root_joint"
 
 # Blender collision shapes with a direct UsdPhysics mesh approximation. MESH and CONVEX_HULL
@@ -161,11 +164,17 @@ class ConstraintsConstructor:
             lower, upper = lower * self.mesh_scale, upper * self.mesh_scale
         self._set_limits(lower, upper)
 
-        if motor_data:
+        if not motor_data:
+            return
+        travel_per_rad = self.constraint_obj.get(TRAVEL_PER_RAD_PROPERTY)
+        if not travel_per_rad or float(travel_per_rad) <= 0.0:
             logger.warning(
-                f"Constraint '{self.name}': {MOTORS_JSON_FILENAME} only describes rotary motors, "
-                "no drive was added to this slider"
+                f"Constraint '{self.name}' uses a rotary motor from {MOTORS_JSON_FILENAME} but has no "
+                f"'{TRAVEL_PER_RAD_PROPERTY}' custom property, so no drive was added. Set it to the "
+                "slider travel in metres per radian of the motor"
             )
+            return
+        self._add_linear_motor_data(motor_data, float(travel_per_rad))
 
     def _blender_limits(self, use_limit, lower, upper):
         """
@@ -224,6 +233,47 @@ class ConstraintsConstructor:
             value = motor_data.get(key)
             if value is not None:
                 joint_prim.CreateAttribute(attr_name, Sdf.ValueTypeNames.Float).Set(float(value) * scale)
+
+
+    def _add_linear_motor_data(self, motor_data, travel_per_rad):
+        """
+        linear drive for a slider moved by a rotary motor through a mechanism with ratio
+        r = travel_per_rad (m/rad), from the motor's json values:
+        - force = torque / r, and speed = angular speed * r
+        - stiffness and damping: torque = k * angle with x = r * angle gives force = k / r^2 * x.
+          The json values are per degree like the angular drive, so they're converted to per
+          radian first
+        - armature (rotor inertia) seen at the slider: I / r^2, an equivalent mass
+        In stage units the force and the speed scale with 1 / metersPerUnit; stiffness (kg/s^2),
+        damping (kg/s), armature (kg) and friction (no unit) don't.
+        Keys that are missing or null in the json keep the schema fallbacks
+        """
+        joint_prim = self.joint.GetPrim()
+        per_radian = 180.0 / math.pi
+        r_squared = travel_per_rad ** 2
+        length_scale = 1.0 / self.meter_per_unit
+
+        drive = UsdPhysics.DriveAPI.Apply(joint_prim, UsdPhysics.Tokens.linear)
+        drive.CreateTypeAttr(UsdPhysics.Tokens.force)
+        for key, create_attr, convert in (
+            ("max_force_nm", drive.CreateMaxForceAttr, lambda torque: torque / travel_per_rad * length_scale),
+            ("stiffness", drive.CreateStiffnessAttr, lambda k: k * per_radian / r_squared),
+            ("damping", drive.CreateDampingAttr, lambda c: c * per_radian / r_squared),
+        ):
+            value = motor_data.get(key)
+            if value is not None:
+                create_attr(convert(float(value)))
+
+        joint_prim.AddAppliedSchema("PhysxJointAPI")
+        for key, attr_name, convert in (
+            ("max_joint_velocity_deg_s", "physxJoint:maxJointVelocity",
+             lambda deg_s: math.radians(deg_s) * travel_per_rad * length_scale),
+            ("armature", "physxJoint:armature", lambda inertia: inertia / r_squared),
+            ("joint_friction", "physxJoint:jointFriction", lambda friction: friction),
+        ):
+            value = motor_data.get(key)
+            if value is not None:
+                joint_prim.CreateAttribute(attr_name, Sdf.ValueTypeNames.Float).Set(convert(float(value)))
 
 
 class ArticulationPlan:
