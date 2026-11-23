@@ -145,6 +145,10 @@ class ProxyGenerator:
         new_mesh = mesh.copy()
         new_mesh.data = mesh.data.copy()
         new_mesh.name = proxy_name
+        # a proxy is a cheap stand-in: subdividing a decimated cage would undo the decimation,
+        # and without the modifier the mesh exporter writes subdivisionScheme = none
+        for modifier in [modifier for modifier in new_mesh.modifiers if modifier.type == "SUBSURF"]:
+            new_mesh.modifiers.remove(modifier)
         target_collection.objects.link(new_mesh)
         self.reduce_polycount(new_mesh, decimate_ratio)
         return new_mesh

@@ -5,6 +5,7 @@ from exporter.collectors import collector_assets
 from exporter.layers_exporters.armature import SkeletonBindingPlan
 from exporter.layers_exporters.physics import is_collisions_collection_name
 from exporter.layers_exporters.common import (
+    DEFORM_MODIFIER_TYPES,
     MAX_JOINT_INFLUENCES,
     asset_root_path,
     geom_scope_path,
@@ -23,6 +24,26 @@ from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
+
+# Blender Subdivision Surface modifier settings -> UsdGeom.Mesh subdivision tokens.
+# The boundary and UV tables follow the OpenSubdiv options Blender itself passes for each setting
+SUBDIVISION_SCHEMES = {
+    "CATMULL_CLARK": UsdGeom.Tokens.catmullClark,
+    "SIMPLE": UsdGeom.Tokens.bilinear,
+}
+INTERPOLATE_BOUNDARY = {
+    # "All" smooths boundaries and corners, "Keep Corners" keeps corners sharp
+    "ALL": UsdGeom.Tokens.edgeOnly,
+    "PRESERVE_CORNERS": UsdGeom.Tokens.edgeAndCorner,
+}
+FACE_VARYING_INTERPOLATION = {
+    "NONE": UsdGeom.Tokens.all,
+    "PRESERVE_CORNERS": UsdGeom.Tokens.cornersOnly,
+    "PRESERVE_CORNERS_AND_JUNCTIONS": UsdGeom.Tokens.cornersPlus1,
+    "PRESERVE_CORNERS_JUNCTIONS_AND_CONCAVE": UsdGeom.Tokens.cornersPlus2,
+    "PRESERVE_BOUNDARIES": UsdGeom.Tokens.boundaries,
+    "SMOOTH_ALL": UsdGeom.Tokens.none,
+}
 
 
 class MeshLayerExporter:
@@ -233,6 +254,8 @@ class MeshLayerExporter:
             )
             uv_attr.Set([Gf.Vec2f(uv.uv.x, uv.uv.y) for uv in mesh_data.uv_layers.active.data])
 
+        self._write_subdivision(usd_mesh, mesh_obj)
+
         if skeleton_binding:
             self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
 
@@ -243,6 +266,33 @@ class MeshLayerExporter:
         if is_collisions_collection_name(parent_prim_name):
             usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.guide)
         return usd_mesh
+
+    @staticmethod
+    def _write_subdivision(usd_mesh, mesh_obj):
+        """
+        subdivisionScheme falls back to catmullClark, so a mesh without a Subdivision Surface modifier
+        has to say "none", or renderers that refine meshes round off hard-surface parts. The modifier
+        isn't applied (points come from mesh_obj.data): the receiving app subdivides the cage
+        """
+        subsurf = MeshLayerExporter._subsurf_modifier(mesh_obj)
+        if subsurf is None:
+            usd_mesh.CreateSubdivisionSchemeAttr().Set(UsdGeom.Tokens.none)
+            return
+        usd_mesh.CreateSubdivisionSchemeAttr().Set(SUBDIVISION_SCHEMES[subsurf.subdivision_type])
+        usd_mesh.CreateInterpolateBoundaryAttr().Set(INTERPOLATE_BOUNDARY[subsurf.boundary_smooth])
+        usd_mesh.CreateFaceVaryingLinearInterpolationAttr().Set(FACE_VARYING_INTERPOLATION[subsurf.uv_smooth])
+
+    @staticmethod
+    def _subsurf_modifier(mesh_obj):
+        """
+        the last render-enabled Subdivision Surface modifier, or None. Deform modifiers after it are
+        fine, USD skinning moves the cage before it's subdivided. Other modifiers aren't exported
+        """
+        enabled = [modifier for modifier in mesh_obj.modifiers if modifier.show_render]
+        skipped = [modifier.type for modifier in enabled if modifier.type not in DEFORM_MODIFIER_TYPES | {"SUBSURF"}]
+        if skipped:
+            logger.warning(f"Mesh '{mesh_obj.name}': {', '.join(skipped)} modifiers aren't applied, it's exported without them")
+        return next((modifier for modifier in reversed(enabled) if modifier.type == "SUBSURF"), None)
 
     @staticmethod
     def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):
