@@ -320,7 +320,8 @@ class MonkeUsdExportDialog(QDialog):
 
         self.light_exposure_offset = QLineEdit()
         self.light_exposure_offset.setValidator(self._create_double_validator(-30.0, 30.0))
-        self.light_exposure_offset.setText("0.0")
+        # Isaac Sim is the main target, so its offset is the default
+        self.light_exposure_offset.setText("10.0")
         self.light_exposure_offset.setToolTip(
             "Stops added to every light's exposure (+1 doubles the brightness).\n"
             "0 matches Blender's own USD export. Isaac Sim / Omniverse RTX needs about +10."

@@ -19,7 +19,6 @@ from exporter.monke_logging import get_logger
 logger = get_logger(__name__)
 COLLISIONS_COLLECTION_PREFIX = "collisions"
 MOTORS_JSON_FILENAME = "isaac_sim.json"
-
 ROOT_JOINT_NAME = "root_joint"
 
 # Blender collision shapes with a direct UsdPhysics mesh approximation. MESH and CONVEX_HULL

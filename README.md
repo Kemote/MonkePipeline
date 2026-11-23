@@ -137,8 +137,10 @@ host process, not just fail to resolve paths.
   `render`/`proxy` purposes, not to variants.
 - Armatures go in a child collection literally named `armature`.
 - A mesh with a Subdivision Surface modifier is exported as its base mesh
-  with the matching `subdivisionScheme`. Other non-deforming modifiers
-  (Mirror, Geometry Nodes, …) aren't applied yet; the exporter logs a warning.
+  with the matching `subdivisionScheme`. Realtime renderers such as Isaac
+  Sim's show the base mesh unless their refinement level is raised. Other
+  non-deforming modifiers (Mirror, Geometry Nodes, …) aren't applied yet;
+  apply them before export, the exporter logs a warning for each.
 
 **Proxy LOD** (*Generate proxy LOD* in the dialog)
 
@@ -170,6 +172,29 @@ host process, not just fail to resolve paths.
   stiffness, damping, velocity limit, armature and friction become an angular
   drive and PhysX joint settings.
 
+**Generating collision meshes** (**Monke Pipeline → Generate Collision
+Object**)
+
+A link's visual meshes are usually too detailed to collide with. The
+generator builds one convex hull per selected mesh and boolean-unions them
+into a single triangulated `<name>__COLLISION` mesh, shown as wireframe:
+
+1. Select the link's visual meshes and open the tool (they're added to the
+   list automatically, or use **Add selected**).
+2. Keep **Use standard parameters**, or set:
+   - **Merge distance** — points closer than this are merged before hulling
+     (scene units).
+   - **Dissolve angle** — coplanar neighbour faces up to this angle are
+     merged, for fewer triangles.
+   - **Max vertices (warn)** — warns when a hull has more vertices than PhysX
+     allows for one convex hull (64 by default).
+3. Under **Output**, optionally set a name, whether to parent the source
+   meshes to the collision mesh, and whether to apply its transform.
+4. **Generate**, then move the result into the link's `collisions`
+   collection and give it a rigid body with the **Mesh** collision shape. The
+   union of several hulls isn't convex, so on a simulated link it's exported
+   as `convexDecomposition`.
+
 **World layout** (*Export world* in the dialog)
 
 - Objects with an empty base geometry and a Geometry Nodes modifier that
@@ -189,6 +214,10 @@ host process, not just fail to resolve paths.
 2. Pick the assets and layers (geometry/materials/armature/physics), whether
    to export the world and lights, the up axis, meters per unit, mesh scale,
    the sublayer resolver and (optionally) proxy LOD generation.
+   **Light exposure offset** adds stops to every light's exposure: the
+   default of 10 suits Isaac Sim and Omniverse RTX, which need far more light
+   than Blender for the same image; 0 writes the same values as Blender's own
+   USD exporter.
 3. Export — this writes a main file plus versioned sublayers per asset, and
    the world file, following `templates/templates.json`:
 
