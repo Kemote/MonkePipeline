@@ -280,18 +280,6 @@ class PhysicsLayerExporter:
             return mesh_path
         return body_path
 
-    def _add_world_fixed_joint(self, blender_obj, body):
-        """
-        a fixed joint with no body0 pins a passive body to the world. With no body0 the frame-0
-        attributes are in world space; they default to the world origin, which would pull the body
-        there when the simulation starts, so the frame is placed at the body's origin instead
-        """
-        fixed_joint = UsdPhysics.FixedJoint.Define(self.stage, self.joints_path.AppendChild(sanitize_name(blender_obj.name)))
-        fixed_joint.CreateBody1Rel().SetTargets([body.prim_path])
-        local_pos0, local_rot0 = joint_local_frame(body.matrix_world, None, self.mesh_scale)
-        fixed_joint.CreateLocalPos0Attr(local_pos0)
-        fixed_joint.CreateLocalRot0Attr(local_rot0)
-
     def _add_constraints(self):
         for constraint_obj in bpy.context.scene.objects:
             rb_constraint = constraint_obj.rigid_body_constraint
