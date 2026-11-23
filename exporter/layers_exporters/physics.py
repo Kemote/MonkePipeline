@@ -3,10 +3,16 @@ import bpy
 import math
 import json
 
-from collections import namedtuple
+from collections import deque, namedtuple
 from mathutils import Matrix
 from pxr import Usd, UsdGeom, UsdPhysics, Gf, Sdf
-from exporter.layers_exporters.common import geom_scope_path, joints_scope_path, sanitize_name, set_stage_metrics
+from exporter.layers_exporters.common import (
+    geom_scope_path,
+    joints_scope_path,
+    sanitize_name,
+    set_stage_metrics,
+    unique_child_path,
+)
 from exporter.monke_logging import get_logger
 
 
@@ -14,8 +20,11 @@ logger = get_logger(__name__)
 COLLISIONS_COLLECTION_PREFIX = "collisions"
 MOTORS_JSON_FILENAME = "isaac_sim.json"
 
-# prim_path: the prim holding RigidBodyAPI, matrix_world: that prim's world matrix in Blender space
-RigidBody = namedtuple("RigidBody", ["prim_path", "matrix_world"])
+ROOT_JOINT_NAME = "root_joint"
+
+# prim_path: the prim holding RigidBodyAPI, matrix_world: that prim's world matrix in Blender space,
+# passive: Blender PASSIVE rigid body, mass: Blender mass
+RigidBody = namedtuple("RigidBody", ["prim_path", "matrix_world", "passive", "mass"])
 
 
 def is_collisions_collection_name(name):
@@ -65,13 +74,22 @@ class ConstraintsConstructor:
         self.mesh_scale = mesh_scale
         self.meter_per_unit = meter_per_unit
         self.joint = None
+        self.flip = False
 
-    def create_usd_joint(self, joints_path, body0, body1, motors_data):
+    def create_usd_joint(self, joints_path, body0, body1, motors_data, flip=False, exclude=False):
+        """
+        flip: swap the bodies so body0 is the parent in the articulation tree. Both local frames come
+              from the same constraint matrix, so only the sign of the joint position changes
+        exclude: the joint closes a loop and is solved outside the articulation
+        """
         joint_schema = self.JOINT_SCHEMAS.get(self.rb_constraint.type)
         if joint_schema is None:
             logger.warning(f"Skipping constraint '{self.name}': {self.rb_constraint.type} constraints aren't exported")
             return None
 
+        self.flip = flip
+        if flip:
+            body0, body1 = body1, body0
         self.joint = joint_schema.Define(self.stage, joints_path.AppendChild(sanitize_name(self.name)))
         self.joint.CreateBody0Rel().SetTargets([body0.prim_path])
         self.joint.CreateBody1Rel().SetTargets([body1.prim_path])
@@ -83,6 +101,8 @@ class ConstraintsConstructor:
             create_pos(local_pos)
             create_rot(local_rot)
 
+        if exclude:
+            self.joint.CreateExcludeFromArticulationAttr(True)
         self.joint.CreateJointEnabledAttr(self.rb_constraint.enabled)
         # Blender and UsdPhysics both disable collisions between the jointed bodies by default
         self.joint.CreateCollisionEnabledAttr(not self.rb_constraint.disable_collisions)
@@ -156,6 +176,9 @@ class ConstraintsConstructor:
         return lower, upper
 
     def _set_limits(self, lower, upper):
+        if self.flip:
+            # with the bodies swapped the joint moves the other way: [l, u] becomes [-u, -l]
+            lower, upper = (-upper if upper is not None else None), (-lower if lower is not None else None)
         # an unset side keeps the schema fallback (-inf or inf): no limit in that direction
         if lower is not None:
             self.joint.CreateLowerLimitAttr(float(lower))
@@ -194,6 +217,93 @@ class ConstraintsConstructor:
             value = motor_data.get(key)
             if value is not None:
                 joint_prim.CreateAttribute(attr_name, Sdf.ValueTypeNames.Float).Set(float(value) * scale)
+
+
+class ArticulationPlan:
+    """
+    turns the asset's constraints into articulation trees. PhysX solves an articulation in reduced
+    coordinates, so its joints can't stretch the way separate joints do, but it needs a tree: one
+    root, joints from parent (body0) to child (body1), no loops and no kinematic links.
+    For each group of jointed bodies it works out:
+    - fixed_bases: the group's passive body. It's held by a fixed joint instead of being kinematic.
+      A group without a passive body is a floating base, walked from its heaviest body
+    - flipped: constraints whose object1/object2 order points from child to parent
+    - excluded: constraints that close a loop, solved as regular joints outside the articulation
+    - kinematic_bodies: passive bodies without constraints, they stay kinematic
+    """
+    def __init__(self, bodies, constraints):
+        """bodies: iterable of RigidBody, constraints: [(constraint_name, body0, body1)]"""
+        self.fixed_bases = []
+        self.kinematic_bodies = []
+        self.flipped = set()
+        self.excluded = set()
+
+        # several Blender objects can share one body prim, the body is passive if any of them is
+        self.bodies = {}
+        for body in bodies:
+            known = self.bodies.get(body.prim_path)
+            if known is None or (body.passive and not known.passive):
+                self.bodies[body.prim_path] = body
+
+        # body path -> [(constraint_name, other body path, this body is the constraint's body1)]
+        self.edges = {path: [] for path in self.bodies}
+        for name, body0, body1 in constraints:
+            self.edges[body0.prim_path].append((name, body1.prim_path, False))
+            self.edges[body1.prim_path].append((name, body0.prim_path, True))
+
+        visited = set()
+        for path in sorted(self.bodies):
+            if path in visited:
+                continue
+            group = self._group(path)
+            visited |= group
+            if len(group) == 1 and not self.edges[path]:
+                if self.bodies[path].passive:
+                    self.kinematic_bodies.append(self.bodies[path])
+                continue
+
+            passive = sorted(p for p in group if self.bodies[p].passive)
+            if passive:
+                root = passive[0]
+                self.fixed_bases.append(self.bodies[root])
+                if len(passive) > 1:
+                    logger.warning(
+                        f"Jointed bodies {', '.join(str(p) for p in passive)} are all passive. {root} is the fixed "
+                        "base, the others are simulated: an articulation can't have kinematic links"
+                    )
+            else:
+                root = max(sorted(group), key=lambda p: self.bodies[p].mass)
+                logger.info(f"Jointed bodies around {root} have no passive body, they form a floating base articulation")
+            self._walk(root)
+
+    def _group(self, start):
+        group = {start}
+        queue = deque([start])
+        while queue:
+            for _, other, _ in self.edges[queue.popleft()]:
+                if other not in group:
+                    group.add(other)
+                    queue.append(other)
+        return group
+
+    def _walk(self, root):
+        """breadth first from the root: the first constraint reaching a body makes it a child"""
+        reached = {root}
+        seen_constraints = set()
+        queue = deque([root])
+        while queue:
+            parent = queue.popleft()
+            for name, child, parent_is_body1 in self.edges[parent]:
+                if name in seen_constraints:
+                    continue
+                seen_constraints.add(name)
+                if child in reached:
+                    self.excluded.add(name)
+                    continue
+                reached.add(child)
+                if parent_is_body1:
+                    self.flipped.add(name)
+                queue.append(child)
 
 
 class PhysicsLayerExporter:
@@ -248,14 +358,11 @@ class PhysicsLayerExporter:
             body_prim.SetTypeName("Xform")
             body_matrix = Matrix.Identity(4)
 
-        # sets rigid bodies APIs and mass
+        # sets rigid bodies APIs and mass. Passive bodies become kinematic or an articulation's
+        # fixed base, which needs every constraint, so save() decides that
         rb_api = UsdPhysics.RigidBodyAPI.Apply(body_prim)
         rb_api.CreateRigidBodyEnabledAttr(True)
-        
-        # if blender rb type is passive set it as kinematic
-        if blender_rb.type == "PASSIVE":
-            rb_api.GetKinematicEnabledAttr().Set(True)
-        
+
         mass_api = UsdPhysics.MassAPI.Apply(body_prim)
         mass_api.CreateMassAttr(blender_rb.mass)
 
@@ -263,7 +370,7 @@ class PhysicsLayerExporter:
         mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(collision_prim)
         mesh_collision.CreateApproximationAttr(UsdPhysics.Tokens.convexDecomposition)
 
-        return RigidBody(body_path, body_matrix)
+        return RigidBody(body_path, body_matrix, blender_rb.type == "PASSIVE", blender_rb.mass)
 
     def _rigid_body_path(self, mesh_path):
         """
@@ -286,7 +393,60 @@ class PhysicsLayerExporter:
         return body_path
 
     def _add_constraints(self):
-        for constraint_obj in bpy.context.scene.objects:
+        constraints = self._asset_constraints()
+        plan = ArticulationPlan(self.bodies.values(), [(obj.name_full, b0, b1) for obj, b0, b1 in constraints])
+
+        for body in plan.kinematic_bodies:
+            UsdPhysics.RigidBodyAPI(self.stage.GetPrimAtPath(body.prim_path)).CreateKinematicEnabledAttr(True)
+
+        for constraint_obj, body0, body1 in constraints:
+            constructor = ConstraintsConstructor(self.stage, constraint_obj, self.mesh_scale, self.meter_per_unit)
+            constructor.create_usd_joint(
+                self.joints_path, body0, body1, self.motors_data,
+                flip=constraint_obj.name_full in plan.flipped,
+                exclude=constraint_obj.name_full in plan.excluded,
+            )
+
+        if constraints:
+            self._add_articulation_root(plan)
+
+    def _add_articulation_root(self, plan):
+        """
+        the articulation root goes on the asset's root prim, so it covers every jointed group and
+        carries over to each place the asset is referenced
+        """
+        asset_path = Sdf.Path(f"/{sanitize_name(self.asset_name)}")
+        root_prim = self.stage.OverridePrim(asset_path)
+        UsdPhysics.ArticulationRootAPI.Apply(root_prim)
+        # links that aren't jointed together don't collide, like Isaac's URDF importer sets it.
+        # Authored by name, Blender's pxr has no PhysxSchema
+        root_prim.AddAppliedSchema("PhysxArticulationAPI")
+        root_prim.CreateAttribute("physxArticulation:enabledSelfCollisions", Sdf.ValueTypeNames.Bool).Set(False)
+
+        for base in plan.fixed_bases:
+            # body0 is the asset's root prim, which isn't a rigid body: physics parsers then attach the
+            # joint to the world, with localPos0 read relative to that prim. So every instance is fixed
+            # where the world layer places it, instead of at the asset's own origin
+            joint_path = unique_child_path(self.stage, self.joints_path, ROOT_JOINT_NAME)
+            joint = UsdPhysics.FixedJoint.Define(self.stage, joint_path)
+            joint.CreateBody0Rel().SetTargets([asset_path])
+            joint.CreateBody1Rel().SetTargets([base.prim_path])
+            local_pos0, local_rot0 = joint_local_frame(base.matrix_world, None, self.mesh_scale)
+            local_pos1, local_rot1 = joint_local_frame(base.matrix_world, base, self.mesh_scale)
+            joint.CreateLocalPos0Attr(local_pos0)
+            joint.CreateLocalRot0Attr(local_rot0)
+            joint.CreateLocalPos1Attr(local_pos1)
+            joint.CreateLocalRot1Attr(local_rot1)
+
+        logger.info(
+            f"Articulation on {asset_path}: fixed bases {[str(b.prim_path) for b in plan.fixed_bases]}, "
+            f"flipped joints {sorted(plan.flipped)}, joints outside the articulation {sorted(plan.excluded)}"
+        )
+
+    def _asset_constraints(self):
+        """[(constraint_obj, body0, body1)] for the constraints between two rigid bodies of this asset"""
+        constraints = []
+        for constraint_obj in sorted(bpy.context.scene.objects, key=lambda obj: obj.name_full):
             rb_constraint = constraint_obj.rigid_body_constraint
             if rb_constraint is None:
                 continue
@@ -307,9 +467,11 @@ class PhysicsLayerExporter:
             if bodies[0].prim_path == bodies[1].prim_path:
                 logger.warning(f"Skipping constraint '{constraint_obj.name}': both objects are the body {bodies[0].prim_path}")
                 continue
-
-            constructor = ConstraintsConstructor(self.stage, constraint_obj, self.mesh_scale, self.meter_per_unit)
-            constructor.create_usd_joint(self.joints_path, bodies[0], bodies[1], self.motors_data)
+            if rb_constraint.type not in ConstraintsConstructor.JOINT_SCHEMAS:
+                logger.warning(f"Skipping constraint '{constraint_obj.name}': {rb_constraint.type} constraints aren't exported")
+                continue
+            constraints.append((constraint_obj, bodies[0], bodies[1]))
+        return constraints
 
     @staticmethod
     def _get_motors_data():
