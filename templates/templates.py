@@ -7,6 +7,8 @@ from exporter.monke_logging import get_logger
 
 
 logger = get_logger(__name__)
+# root that monkeDisc:// paths are relative to, it must match PROJECTSROOT/PROJECTNAME
+MONKE_DISC_ROOT = "main"
 
 
 class Template:
@@ -50,11 +52,24 @@ class Templates:
         self.version_pattern = re.sub(r"%[-+0 #]*\d*[diouxXeEfFgGs]", "*", version_format)
 
     def convert_path_to_monkedDisc(self, template, path, type="latest"):
+        """
+        monkeDisc://<path relative to the project root>:<type>, with the file's version
+        replaced by <version> so the resolver can pick one at load time
+        """
         fields = self.get_fields_from_path(template, path)
+        # the resolver joins the path onto PROJECTSROOT/PROJECTNAME, which is the "main" root,
+        # so templates under any other root (e.g. "assets") keep their folder in the path
+        project_dir = self.resolve_template(self._roots[MONKE_DISC_ROOT], fields)
+        rel_path = os.path.relpath(os.path.normpath(path), os.path.normpath(project_dir))
+        if rel_path.startswith(".."):
+            raise ValueError(f"'{path}' is outside the project folder '{project_dir}'")
+
+        # the resolver only looks for <version> in the file name
+        folder, file_name = os.path.split(rel_path)
         version_str = self._tokens["version"]["format"] % fields["version"]
-        rel_path = self.resolve_template(template.rel_template, fields)
-        rel_path = rel_path.replace(version_str, "<version>")
-        return f"monkeDisc://{rel_path.lstrip('/')}:{type}"
+        file_name = file_name.replace(version_str, "<version>")
+        rel_path = "/".join(part for part in folder.split(os.sep) + [file_name] if part)
+        return f"monkeDisc://{rel_path}:{type}"
 
     def get_existing_version_numbers(self, template, fields):
         fields["version"] = self.version_pattern

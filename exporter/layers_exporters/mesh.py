@@ -14,6 +14,7 @@ from exporter.layers_exporters.common import (
     mesh_prim_path,
     sanitize_name,
     scaled_matrix_to_gf,
+    set_stage_metrics,
     skel_root_path,
 )
 from templates.templates import Templates
@@ -31,19 +32,20 @@ class MeshLayerExporter:
 
     VARIANT_LAYER_TEMPLATE_NAME = "asset_mesh_variant_layer"
 
-    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0, physics_exporter=None):
+    def __init__(self, base_fields, variants_dir, meter_per_unit, mesh_scale=1.0, physics_exporter=None, up_axis=UsdGeom.Tokens.z):
         self.templates = Templates()
         self.base_fields = base_fields
         self.variant_layer_template = self.templates.get_template_by_name(self.VARIANT_LAYER_TEMPLATE_NAME)
         self.variants_dir = variants_dir
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
-        self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit)
+        self.up_axis = up_axis
+        self.binding_exporter = MaterialBindingLayerExporter(meter_per_unit, up_axis)
         self.physics_exporter = physics_exporter
 
     def export(self, output_path, asset_item):
         stage = Usd.Stage.CreateNew(output_path)
-        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
+        set_stage_metrics(stage, self.meter_per_unit, self.up_axis)
         has_skeleton = bool(asset_item.armature_objects)
         if has_skeleton:
             UsdSkel.Root.Define(stage, skel_root_path(asset_item.name))
@@ -163,7 +165,7 @@ class MeshLayerExporter:
         variant_layer_path = self.templates.get_new_file_path(self.variant_layer_template, fields)
         os.makedirs(os.path.dirname(variant_layer_path), exist_ok=True)
         variant_stage = Usd.Stage.CreateNew(variant_layer_path)
-        UsdGeom.SetStageMetersPerUnit(variant_stage, self.meter_per_unit)
+        set_stage_metrics(variant_stage, self.meter_per_unit, self.up_axis)
         UsdGeom.Xform.Define(variant_stage, asset_root_path(asset_item.name))
         UsdGeom.Scope.Define(variant_stage, geom_scope_path(asset_item.name))
 

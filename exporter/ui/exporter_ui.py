@@ -12,7 +12,7 @@ from exporter.layers_exporters.usd_exporter import (
     SUBLAYER_RESOLVERS,
 )
 from exporter.collectors.collector_assets import AssetsCollector
-from exporter.collectors.collector_world import WorldCollector
+from exporter.collectors.collector_world import LightsCollector, WorldCollector
 from exporter.monke_logging import configure_logging, get_logger
 from proxy_generator.app import ProxyGenerator
 from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
@@ -116,6 +116,8 @@ class MonkeUsdExportDialog(QDialog):
         # collect world
         self.world_collector = WorldCollector()
         self.world_collector.collect()
+        self.lights_collector = LightsCollector()
+        self.lights_collector.collect()
 
         # output folder - PROJECTSROOT/PROJECTNAME, or "<blend name>_usd" next to the .blend
         _, _, self.location_from_env = resolve_project_location(bpy.data.filepath)
@@ -129,6 +131,7 @@ class MonkeUsdExportDialog(QDialog):
         options_layout.addWidget(self._build_proxy_group())
         options_layout.addStretch()
         self._refresh_layer_checks()
+        self._refresh_lights_check()
 
         # buttons row
         export_button = QPushButton("Export")
@@ -191,11 +194,20 @@ class MonkeUsdExportDialog(QDialog):
         self.export_world_check = QCheckBox("Export world")
         self.export_world_check.setChecked(True)
         self.export_world_check.setToolTip("Export the scene layout gathered by the world collector.")
-        if not self.world_collector.instances_dict:
+        if not self.world_collector.instances_dict and not self.lights_collector.items:
             self.export_world_check.setChecked(False)
             self.export_world_check.setEnabled(False)
-            self.export_world_check.setToolTip("No Geometry Nodes instances of assets found in the scene.")
+            self.export_world_check.setToolTip("No Geometry Nodes instances of assets or lights found in the scene.")
         column.addWidget(self.export_world_check)
+
+        # lights are a sublayer of the world file, so they're part of the world export
+        self.export_lights_check = QCheckBox("Lights")
+        self.export_lights_check.setChecked(True)
+        lights_row = QHBoxLayout()
+        lights_row.addSpacing(20)
+        lights_row.addWidget(self.export_lights_check)
+        column.addLayout(lights_row)
+        self.export_world_check.toggled.connect(self._refresh_lights_check)
 
         column.addSpacing(8)
         column.addWidget(QLabel("Assets:"))
@@ -262,6 +274,14 @@ class MonkeUsdExportDialog(QDialog):
             self.proxy_group.setEnabled(self.geometry_check.isChecked())
         finally:
             self._refreshing_checks = False
+
+    def _refresh_lights_check(self, *_):
+        if not self.lights_collector.items:
+            self._set_check_available(self.export_lights_check, False, "No lights found outside the assets.")
+        elif not self.export_world_check.isChecked():
+            self._set_check_available(self.export_lights_check, False, "Lights are exported with the world.")
+        else:
+            self._set_check_available(self.export_lights_check, True, "")
 
     def _set_check_available(self, check, available, reason):
         if available:
@@ -430,6 +450,8 @@ class MonkeUsdExportDialog(QDialog):
         selected_assets_names = [x.text() for x in self.assets_checkboxes if x.isChecked()]
         collected_assets_items = [x for x in self.asset_collector.items if x.name in selected_assets_names]
         collected_world_dict = self.world_collector.instances_dict if self.export_world_check.isChecked() else None
+        export_lights = self.export_lights_check.isChecked()
+        collected_lights = self.lights_collector.items if export_lights else []
         output_dir = os.path.normpath(os.path.expanduser(self.output_dir_edit.text().strip()))
         return {
             "projects_root": os.path.dirname(output_dir),
@@ -445,6 +467,10 @@ class MonkeUsdExportDialog(QDialog):
             "up_axis": self.up_axis_combo.currentText(),
             "collected_assets_item": collected_assets_items,
             "collected_world_item": collected_world_dict,
+            # with no lights in the scene the step counts as exported and empty, so the
+            # world file doesn't keep lights from an older export
+            "export_lights": export_lights or not self.lights_collector.items,
+            "collected_lights": collected_lights,
             "meter_per_unit": float(self.meter_per_unit.text()),
             "mesh_scale": float(self.mesh_scale.text()),
             "generate_proxy": self.proxy_generator_check.isChecked() and self.geometry_check.isChecked(),

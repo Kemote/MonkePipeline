@@ -31,6 +31,10 @@
       "template": "/<project_name>.<ext>",
       "root": "main"
     },
+    "world_sublayer_file": {
+      "template": "/layers/<project_name>_<step>_<version>.<ext>",
+      "root": "main"
+    },
     "asset_main_file": {
       "template": "/<name>/<name>.<ext>",
       "root": "assets"

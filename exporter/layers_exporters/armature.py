@@ -5,6 +5,7 @@ from exporter.layers_exporters.common import (
     find_armature_modifier,
     sanitize_name,
     scaled_matrix_to_gf,
+    set_stage_metrics,
 )
 from exporter.monke_logging import get_logger
 
@@ -80,9 +81,10 @@ class ArmatureLayerExporter:
     export one static bind-pose skeleton per armature, shared across all variants
     """
 
-    def __init__(self, meter_per_unit, mesh_scale=1.0):
+    def __init__(self, meter_per_unit, mesh_scale=1.0, up_axis=UsdGeom.Tokens.z):
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
+        self.up_axis = up_axis
 
     def export(self, output_path, asset_item):
         if not asset_item.has_armature:
@@ -95,7 +97,7 @@ class ArmatureLayerExporter:
 
         # CreateNew writes the file right away, so only call it when there is data
         stage = Usd.Stage.CreateNew(output_path)
-        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
+        set_stage_metrics(stage, self.meter_per_unit, self.up_axis)
         UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name, True))
         for skeleton_path, (armature_obj, bone_names) in plan.skeletons.items():
             self._write_skeleton(stage, skeleton_path, armature_obj, bone_names)

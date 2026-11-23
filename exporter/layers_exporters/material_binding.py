@@ -8,6 +8,7 @@ from exporter.layers_exporters.common import (
     material_prim_name,
     mesh_prim_path,
     sanitize_name,
+    set_stage_metrics,
 )
 from exporter.monke_logging import get_logger
 
@@ -20,15 +21,16 @@ class MaterialBindingLayerExporter:
     create a separate layer next to the geometry file for binding data
     """
 
-    def __init__(self, meter_per_unit):
+    def __init__(self, meter_per_unit, up_axis=UsdGeom.Tokens.z):
         self.meter_per_unit = meter_per_unit
+        self.up_axis = up_axis
 
     def write_for_layer(self, geo_layer_path, asset_item, outliner_paths, has_skeleton=False):
         base_path, extension = os.path.splitext(geo_layer_path)
         binding_layer_path = f"{base_path}_binding{extension}"
 
         stage = Usd.Stage.CreateNew(binding_layer_path)
-        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
+        set_stage_metrics(stage, self.meter_per_unit, self.up_axis)
         self.export(stage, asset_item, outliner_paths, has_skeleton)
         stage.GetRootLayer().Save()
         return binding_layer_path

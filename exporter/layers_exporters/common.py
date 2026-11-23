@@ -1,4 +1,4 @@
-from pxr import Gf, UsdGeom
+from pxr import Gf, Kind, Sdf, UsdGeom
 from exporter.collectors.collector_assets import VARIANT_SEPARATOR
 
 
@@ -12,6 +12,7 @@ LOD_PURPOSES = {
 }
 PROXY_POST_FIX = "_&&_proxy"
 SKEL_ROOT_NAME = "SkelRoot"
+WORLD_ROOT_PATH = "/World"
 
 
 def sanitize_name(name):
@@ -19,6 +20,39 @@ def sanitize_name(name):
     if sanitized[:1].isdigit():
         sanitized = f"_{sanitized}"
     return sanitized
+
+
+def set_stage_metrics(stage, meter_per_unit, up_axis):
+    """
+    every output file gets both values: USD only reads them from the root layer and never
+    rescales or rotates data that comes from a layer with different values, so a file
+    without them is read with the fallbacks (Y up, centimetres) when it's opened on its own
+    """
+    UsdGeom.SetStageMetersPerUnit(stage, meter_per_unit)
+    UsdGeom.SetStageUpAxis(stage, up_axis)
+
+
+def define_world_groups(stage, collection_path):
+    """
+    defines /World/<collection path> as group Xforms and returns the last path.
+    Instanced assets are components, and a component can't contain models,
+    so every prim above them is a group to keep the model hierarchy valid
+    """
+    group_path = Sdf.Path(WORLD_ROOT_PATH)
+    for part in filter(None, collection_path.split("/")):
+        group_path = group_path.AppendChild(sanitize_name(part))
+        if not stage.GetPrimAtPath(group_path):
+            UsdGeom.Xform.Define(stage, group_path).GetPrim().SetKind(Kind.Tokens.group)
+    return group_path
+
+
+def unique_child_path(stage, parent_path, name):
+    path = parent_path.AppendChild(name)
+    index = 1
+    while stage.GetPrimAtPath(path):
+        path = parent_path.AppendChild(f"{name}_{index:03d}")
+        index += 1
+    return path
 
 
 def split_variant(name):
