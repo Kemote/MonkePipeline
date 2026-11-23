@@ -196,7 +196,7 @@ class MeshLayerExporter:
         create separate layer for material binding which is used for material variants,
         the binding file sits next to its geometry layer, so the relative path is just the name
         """
-        if not outliner_paths:
+        if not outliner_paths or not asset_item.has_materials:
             return
         geo_layer = stage.GetRootLayer()
         binding_layer_path = self.binding_exporter.write_for_layer(geo_layer.realPath, asset_item, outliner_paths, has_skeleton)

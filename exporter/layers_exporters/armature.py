@@ -85,9 +85,7 @@ class ArmatureLayerExporter:
         self.mesh_scale = mesh_scale
 
     def export(self, output_path, asset_item):
-        stage = Usd.Stage.CreateNew(output_path)
-        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
-        if not asset_item.armature_objects:
+        if not asset_item.has_armature:
             return None
 
         plan = SkeletonBindingPlan(asset_item)
@@ -95,6 +93,9 @@ class ArmatureLayerExporter:
             logger.warning(f"No skeleton bindings found for asset '{asset_item.name}' - skipping armature layer.")
             return None
 
+        # CreateNew writes the file right away, so only call it when there is data
+        stage = Usd.Stage.CreateNew(output_path)
+        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
         UsdGeom.Scope.Define(stage, armature_scope_path(asset_item.name, True))
         for skeleton_path, (armature_obj, bone_names) in plan.skeletons.items():
             self._write_skeleton(stage, skeleton_path, armature_obj, bone_names)

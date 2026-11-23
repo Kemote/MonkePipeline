@@ -60,6 +60,23 @@ class CollectedAssetItem(CollectedItem):
         else:
             self.materials[material.name] = material
 
+    # which export steps have data, used by the UI and UsdExporter
+    @property
+    def has_geometry(self):
+        return bool(self.mesh_objects)
+
+    @property
+    def has_materials(self):
+        return bool(self.materials or self.material_variants)
+
+    @property
+    def has_armature(self):
+        return bool(self.armature_objects)
+
+    @property
+    def has_physics(self):
+        return any(mesh_obj.rigid_body for mesh_obj in self.mesh_objects.values())
+
 
 class Collector(ABC):
     def __init__(self):

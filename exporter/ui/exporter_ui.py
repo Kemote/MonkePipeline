@@ -128,6 +128,7 @@ class MonkeUsdExportDialog(QDialog):
         options_layout.addWidget(self._build_stage_group())
         options_layout.addWidget(self._build_proxy_group())
         options_layout.addStretch()
+        self._refresh_layer_checks()
 
         # buttons row
         export_button = QPushButton("Export")
@@ -190,6 +191,10 @@ class MonkeUsdExportDialog(QDialog):
         self.export_world_check = QCheckBox("Export world")
         self.export_world_check.setChecked(True)
         self.export_world_check.setToolTip("Export the scene layout gathered by the world collector.")
+        if not self.world_collector.instances_dict:
+            self.export_world_check.setChecked(False)
+            self.export_world_check.setEnabled(False)
+            self.export_world_check.setToolTip("No Geometry Nodes instances of assets found in the scene.")
         column.addWidget(self.export_world_check)
 
         column.addSpacing(8)
@@ -198,6 +203,7 @@ class MonkeUsdExportDialog(QDialog):
         for item in self.asset_collector.items:
             asset_checkbox = QCheckBox(item.name)
             asset_checkbox.setChecked(True)
+            asset_checkbox.toggled.connect(self._refresh_layer_checks)
             self.assets_checkboxes.append(asset_checkbox)
             column.addWidget(asset_checkbox)
         if not self.assets_checkboxes:
@@ -220,7 +226,55 @@ class MonkeUsdExportDialog(QDialog):
         ):
             check.setChecked(True)
             column.addWidget(check)
+
+        # check -> (asset data property, tooltip name), geometry first because physics needs it
+        self.layer_data_checks = {
+            self.geometry_check: ("has_geometry", "meshes"),
+            self.materials_check: ("has_materials", "materials"),
+            self.armature_check: ("has_armature", "armature"),
+            self.physics_check: ("has_physics", "rigid bodies"),
+        }
+        # user's choice, restored when a disabled check is enabled again
+        self._remembered_checks = {}
+        self._refreshing_checks = False
+        self.geometry_check.toggled.connect(self._refresh_layer_checks)
         return group
+
+    def _refresh_layer_checks(self, *_):
+        """disable layer checks that no selected asset has data for"""
+        # unchecking Geometry calls this method again
+        if self._refreshing_checks:
+            return
+        self._refreshing_checks = True
+        try:
+            selected_names = {check.text() for check in self.assets_checkboxes if check.isChecked()}
+            selected_items = [item for item in self.asset_collector.items if item.name in selected_names]
+
+            for check, (data_attr, data_label) in self.layer_data_checks.items():
+                available = any(getattr(item, data_attr) for item in selected_items)
+                reason = f"No {data_label} in the selected assets."
+                if check is self.physics_check and available and not self.geometry_check.isChecked():
+                    available = False
+                    reason = "Physics needs Geometry."
+                self._set_check_available(check, available, reason)
+
+            # proxies are part of geometry
+            self.proxy_group.setEnabled(self.geometry_check.isChecked())
+        finally:
+            self._refreshing_checks = False
+
+    def _set_check_available(self, check, available, reason):
+        if available:
+            if not check.isEnabled():
+                check.setEnabled(True)
+                check.setChecked(self._remembered_checks.pop(check, True))
+            check.setToolTip("")
+        else:
+            if check.isEnabled():
+                self._remembered_checks[check] = check.isChecked()
+                check.setChecked(False)
+                check.setEnabled(False)
+            check.setToolTip(reason)
 
     def _build_stage_group(self):
         """stage metadata and unit conversion"""
@@ -240,7 +294,7 @@ class MonkeUsdExportDialog(QDialog):
 
         self.mesh_scale = QLineEdit()
         self.mesh_scale.setValidator(self._create_double_validator(0.0001, 1000))
-        self.mesh_scale.setText("100.0")
+        self.mesh_scale.setText("1.0")
         self.mesh_scale.setToolTip("Multiplier applied to points and translations on export.")
         form.addRow("Mesh scale", self.mesh_scale)
         return group
@@ -248,6 +302,7 @@ class MonkeUsdExportDialog(QDialog):
     def _build_proxy_group(self):
         """automatic decimated proxy LOD"""
         group = QGroupBox("Proxy LOD")
+        self.proxy_group = group
         form = QFormLayout(group)
 
         self.proxy_generator_check = QCheckBox("Generate proxy LOD")
@@ -392,7 +447,7 @@ class MonkeUsdExportDialog(QDialog):
             "collected_world_item": collected_world_dict,
             "meter_per_unit": float(self.meter_per_unit.text()),
             "mesh_scale": float(self.mesh_scale.text()),
-            "generate_proxy": self.proxy_generator_check.isChecked(),
+            "generate_proxy": self.proxy_generator_check.isChecked() and self.geometry_check.isChecked(),
             "decimate_ratio": self.decimate_slider.value_float()
         }
 

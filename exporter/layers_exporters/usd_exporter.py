@@ -1,7 +1,7 @@
 import math
 import os
 
-from pxr import Usd, UsdGeom, Kind, Gf, Sdf
+from pxr import Usd, UsdGeom, Kind, Gf, Sdf, UsdPhysics
 from exporter.layers_exporters.armature import ArmatureLayerExporter
 from exporter.layers_exporters.common import FPS, sanitize_name
 from exporter.layers_exporters.materials import MaterialsLayerExporter
@@ -113,17 +113,12 @@ class UsdExporter:
 
                 self._set_instance_transform(instance_prim, instancer_item)
 
+        # set physics scene
+        if self.export_physics:
+            UsdPhysics.Scene.Define(stage, "/World/physicsScene")
+
         stage.GetRootLayer().Save()
         return world_main_path
-
-    @staticmethod
-    def _unique_child_path(stage, parent_path, name):
-        path = parent_path.AppendChild(name)
-        index = 1
-        while stage.GetPrimAtPath(path):
-            path = parent_path.AppendChild(f"{name}_{index:03d}")
-            index += 1
-        return path
 
     def _set_instance_transform(self, prim, instancer_item):
         rot, loc, scale = instancer_item.decompose_transform()
@@ -168,15 +163,14 @@ class UsdExporter:
         }
 
         physics_exporter = None
-        if self.export_physics:
-            if self.export_geom:
-                physics_exporter = PhysicsLayerExporter(
-                    asset_name, physics_file_path, self.meter_per_unit, self.mesh_scale, self.up_axis
-                )
-            else:
-                logger.warning("Physics export needs geometry export: rigid bodies are read from the exported meshes")
+        if self.export_physics and not self.export_geom:
+            logger.warning("Physics export needs geometry export: rigid bodies are read from the exported meshes")
+        elif self.export_physics and asset_item.has_physics:
+            physics_exporter = PhysicsLayerExporter(
+                asset_name, physics_file_path, self.meter_per_unit, self.mesh_scale, self.up_axis
+            )
 
-        if self.export_geom:
+        if self.export_geom and asset_item.has_geometry:
             variant_base_fields = {
                 "ext": fields["ext"],
                 "projects_root": fields["projects_root"],
@@ -184,23 +178,32 @@ class UsdExporter:
                 "name": fields["name"],
             }
             mesh_exporter = MeshLayerExporter(variant_base_fields, mesh_variants_output, self.meter_per_unit, self.mesh_scale, physics_exporter)
-            self._write_layer(geom_file_path, mesh_exporter, asset_item)
-            layer_paths_dict["geom"] = geom_file_path
+            if self._write_layer(geom_file_path, mesh_exporter, asset_item):
+                layer_paths_dict["geom"] = geom_file_path
 
         if physics_exporter:
             # joints need every rigid body, which the mesh export above has collected
-            physics_exporter.save()
-            layer_paths_dict["physics"] = physics_file_path
+            layer_paths_dict["physics"] = physics_exporter.save()
 
-        if self.export_mat:
+        if self.export_mat and asset_item.has_materials:
             materials_exporter = MaterialsLayerExporter(textures_output, self.meter_per_unit)
-            self._write_layer(look_file_path, materials_exporter, asset_item)
-            layer_paths_dict["look"] = look_file_path
+            if self._write_layer(look_file_path, materials_exporter, asset_item):
+                layer_paths_dict["look"] = look_file_path
 
-        if self.export_armature:
+        if self.export_armature and asset_item.has_armature:
             armature_exporter = ArmatureLayerExporter(self.meter_per_unit, self.mesh_scale)
-            self._write_layer(rig_file_path, armature_exporter, asset_item)
-            layer_paths_dict["rig"] = rig_file_path
+            if self._write_layer(rig_file_path, armature_exporter, asset_item):
+                layer_paths_dict["rig"] = rig_file_path
+
+        # steps selected but with nothing written for this asset: the main file
+        # gets no sublayer for them, not even an older version from disk
+        selected_steps = {
+            "geom": self.export_geom,
+            "look": self.export_mat,
+            "rig": self.export_armature,
+            "physics": self.export_physics and self.export_geom,
+        }
+        empty_steps = {step for step, selected in selected_steps.items() if selected and not layer_paths_dict[step]}
 
         # creating main stage
         os.makedirs(os.path.dirname(main_file_path), exist_ok=True)
@@ -227,6 +230,8 @@ class UsdExporter:
 
         final_sublayers = []
         for step in step_order:
+            if step in empty_steps:
+                continue
             layer_path = layer_paths_dict[step]
             if not layer_path:
                 # step not exported this run: point at its newest version on disk,
@@ -251,12 +256,24 @@ class UsdExporter:
         return rel_path if rel_path.startswith(".") else f"./{rel_path}"
 
     def _write_layer(self, file_path, layer_exporter, asset_item):
+        """returns True when the exporter wrote a layer"""
         logger.debug(f"Write layer: {file_path} for asset: {asset_item.name }")
         stage = layer_exporter.export(file_path, asset_item)
-        if stage:
-            self._set_fps(stage)
-            stage.GetRootLayer().Save()
-                    
+        if not stage:
+            return False
+        self._set_fps(stage)
+        stage.GetRootLayer().Save()
+        return True
+
+    @staticmethod
+    def _unique_child_path(stage, parent_path, name):
+        path = parent_path.AppendChild(name)
+        index = 1
+        while stage.GetPrimAtPath(path):
+            path = parent_path.AppendChild(f"{name}_{index:03d}")
+            index += 1
+        return path
+                       
     @staticmethod
     def _set_fps(stage):
         stage.SetFramesPerSecond(FPS)
