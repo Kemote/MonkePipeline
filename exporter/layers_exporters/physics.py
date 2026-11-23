@@ -22,9 +22,17 @@ MOTORS_JSON_FILENAME = "isaac_sim.json"
 
 ROOT_JOINT_NAME = "root_joint"
 
+# Blender collision shapes with a direct UsdPhysics mesh approximation. MESH and CONVEX_HULL
+# depend on the body, see PhysicsLayerExporter._collision_approximation
+COLLISION_APPROXIMATIONS = {
+    "BOX": UsdPhysics.Tokens.boundingCube,
+    "SPHERE": UsdPhysics.Tokens.boundingSphere,
+    "COMPOUND": UsdPhysics.Tokens.convexDecomposition,
+}
+
 # prim_path: the prim holding RigidBodyAPI, matrix_world: that prim's world matrix in Blender space,
-# passive: Blender PASSIVE rigid body, mass: Blender mass
-RigidBody = namedtuple("RigidBody", ["prim_path", "matrix_world", "passive", "mass"])
+# passive: Blender PASSIVE rigid body, animated: Blender's "Animated" option, mass: Blender mass
+RigidBody = namedtuple("RigidBody", ["prim_path", "matrix_world", "passive", "animated", "mass"])
 
 
 def is_collisions_collection_name(name):
@@ -229,12 +237,12 @@ class ArticulationPlan:
       A group without a passive body is a floating base, walked from its heaviest body
     - flipped: constraints whose object1/object2 order points from child to parent
     - excluded: constraints that close a loop, solved as regular joints outside the articulation
-    - kinematic_bodies: passive bodies without constraints, they stay kinematic
+    - unjointed_passive: passive bodies without constraints, they stay static or kinematic
     """
     def __init__(self, bodies, constraints):
         """bodies: iterable of RigidBody, constraints: [(constraint_name, body0, body1)]"""
         self.fixed_bases = []
-        self.kinematic_bodies = []
+        self.unjointed_passive = []
         self.flipped = set()
         self.excluded = set()
 
@@ -259,7 +267,7 @@ class ArticulationPlan:
             visited |= group
             if len(group) == 1 and not self.edges[path]:
                 if self.bodies[path].passive:
-                    self.kinematic_bodies.append(self.bodies[path])
+                    self.unjointed_passive.append(self.bodies[path])
                 continue
 
             passive = sorted(p for p in group if self.bodies[p].passive)
@@ -324,53 +332,105 @@ class PhysicsLayerExporter:
         self.motors_data = self._get_motors_data()
         # Blender object name -> RigidBody, filled by export()
         self.bodies = {}
+        # (collider mesh path, Blender object, body path), filled by export()
+        self.colliders = []
 
     def save(self):
         """writes the layer and returns its path, or None when the asset has no rigid bodies"""
         if not self.bodies:
             return None
-        self._add_constraints()
+        constraints = self._asset_constraints()
+        plan = ArticulationPlan(self.bodies.values(), [(obj.name_full, b0, b1) for obj, b0, b1 in constraints])
+        static_paths, kinematic_paths = self._author_bodies(plan)
+        self._author_colliders(static_paths, kinematic_paths)
+        self._add_constraints(constraints, plan)
         self.stage.GetRootLayer().Export(self.output_path)
         return self.output_path
 
     def export(self, blender_obj, prim_path):
-        # export rigid body
+        """records a rigid body mesh. What it becomes depends on every constraint, so save() authors it"""
         blender_rb = blender_obj.rigid_body
         if not blender_rb:
             return
 
-        body = self._create_rigid_body(blender_obj, blender_rb, Sdf.Path(prim_path))
-        self.bodies[blender_obj.name_full] = body
-
-    def _create_rigid_body(self, blender_obj, blender_rb, mesh_path):
-        # overs only: this layer adds APIs to prims the geom layer defines. A def with a type here
-        # would replace the Mesh type whenever this layer is the stronger one
-        collision_prim = self.stage.OverridePrim(mesh_path)
+        mesh_path = Sdf.Path(prim_path)
         body_path = self._rigid_body_path(mesh_path)
-        if body_path == mesh_path:
-            body_prim = collision_prim
-            # the mesh exporter writes the mesh's world matrix on the mesh prim
-            body_matrix = blender_obj.matrix_world.copy()
-        else:
+        # the mesh exporter writes the mesh's world matrix on the mesh prim. Link prims carry no
+        # transform, so a body on a link has the world frame
+        body_matrix = blender_obj.matrix_world.copy() if body_path == mesh_path else Matrix.Identity(4)
+        self.bodies[blender_obj.name_full] = RigidBody(
+            body_path, body_matrix, blender_rb.type == "PASSIVE", blender_rb.kinematic, blender_rb.mass
+        )
+        self.colliders.append((mesh_path, blender_obj, body_path))
+
+    def _author_bodies(self, plan):
+        """
+        a passive body without constraints is a static collider: no RigidBodyAPI at all, which is the
+        usual setup for floors and furniture and allows exact triangle collision. With Blender's
+        "Animated" option it's kinematic instead. Every other body is simulated.
+        Returns the static and the kinematic body paths
+        """
+        static_paths = {body.prim_path for body in plan.unjointed_passive if not body.animated}
+        kinematic_paths = {body.prim_path for body in plan.unjointed_passive if body.animated}
+
+        # several Blender objects can make up one body (colliders of one link), their masses add up
+        masses = {}
+        for body in self.bodies.values():
+            masses[body.prim_path] = masses.get(body.prim_path, 0.0) + body.mass
+
+        collider_paths = {mesh_path for mesh_path, _, _ in self.colliders}
+        for body_path, mass in masses.items():
+            if body_path in static_paths:
+                continue
+            # overs only: this layer adds APIs to prims the geom layer defines. A def with a type here
+            # would replace the Mesh type whenever this layer is the stronger one
             body_prim = self.stage.OverridePrim(body_path)
-            # the geom layer leaves collection prims typeless and a rigid body has to be Xformable.
-            # They carry no transform, so the body frame is the world frame
-            body_prim.SetTypeName("Xform")
-            body_matrix = Matrix.Identity(4)
+            if body_path not in collider_paths:
+                # the geom layer leaves collection prims typeless and a rigid body has to be Xformable
+                body_prim.SetTypeName("Xform")
+            rb_api = UsdPhysics.RigidBodyAPI.Apply(body_prim)
+            rb_api.CreateRigidBodyEnabledAttr(True)
+            if body_path in kinematic_paths:
+                rb_api.CreateKinematicEnabledAttr(True)
+            UsdPhysics.MassAPI.Apply(body_prim).CreateMassAttr(mass)
+        return static_paths, kinematic_paths
 
-        # sets rigid bodies APIs and mass. Passive bodies become kinematic or an articulation's
-        # fixed base, which needs every constraint, so save() decides that
-        rb_api = UsdPhysics.RigidBodyAPI.Apply(body_prim)
-        rb_api.CreateRigidBodyEnabledAttr(True)
+    def _author_colliders(self, static_paths, kinematic_paths):
+        for mesh_path, blender_obj, body_path in self.colliders:
+            collision_prim = self.stage.OverridePrim(mesh_path)
+            UsdPhysics.CollisionAPI.Apply(collision_prim)
+            simulated = body_path not in static_paths and body_path not in kinematic_paths
+            approximation = self._collision_approximation(blender_obj, simulated)
+            UsdPhysics.MeshCollisionAPI.Apply(collision_prim).CreateApproximationAttr(approximation)
 
-        mass_api = UsdPhysics.MassAPI.Apply(body_prim)
-        mass_api.CreateMassAttr(blender_rb.mass)
+    @staticmethod
+    def _collision_approximation(blender_obj, simulated):
+        """
+        follows the Blender collision shape. PhysX only takes exact triangle meshes ("none") on static
+        and kinematic bodies, so a simulated MESH shape is split into convex pieces instead
+        """
+        shape = blender_obj.rigid_body.collision_shape
+        if shape in COLLISION_APPROXIMATIONS:
+            return COLLISION_APPROXIMATIONS[shape]
+        if shape == "MESH":
+            return UsdPhysics.Tokens.convexDecomposition if simulated else UsdPhysics.Tokens.none
 
-        UsdPhysics.CollisionAPI.Apply(collision_prim)
-        mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(collision_prim)
-        mesh_collision.CreateApproximationAttr(UsdPhysics.Tokens.convexDecomposition)
+        # CONVEX_HULL, and CAPSULE, CYLINDER and CONE, which have no UsdPhysics mesh approximation
+        if PhysicsLayerExporter._is_flat(blender_obj):
+            # the hull of a flat mesh (a floor plane) has no volume and PhysX can fail to build it
+            if not simulated:
+                return UsdPhysics.Tokens.none
+            logger.warning(
+                f"'{blender_obj.name}' is flat and simulated, its convex hull has no volume and may not "
+                "collide. Give it some thickness"
+            )
+        return UsdPhysics.Tokens.convexHull
 
-        return RigidBody(body_path, body_matrix, blender_rb.type == "PASSIVE", blender_rb.mass)
+    @staticmethod
+    def _is_flat(blender_obj):
+        extents = [max(corner[axis] for corner in blender_obj.bound_box) - min(corner[axis] for corner in blender_obj.bound_box)
+                   for axis in range(3)]
+        return min(extents) <= 1e-6 * max(max(extents), 1e-12)
 
     def _rigid_body_path(self, mesh_path):
         """
@@ -392,13 +452,7 @@ class PhysicsLayerExporter:
             return mesh_path
         return body_path
 
-    def _add_constraints(self):
-        constraints = self._asset_constraints()
-        plan = ArticulationPlan(self.bodies.values(), [(obj.name_full, b0, b1) for obj, b0, b1 in constraints])
-
-        for body in plan.kinematic_bodies:
-            UsdPhysics.RigidBodyAPI(self.stage.GetPrimAtPath(body.prim_path)).CreateKinematicEnabledAttr(True)
-
+    def _add_constraints(self, constraints, plan):
         for constraint_obj, body0, body1 in constraints:
             constructor = ConstraintsConstructor(self.stage, constraint_obj, self.mesh_scale, self.meter_per_unit)
             constructor.create_usd_joint(
