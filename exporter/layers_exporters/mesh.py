@@ -106,11 +106,22 @@ class MeshLayerExporter:
                 yield variant_data
 
     def _write_meshes(self, stage, asset_item, outliner_paths, skeleton_plan=None, has_skeleton=False, in_variant_layer=False):
+        generated_proxies = set(asset_item.proxy_paths.values())
         for outliner_path in outliner_paths:
             mesh = asset_item.mesh_objects[outliner_path]
             prim_path = mesh_prim_path(asset_item.name, asset_item.path, outliner_path, has_skeleton)
             binding = skeleton_plan.mesh_bindings.get(outliner_path) if skeleton_plan else None
-            self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
+            usd_mesh = self._write_mesh(stage, prim_path, mesh, asset_item.name, binding, in_variant_layer)
+
+            proxy_path = asset_item.proxy_paths.get(outliner_path)
+            if outliner_path in generated_proxies:
+                usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.proxy)
+            elif proxy_path:
+                # a render mesh is only hidden in proxy views when it has a proxy, proxyPrim
+                # tells renderers which prim stands in for it
+                usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.render)
+                proxy_prim_path = mesh_prim_path(asset_item.name, asset_item.path, proxy_path, has_skeleton)
+                usd_mesh.CreateProxyPrimRel().SetTargets([Sdf.Path(proxy_prim_path)])
 
             # check if mesh have any physic
             if self.physics_exporter:
@@ -225,12 +236,13 @@ class MeshLayerExporter:
         if skeleton_binding:
             self._write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, scale, in_variant_layer)
 
-        # check if its collision object if yes set purpose as guide, else set purpose as render
+        # collisions are guides. Other meshes author no purpose here: a purpose on the mesh beats the
+        # one inherited from its parent, so authoring render would make meshes in the lod proxy
+        # scope draw as render. _write_meshes sets render/proxy on visuals proxy pairs
         parent_prim_name = prim_path.split("/")[-2]
         if is_collisions_collection_name(parent_prim_name):
             usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.guide)
-        else:
-            usd_mesh.CreatePurposeAttr().Set(UsdGeom.Tokens.render)
+        return usd_mesh
 
     @staticmethod
     def _write_skin_binding(usd_mesh, mesh_obj, asset_name, skeleton_binding, mesh_scale, in_variant_layer=False):

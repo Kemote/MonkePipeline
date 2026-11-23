@@ -43,6 +43,7 @@ class CollectedAssetItem(CollectedItem):
     armature_objects: {outliner_path: armature_obj} from armature collection
     materials: {name: material} standard materials
     material_variants: {base_name: {variant_name: material}} single-level variants
+    proxy_paths: {render_outliner_path: proxy_outliner_path} visuals proxies made by ProxyGenerator
     """
     def __init__(self, name, outliner_path):
         super().__init__(name, outliner_path)
@@ -50,6 +51,7 @@ class CollectedAssetItem(CollectedItem):
         self.armature_objects = {}
         self.materials = {}
         self.material_variants = {}
+        self.proxy_paths = {}
         self.type = "ASSET_ITEM"
 
     def add_material(self, material):
