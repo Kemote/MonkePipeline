@@ -317,6 +317,15 @@ class MonkeUsdExportDialog(QDialog):
         self.mesh_scale.setText("1.0")
         self.mesh_scale.setToolTip("Multiplier applied to points and translations on export.")
         form.addRow("Mesh scale", self.mesh_scale)
+
+        self.light_exposure_offset = QLineEdit()
+        self.light_exposure_offset.setValidator(self._create_double_validator(-30.0, 30.0))
+        self.light_exposure_offset.setText("0.0")
+        self.light_exposure_offset.setToolTip(
+            "Stops added to every light's exposure (+1 doubles the brightness).\n"
+            "0 matches Blender's own USD export. Isaac Sim / Omniverse RTX needs about +10."
+        )
+        form.addRow("Light exposure offset", self.light_exposure_offset)
         return group
 
     def _build_proxy_group(self):
@@ -473,6 +482,7 @@ class MonkeUsdExportDialog(QDialog):
             "collected_lights": collected_lights,
             "meter_per_unit": float(self.meter_per_unit.text()),
             "mesh_scale": float(self.mesh_scale.text()),
+            "light_exposure_offset": float(self.light_exposure_offset.text() or 0.0),
             "generate_proxy": self.proxy_generator_check.isChecked() and self.geometry_check.isChecked(),
             "decimate_ratio": self.decimate_slider.value_float()
         }

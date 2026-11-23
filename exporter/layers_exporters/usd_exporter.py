@@ -38,6 +38,7 @@ class UsdExporter:
         self.extension = settings["extension"]
         self.meter_per_unit = settings["meter_per_unit"]
         self.mesh_scale = settings.get("mesh_scale", 1.0)
+        self.light_exposure_offset = settings.get("light_exposure_offset", 0.0)
         self.export_geom = settings["export_geometry"]
         self.export_mat = settings["export_materials"]
         self.export_armature = settings["export_armature"]
@@ -142,7 +143,9 @@ class UsdExporter:
         if not self.export_lights:
             return self.templates.get_latest_file_path(self.world_sublayer_template, lights_fields)
 
-        lights_stage = LightsLayerExporter(self.meter_per_unit, self.mesh_scale, self.up_axis).export(self.light_items)
+        lights_stage = LightsLayerExporter(
+            self.meter_per_unit, self.mesh_scale, self.up_axis, self.light_exposure_offset
+        ).export(self.light_items)
         if not lights_stage:
             return None
 

@@ -24,12 +24,17 @@ class LightsLayerExporter:
     - point, spot and area power (W) -> intensity W / pi
     - sun strength -> intensity strength / 4
     - sun angle and spot size are full angles in Blender, UsdLux wants half angles
+
+    exposure_offset (stops) is added to every light's exposure. Renderers that expose like a
+    physical camera (Omniverse RTX in Isaac Sim) need far more light than Blender for the same
+    image, so the same scene needs about +10 stops there
     """
 
-    def __init__(self, meter_per_unit, mesh_scale=1.0, up_axis=UsdGeom.Tokens.z):
+    def __init__(self, meter_per_unit, mesh_scale=1.0, up_axis=UsdGeom.Tokens.z, exposure_offset=0.0):
         self.meter_per_unit = meter_per_unit
         self.mesh_scale = mesh_scale
         self.up_axis = up_axis
+        self.exposure_offset = exposure_offset
 
     def export(self, light_items):
         """returns the in-memory stage, or None when there are no lights"""
@@ -88,12 +93,13 @@ class LightsLayerExporter:
             shaping.CreateShapingConeSoftnessAttr(light_item.spot_blend)
         return light
 
-    @staticmethod
-    def _set_common_inputs(light, light_item):
+    def _set_common_inputs(self, light, light_item):
         light.CreateNormalizeAttr(True)
         light.CreateColorAttr(Gf.Vec3f(*light_item.color))
-        if light_item.exposure:
-            light.CreateExposureAttr(light_item.exposure)
+        # exposure instead of a scaled intensity, so intensity keeps Blender's value
+        exposure = light_item.exposure + self.exposure_offset
+        if exposure:
+            light.CreateExposureAttr(exposure)
         if light_item.use_temperature:
             light.CreateEnableColorTemperatureAttr(True)
             light.CreateColorTemperatureAttr(light_item.temperature)
