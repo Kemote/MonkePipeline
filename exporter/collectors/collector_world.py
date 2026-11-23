@@ -41,43 +41,14 @@ class InstancerItem:
         return rot, loc, scale
 
 
-class WorldCollector:
-    """
-    collects Geometry Nodes instancers (objects with an empty base geometry and a
-    GN modifier) and the asset placements they generate, with world-space transforms.
-    instances_dict: {instancer_collection_path: [InstancerItem]}
-    """
+class SceneCollector:
+    """shared helpers for collectors that read scene objects outside the assets tree"""
 
     def __init__(self, context=None):
         self.context = context or bpy.context
-        self.instances_dict = {}
         # collection paths are looked up per depsgraph instance, which can run into
         # thousands, so the outliner walk is cached per object for one collect() call
         self._collection_paths_cache = {}
-
-    @staticmethod
-    def has_geonodes_modifier(obj: bpy.types.Object) -> bool:
-        return any(mod.type == 'NODES' and mod.show_viewport for mod in obj.modifiers)
-
-    @staticmethod
-    def is_empty_geometry(obj: bpy.types.Object) -> bool:
-        """
-        zero base vertices/splines - the usual container setup for Geometry Nodes
-        """
-        if obj.type == 'EMPTY':
-            return True
-        if obj.type == 'MESH' and obj.data:
-            return len(obj.data.vertices) == 0
-        if obj.type == 'CURVE' and obj.data:
-            return len(obj.data.splines) == 0
-        return False
-
-    def get_target_containers(self, only_empty_geo: bool = True) -> set:
-        return {
-            obj.name
-            for obj in self.context.scene.objects
-            if self.has_geonodes_modifier(obj) and (not only_empty_geo or self.is_empty_geometry(obj))
-        }
 
     def get_object_collection_paths(self, obj: bpy.types.Object) -> list[str]:
         """
@@ -108,6 +79,42 @@ class WorldCollector:
             if parts[0] == ASSETS_COLLECTION_NAME and len(parts) > 1:
                 return parts[1]
         return None
+
+
+class WorldCollector(SceneCollector):
+    """
+    collects Geometry Nodes instancers (objects with an empty base geometry and a
+    GN modifier) and the asset placements they generate, with world-space transforms.
+    instances_dict: {instancer_collection_path: [InstancerItem]}
+    """
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.instances_dict = {}
+
+    @staticmethod
+    def has_geonodes_modifier(obj: bpy.types.Object) -> bool:
+        return any(mod.type == 'NODES' and mod.show_viewport for mod in obj.modifiers)
+
+    @staticmethod
+    def is_empty_geometry(obj: bpy.types.Object) -> bool:
+        """
+        zero base vertices/splines - the usual container setup for Geometry Nodes
+        """
+        if obj.type == 'EMPTY':
+            return True
+        if obj.type == 'MESH' and obj.data:
+            return len(obj.data.vertices) == 0
+        if obj.type == 'CURVE' and obj.data:
+            return len(obj.data.splines) == 0
+        return False
+
+    def get_target_containers(self, only_empty_geo: bool = True) -> set:
+        return {
+            obj.name
+            for obj in self.context.scene.objects
+            if self.has_geonodes_modifier(obj) and (not only_empty_geo or self.is_empty_geometry(obj))
+        }
 
     def get_point_empties(self, target_containers: set) -> list[tuple[str, Matrix]]:
         """
@@ -225,7 +232,82 @@ class WorldCollector:
         return self.instances_dict
 
 
+class LightItem:
+    """
+    snapshot of one Blender light object with the values UsdLux can reproduce.
+    collection_path: outliner path of its collection ('' for the scene collection)
+    matrix_world: world matrix of the light object, lights shine along their local -Z in both apps
+    """
+    def __init__(self, obj: bpy.types.Object, collection_path: str):
+        light = obj.data
+        self.name = obj.name
+        self.collection_path = collection_path
+        self.matrix_world = obj.matrix_world.copy()
+        self.light_type = light.type
+        self.color = tuple(light.color)
+        self.energy = light.energy
+        self.exposure = getattr(light, "exposure", 0.0)
+        self.use_temperature = getattr(light, "use_temperature", False)
+        self.temperature = getattr(light, "temperature", 6500.0)
+        self.use_shadow = light.use_shadow
+        self.diffuse_factor = light.diffuse_factor
+        self.specular_factor = light.specular_factor
+        # type specific, None when the light type doesn't have it
+        self.radius = getattr(light, "shadow_soft_size", None)
+        self.spot_size = getattr(light, "spot_size", None)
+        self.spot_blend = getattr(light, "spot_blend", None)
+        self.angle = getattr(light, "angle", None)
+        self.shape = getattr(light, "shape", None)
+        self.size = getattr(light, "size", None)
+        self.size_y = getattr(light, "size_y", None)
+
+    def __repr__(self):
+        return f"{self.light_type} light {self.name} in '{self.collection_path}'"
+
+
+class LightsCollector(SceneCollector):
+    """
+    collects light objects outside the assets tree that UsdLux can reproduce.
+    items: [LightItem]
+    """
+    SUPPORTED_TYPES = {"POINT", "SPOT", "SUN", "AREA"}
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.items = []
+
+    def is_reproducible(self, obj: bpy.types.Object) -> bool:
+        light = obj.data
+        if light.type not in self.SUPPORTED_TYPES:
+            logger.warning(f"Skipping light {obj.name}: {light.type} lights have no UsdLux equivalent")
+            return False
+        # UsdLux has no ellipse light, a DiskLight only covers the round case
+        if light.type == "AREA" and light.shape == "ELLIPSE" and abs(light.size - light.size_y) > 1e-6:
+            logger.warning(f"Skipping light {obj.name}: UsdLux has no ellipse light, use a disk or rectangle")
+            return False
+        return True
+
+    def collect(self) -> list[LightItem]:
+        self.items = []
+        self._collection_paths_cache = {}
+
+        for obj in self.context.scene.objects:
+            if obj.type != 'LIGHT' or obj.hide_render:
+                continue
+            if self.get_asset_name(obj) is not None:
+                logger.warning(f"Skipping light {obj.name}: lights inside assets aren't exported yet")
+                continue
+            if not self.is_reproducible(obj):
+                continue
+
+            collection_paths = self.get_object_collection_paths(obj)
+            self.items.append(LightItem(obj, collection_paths[0] if collection_paths else ""))
+
+        return self.items
+
+
 if __name__ == "__main__":
     # only for test purpose
     import pprint
     pprint.pprint(WorldCollector().collect())
+    pprint.pprint(LightsCollector().collect())

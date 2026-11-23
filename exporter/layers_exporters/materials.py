@@ -3,7 +3,7 @@ import shutil
 import bpy
 
 from pxr import UsdGeom, UsdShade, Sdf, Gf, Usd
-from exporter.layers_exporters.common import looks_scope_path, material_prim_name, sanitize_name
+from exporter.layers_exporters.common import looks_scope_path, material_prim_name, sanitize_name, set_stage_metrics
 from exporter.monke_logging import get_logger
 
 
@@ -30,16 +30,17 @@ class MaterialsLayerExporter:
     Advanced material networks are not yet supported.
     """
 
-    def __init__(self, textures_dir, meter_per_unit):
+    def __init__(self, textures_dir, meter_per_unit, up_axis=UsdGeom.Tokens.z):
         self.textures_dir = textures_dir
         self.meter_per_unit = meter_per_unit
+        self.up_axis = up_axis
 
     def export(self, output_path, asset_item):
         if not asset_item.has_materials:
             return None
         logger.debug("Exporting materials...")
         stage = Usd.Stage.CreateNew(output_path)
-        UsdGeom.SetStageMetersPerUnit(stage, self.meter_per_unit)
+        set_stage_metrics(stage, self.meter_per_unit, self.up_axis)
         looks_path = looks_scope_path(asset_item.name, bool(asset_item.armature_objects))
         UsdGeom.Scope.Define(stage, looks_path)
 

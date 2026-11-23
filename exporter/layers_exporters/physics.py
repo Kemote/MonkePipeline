@@ -6,7 +6,7 @@ import json
 from collections import namedtuple
 from mathutils import Matrix
 from pxr import Usd, UsdGeom, UsdPhysics, Gf, Sdf
-from exporter.layers_exporters.common import geom_scope_path, joints_scope_path, sanitize_name
+from exporter.layers_exporters.common import geom_scope_path, joints_scope_path, sanitize_name, set_stage_metrics
 from exporter.monke_logging import get_logger
 
 
@@ -209,8 +209,7 @@ class PhysicsLayerExporter:
         self.output_path = output_path
         # kept in memory until save(), so assets without rigid bodies write no file
         self.stage = Usd.Stage.CreateInMemory()
-        UsdGeom.SetStageMetersPerUnit(self.stage, meter_per_unit)
-        UsdGeom.SetStageUpAxis(self.stage, up_axis)
+        set_stage_metrics(self.stage, meter_per_unit, up_axis)
         self.joints_path = UsdGeom.Scope.Define(self.stage, joints_scope_path(asset_name)).GetPath()
         self.motors_data = self._get_motors_data()
         # Blender object name -> RigidBody, filled by export()

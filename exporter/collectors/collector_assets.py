@@ -196,11 +196,3 @@ class AssetsCollector(Collector):
             asset_export["meshes"].sort(key=lambda mesh: mesh["outliner_path"])
             export_data.append(asset_export)
         return export_data
-
-
-class LightCollector(Collector):
-    def __init__(self):
-        super().__init__()
-
-    def collect(self):
-        return super().collect()
