@@ -8,6 +8,9 @@ logger = get_logger(__name__)
 VARIANT_SEPARATOR = "_VAR_"
 ASSETS_ROOT = "/Scene Collection/assets"
 ARMATURE_COLLECTION_NAME = "armature"
+# custom property ProxyGenerator puts on the meshes it creates. They're deleted after each export,
+# but a failed export or a save in between can leave them in the scene, so they're never collected
+GENERATED_PROXY_PROPERTY = "monke_generated_proxy"
 
 
 class VariantNode:
@@ -112,7 +115,7 @@ class Collector(ABC):
         recursively build variant hierarchy: '_VAR_' collections open nested nodes, others stay inline
         """
         for obj in collection.objects:
-            if obj.type == obj_type:
+            if obj.type == obj_type and not obj.get(GENERATED_PROXY_PROPERTY):
                 obj_path = f"{outliner_path}/{obj.name}"
                 asset_item.mesh_objects[obj_path] = obj
                 node.outliner_paths.append(obj_path)

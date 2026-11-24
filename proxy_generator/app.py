@@ -145,6 +145,7 @@ class ProxyGenerator:
         new_mesh = mesh.copy()
         new_mesh.data = mesh.data.copy()
         new_mesh.name = proxy_name
+        new_mesh[collector_assets.GENERATED_PROXY_PROPERTY] = True
         # a proxy is a cheap stand-in: subdividing a decimated cage would undo the decimation,
         # and without the modifier the mesh exporter writes subdivisionScheme = none
         for modifier in [modifier for modifier in new_mesh.modifiers if modifier.type == "SUBSURF"]:

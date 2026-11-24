@@ -432,13 +432,17 @@ class MonkeUsdExportDialog(QDialog):
         for asset_item in asset_items:
             logger.info(f"Exporting asset: {asset_item.name}")
             proxy_generator = None
-            if settings["generate_proxy"]:
-                decimate_ratio = settings["decimate_ratio"]
-                proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
-                proxy_generator.add_proxy()
-            usd_exporter.export_assets(asset_item)
-            if proxy_generator:
-                proxy_generator.clear()
+            try:
+                if settings["generate_proxy"]:
+                    decimate_ratio = settings["decimate_ratio"]
+                    proxy_generator = ProxyGenerator(asset_item, decimate_ratio)
+                    proxy_generator.add_proxy()
+                usd_exporter.export_assets(asset_item)
+            finally:
+                # the proxies are temporary scene objects: remove them even when the export fails,
+                # or they stay in the .blend and get exported as normal meshes next time
+                if proxy_generator:
+                    proxy_generator.clear()
 
         # exporting world collection
         usd_exporter.export_world()
