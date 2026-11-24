@@ -2,9 +2,9 @@ bl_info = {
     "name": "USD Monke Exporter",
     "author": "Monke Pipeline",
     "version": (0, 1, 0),
-    "blender": (3, 6, 0),
+    "blender": (5, 2, 0),
     "location": "Top Bar > Monke Pipeline > USD Export",
-    "description": "Sample USD export entry point for the Monke Pipeline.",
+    "description": "Export Blender scenes as layered, simulation-ready OpenUSD assets for Isaac Sim and Omniverse.",
     "category": "Pipeline",
 }
 

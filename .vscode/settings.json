@@ -10,5 +10,5 @@
             "depth": 10,
         }
     ],
-    "cmake.sourceDirectory": "/home/monke/Dev/MonkePipeline/usd_asset_resolver"
+    "cmake.sourceDirectory": "${workspaceFolder}/usd_asset_resolver"
 }

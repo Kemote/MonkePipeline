@@ -74,7 +74,7 @@ not guarantee plugin ABI compatibility across releases. **Build it yourself,
 against the exact OpenUSD build each host application uses**:
 
 - For **Blender/usdview**, build against the same OpenUSD install those apps
-  load at runtime (`pxr_DIR` in `usd_asset_resolver/build.sh`).
+  load at runtime (`USD_INSTALL_DIR` for `usd_asset_resolver/build.sh`).
 - For **Omniverse Kit**, Kit bundles its own USD build and does not ship
   headers — `usd_asset_resolver/build_kit.sh` compiles against a separately
   built headless OpenUSD matching Kit's USD tag purely to get compatible
@@ -106,14 +106,16 @@ host process, not just fail to resolve paths.
 2. *(Optional)* **Build the resolver plugin** for each host app you'll use:
 
    ```bash
-   cd usd_asset_resolver
-   ./build.sh        # Blender / usdview, edit USD_INSTALL_DIR inside first
-   ./build_kit.sh    # Omniverse Kit, edit the paths inside first
+   # Blender / usdview: the OpenUSD install those apps load
+   USD_INSTALL_DIR=/path/to/OpenUSD ./usd_asset_resolver/build.sh
+   # Omniverse Kit: headers from an OpenUSD build matching Kit's USD tag,
+   # plus your kit-app-template checkout
+   USD_HEADERS_DIR=/path/to/OpenUSD_25_11 KIT_APP_TEMPLATE_DIR=/path/to/kit-app-template \
+       ./usd_asset_resolver/build_kit.sh
    ```
 
-   Both scripts currently have machine paths hardcoded at the top — edit
-   `USD_INSTALL_DIR` / `USD_HEADERS_DIR` / `KIT_APP_TEMPLATE_DIR` before
-   running, or pass equivalent `-D...` overrides to `cmake` directly.
+   Without the variables, the scripts look in `~/UsdRoot`,
+   `~/UsdRoot_25_11` and `~/kit-app-template`.
 
 3. **Launch Blender with the pipeline plugin registered:**
 
@@ -171,6 +173,37 @@ host process, not just fail to resolve paths.
   first part of the constraint name (`st3020_1` → `"st3020"`): max torque,
   stiffness, damping, velocity limit, armature and friction become an angular
   drive and PhysX joint settings.
+- A **slider moved by a rotary motor** through a mechanism (a gripper finger
+  pushed by a servo-driven disc, a rack and pinion, a crank) gets a linear
+  drive converted from that motor. Name the constraint after the motor
+  (`st3020_grip_l`) and add a Float custom property `finger_travel_per_rad_m`
+  to its Empty: the slider's travel in metres per radian of the motor,
+  averaged over the stroke (e.g. 23 mm over 70° → 0.023 / 1.222 ≈ 0.0188).
+  The exporter converts the motor through that ratio: force = torque / r,
+  speed = angular speed × r, stiffness and damping ÷ r², armature ÷ r². A
+  slider with a motor but no ratio is exported without a drive, with a
+  warning.
+
+**Driving the robot in Isaac Sim**
+
+Every exported joint with a motor has a position drive, so during Play the
+robot moves to whatever target you set — from the Property panel, or from
+Python by setting the joint prim's drive target:
+
+```python
+joints = "/World/robots/monkeArm_001/Joints"
+stage.GetPrimAtPath(f"{joints}/st3020_2").GetAttribute(
+    "drive:angular:physics:targetPosition").Set(45.0)      # degrees
+# close the gripper 20 mm: the fingers are mirrored, so the right one is negative
+stage.GetPrimAtPath(f"{joints}/st3020_grip_l").GetAttribute(
+    "drive:linear:physics:targetPosition").Set(0.02)       # stage units (m)
+stage.GetPrimAtPath(f"{joints}/st3020_grip_r").GetAttribute(
+    "drive:linear:physics:targetPosition").Set(-0.02)
+```
+
+Target 0 is the pose the robot was exported in. The fingers and the disc
+that drives them on the real robot are separate joints in the simulation, so
+command them together: disc angle θ, fingers at the matching travel.
 
 **Generating collision meshes** (**Monke Pipeline → Generate Collision
 Object**)
