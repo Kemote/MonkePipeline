@@ -1,0 +1,12 @@
+{
+    "st3020": {
+        "max_force_nm": 2.45166,
+        "max_joint_velocity_deg_s": 360.0,
+        "lower_limit_deg": null,
+        "upper_limit_deg": null,
+        "stiffness": 0.7,
+        "damping": 0.04,
+        "armature": 0.01,
+        "joint_friction": 0.05
+    }
+}
