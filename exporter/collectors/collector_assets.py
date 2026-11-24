@@ -174,27 +174,3 @@ class AssetsCollector(Collector):
 
         for child in collection.children:
             self._collect_objects_by_type(child, f"{outliner_path}/{child.name}", obj_type, target)
-
-    def get_usd_export_data(self):
-        """
-        builds the per-mesh data required to author OpenUSD prims (mesh geometry,
-        world transform, assigned materials) from the mesh objects gathered by collect()
-        """
-        export_data = []
-        for asset_item in self.items:
-            asset_export = {
-                "name": asset_item.name,
-                "outliner_path": asset_item.path,
-                "meshes": [],
-            }
-            for outliner_path, mesh_obj in asset_item.mesh_objects.items():
-                asset_export["meshes"].append({
-                    "name": mesh_obj.name,
-                    "outliner_path": outliner_path,
-                    "matrix_world": mesh_obj.matrix_world.copy(),
-                    "mesh_data": mesh_obj.data,
-                    "materials": [slot.material for slot in mesh_obj.material_slots if slot.material],
-                })
-            asset_export["meshes"].sort(key=lambda mesh: mesh["outliner_path"])
-            export_data.append(asset_export)
-        return export_data

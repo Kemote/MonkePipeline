@@ -74,7 +74,7 @@ not guarantee plugin ABI compatibility across releases. **Build it yourself,
 against the exact OpenUSD build each host application uses**:
 
 - For **Blender/usdview**, build against the same OpenUSD install those apps
-  load at runtime (`pxr_DIR` in `usd_asset_resolver/build.sh`).
+  load at runtime (`USD_INSTALL_DIR` for `usd_asset_resolver/build.sh`).
 - For **Omniverse Kit**, Kit bundles its own USD build and does not ship
   headers — `usd_asset_resolver/build_kit.sh` compiles against a separately
   built headless OpenUSD matching Kit's USD tag purely to get compatible
@@ -106,14 +106,16 @@ host process, not just fail to resolve paths.
 2. *(Optional)* **Build the resolver plugin** for each host app you'll use:
 
    ```bash
-   cd usd_asset_resolver
-   ./build.sh        # Blender / usdview, edit USD_INSTALL_DIR inside first
-   ./build_kit.sh    # Omniverse Kit, edit the paths inside first
+   # Blender / usdview: the OpenUSD install those apps load
+   USD_INSTALL_DIR=/path/to/OpenUSD ./usd_asset_resolver/build.sh
+   # Omniverse Kit: headers from an OpenUSD build matching Kit's USD tag,
+   # plus your kit-app-template checkout
+   USD_HEADERS_DIR=/path/to/OpenUSD_25_11 KIT_APP_TEMPLATE_DIR=/path/to/kit-app-template \
+       ./usd_asset_resolver/build_kit.sh
    ```
 
-   Both scripts currently have machine paths hardcoded at the top — edit
-   `USD_INSTALL_DIR` / `USD_HEADERS_DIR` / `KIT_APP_TEMPLATE_DIR` before
-   running, or pass equivalent `-D...` overrides to `cmake` directly.
+   Without the variables, the scripts look in `~/UsdRoot`,
+   `~/UsdRoot_25_11` and `~/kit-app-template`.
 
 3. **Launch Blender with the pipeline plugin registered:**
 

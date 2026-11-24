@@ -1,10 +1,10 @@
 # Minimal shim so CMake's find_dependency(OpenSubdiv ...) succeeds against
-# /home/kemot/UsdRoot, which ships OpenSubdiv's runtime libs/headers but no
-# CMake package config of its own. Points at UsdRoot's own copies so the
-# resolver plugin links against the exact same build the rest of UsdRoot uses
+# the OpenUSD install (pxr_DIR, set by build.sh), which ships OpenSubdiv's runtime libs/headers but no
+# CMake package config of its own. Points at that install's own copies so the
+# resolver plugin links against the exact same build the rest of USD uses
 # (mixing in a different OpenSubdiv build caused ABI symbol clashes before).
 
-set(_osd_root "/home/kemot/UsdRoot")
+set(_osd_root "${pxr_DIR}")
 set(OpenSubdiv_INCLUDE_DIR "${_osd_root}/include")
 set(OpenSubdiv_LIB_DIR "${_osd_root}/lib")
 

@@ -492,12 +492,6 @@ class MonkeUsdExportDialog(QDialog):
     def append_log(self, text: str):
         self.log_display.appendPlainText(text)
 
-    def generate_logs(self):
-        logger.debug("DEBUG message.")
-        logger.info("INFO message.")
-        logger.warning("WARNING message!")
-        logger.error("ERROR message!")
-
 
 def _pump_qt_events():
     app = QApplication.instance()

@@ -15,10 +15,11 @@
 
 set -e
 
-PROJECT_DIR="/home/kemot/Documents/Dev/MonkePipeline/usd_asset_resolver"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_BUILD_DIR="${PROJECT_DIR}/build_kit"
-USD_HEADERS_DIR="/home/kemot/UsdRoot_25_11"
-KIT_APP_TEMPLATE_DIR="/home/kemot/kit-app-template"
+# override both with environment variables for your machine
+USD_HEADERS_DIR="${USD_HEADERS_DIR:-$HOME/UsdRoot_25_11}"
+KIT_APP_TEMPLATE_DIR="${KIT_APP_TEMPLATE_DIR:-$HOME/kit-app-template}"
 
 # Kit's omni.usd.libs extension folder name is pinned to the kit-sdk version
 # via kit-sdk.packman.xml, but the actual content lives behind a
@@ -42,7 +43,7 @@ fi
 
 if [ ! -d "$USD_HEADERS_DIR" ]; then
     echo "ERROR: ${USD_HEADERS_DIR} not found - build headless OpenUSD 0.25.11 first" >&2
-    echo "  cd /home/kemot/OpenUSD-src-25.11 && python3 build_scripts/build_usd.py --no-imaging --no-usdview --no-examples --no-tutorials --no-tests ${USD_HEADERS_DIR}" >&2
+    echo "  cd <OpenUSD v25.11 source> && python3 build_scripts/build_usd.py --no-imaging --no-usdview --no-examples --no-tutorials --no-tests ${USD_HEADERS_DIR}" >&2
     exit 1
 fi
 
