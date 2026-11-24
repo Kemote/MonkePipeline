@@ -144,6 +144,26 @@ host process, not just fail to resolve paths.
   non-deforming modifiers (Mirror, Geometry Nodes, …) aren't applied yet;
   apply them before export, the exporter logs a warning for each.
 
+**Materials**
+
+- Each material's **Principled BSDF** becomes a `UsdPreviewSurface`: base
+  color, metallic, roughness, IOR, alpha, coat, emission and normal map.
+  Other shader nodes aren't translated; a material without a Principled BSDF
+  is exported as flat magenta so it's easy to spot.
+- An **Image Texture** node linked to one of those inputs becomes a
+  `UsdUVTexture`, and its image is copied into the asset's `textures/` folder:
+  - **Extension** sets the wrap mode: Repeat → `repeat`, Extend → `clamp`,
+    Clip → `black`, Mirror → `mirror`. Use Repeat for tiling textures.
+  - The image's **colour space** sets `sourceColorSpace`: sRGB → `sRGB`,
+    Non-Color or any linear space → `raw`. Set data maps (roughness,
+    metallic, normal) to Non-Color, as Blender itself expects.
+  - The **output socket** you link picks the channel: Color → `rgb` (or `r`
+    for a single-value input), Alpha → `a`. A JPG has no alpha, so link its
+    Color output.
+- A Normal Map node with an Image Texture is exported as a tangent-space
+  normal map (scale 2, bias −1).
+- Textures read the mesh's active UV map, exported as the `st` primvar.
+
 **Proxy LOD** (*Generate proxy LOD* in the dialog)
 
 - With a `lod_VAR_render` collection, its meshes are decimated into a

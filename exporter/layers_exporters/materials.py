@@ -21,6 +21,14 @@ SCALAR_INPUTS = {
 }
 EMISSION_COLOR_NAMES = ("Emission Color", "Emission")
 EMISSION_STRENGTH_NAMES = ("Emission Strength",)
+# Image Texture node Extension -> UsdUVTexture wrap mode. Without one, wrapS/wrapT fall back to
+# "useMetadata", and image files rarely carry wrap metadata, so UVs outside 0-1 render black
+WRAP_MODES = {
+    "REPEAT": "repeat",
+    "EXTEND": "clamp",
+    "CLIP": "black",
+    "MIRROR": "mirror",
+}
 
 
 class MaterialsLayerExporter:
@@ -78,17 +86,19 @@ class MaterialsLayerExporter:
         usd_material.CreateSurfaceOutput().ConnectToSource(shader.ConnectableAPI(), "surface")
 
     def _write_color_input(self, stage, material_path, shader, socket, usd_input):
-        tex_image = self._resolve_texture(socket)
-        if tex_image:
-            self._connect_texture(stage, material_path, shader, usd_input, tex_image, Sdf.ValueTypeNames.Color3f, "rgb")
+        tex_node = self._resolve_texture(socket)
+        if tex_node:
+            self._connect_texture(stage, material_path, shader, usd_input, tex_node, Sdf.ValueTypeNames.Color3f, "rgb")
             return
         value = socket.default_value
         shader.CreateInput(usd_input, Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(value[0], value[1], value[2]))
 
     def _write_scalar_input(self, stage, material_path, shader, socket, usd_input):
-        tex_image = self._resolve_texture(socket)
-        if tex_image:
-            self._connect_texture(stage, material_path, shader, usd_input, tex_image, Sdf.ValueTypeNames.Float, "r")
+        tex_node = self._resolve_texture(socket)
+        if tex_node:
+            # follow the node link: the texture's Alpha output reads the alpha channel
+            channel = "a" if socket.links[0].from_socket.name == "Alpha" else "r"
+            self._connect_texture(stage, material_path, shader, usd_input, tex_node, Sdf.ValueTypeNames.Float, channel)
             return
         shader.CreateInput(usd_input, Sdf.ValueTypeNames.Float).Set(float(socket.default_value))
 
@@ -97,9 +107,9 @@ class MaterialsLayerExporter:
         if color_socket is None:
             return
 
-        tex_image = self._resolve_texture(color_socket)
-        if tex_image:
-            self._connect_texture(stage, material_path, shader, "emissiveColor", tex_image, Sdf.ValueTypeNames.Color3f, "rgb")
+        tex_node = self._resolve_texture(color_socket)
+        if tex_node:
+            self._connect_texture(stage, material_path, shader, "emissiveColor", tex_node, Sdf.ValueTypeNames.Color3f, "rgb")
             return
 
         strength_socket = self._first_socket(bsdf, EMISSION_STRENGTH_NAMES)
@@ -117,17 +127,17 @@ class MaterialsLayerExporter:
         node = normal_socket.links[0].from_node
         if node.type == "NORMAL_MAP":
             color_input = node.inputs.get("Color")
-            tex_image = self._resolve_texture(color_input) if color_input else None
-        elif node.type == "TEX_IMAGE":
-            tex_image = node.image
+            tex_node = self._resolve_texture(color_input) if color_input else None
+        elif node.type == "TEX_IMAGE" and node.image and node.image.filepath:
+            tex_node = node
         else:
-            tex_image = None
+            tex_node = None
 
-        if not tex_image:
+        if not tex_node:
             return
 
         self._connect_texture(
-            stage, material_path, shader, "normal", tex_image, Sdf.ValueTypeNames.Normal3f, "rgb", scale_bias=True
+            stage, material_path, shader, "normal", tex_node, Sdf.ValueTypeNames.Normal3f, "rgb", scale_bias=True
         )
 
     @staticmethod
@@ -149,15 +159,16 @@ class MaterialsLayerExporter:
 
     @staticmethod
     def _resolve_texture(socket):
-        """the Image Texture node feeding `socket`, if any (and it has a file on disk)"""
+        """the Image Texture node feeding `socket`, if any (and its image has a file on disk)"""
         if socket is None or not socket.is_linked:
             return None
         node = socket.links[0].from_node
         if node.type == "TEX_IMAGE" and node.image and node.image.filepath:
-            return node.image
+            return node
         return None
 
-    def _connect_texture(self, stage, material_path, shader, usd_input, image, value_type, output_channel, scale_bias=False):
+    def _connect_texture(self, stage, material_path, shader, usd_input, tex_node, value_type, output_channel, scale_bias=False):
+        image = tex_node.image
         texture_asset_path = self._copy_texture(image)
 
         texture_shader = UsdShade.Shader.Define(stage, f"{material_path}/{sanitize_name(image.name)}_Texture")
@@ -167,8 +178,13 @@ class MaterialsLayerExporter:
         uv_reader = self._get_uv_reader(stage, material_path)
         texture_shader.CreateInput("st", Sdf.ValueTypeNames.Float2).ConnectToSource(uv_reader.ConnectableAPI(), "result")
 
-        if image.colorspace_settings.name == "Non-Color":
-            texture_shader.CreateInput("sourceColorSpace", Sdf.ValueTypeNames.Token).Set("raw")
+        wrap = WRAP_MODES.get(tex_node.extension, "repeat")
+        texture_shader.CreateInput("wrapS", Sdf.ValueTypeNames.Token).Set(wrap)
+        texture_shader.CreateInput("wrapT", Sdf.ValueTypeNames.Token).Set(wrap)
+
+        # same decoding as Blender: sRGB images are decoded, everything else (Non-Color, linear) is read as is
+        source_color_space = "sRGB" if image.colorspace_settings.name == "sRGB" else "raw"
+        texture_shader.CreateInput("sourceColorSpace", Sdf.ValueTypeNames.Token).Set(source_color_space)
 
         if scale_bias:
             texture_shader.CreateInput("scale", Sdf.ValueTypeNames.Float4).Set(Gf.Vec4f(2, 2, 2, 1))
@@ -193,6 +209,7 @@ class MaterialsLayerExporter:
     def _get_uv_reader(stage, material_path):
         reader = UsdShade.Shader.Define(stage, f"{material_path}/uvReader_st")
         reader.CreateIdAttr("UsdPrimvarReader_float2")
-        reader.CreateInput("varname", Sdf.ValueTypeNames.Token).Set("st")
+        # the UsdPrimvarReader spec declares varname as a string; some renderers ignore a token
+        reader.CreateInput("varname", Sdf.ValueTypeNames.String).Set("st")
         reader.CreateOutput("result", Sdf.ValueTypeNames.Float2)
         return reader
