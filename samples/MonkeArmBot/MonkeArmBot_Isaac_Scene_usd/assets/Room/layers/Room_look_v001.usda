@@ -1,0 +1,33 @@
+#usda 1.0
+(
+    framesPerSecond = 30
+    metersPerUnit = 1
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+
+def "Room"
+{
+    def Scope "Looks"
+    {
+        def Material "floor"
+        {
+            token outputs:surface.connect = </Room/Looks/floor/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.13644439, 0.098088026, 0.078697376)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                float inputs:opacity = 1
+                float inputs:roughness = 0.8154762
+                token outputs:surface
+            }
+        }
+    }
+}
+

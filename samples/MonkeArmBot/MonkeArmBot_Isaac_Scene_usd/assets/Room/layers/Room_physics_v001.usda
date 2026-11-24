@@ -1,0 +1,23 @@
+#usda 1.0
+(
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def "Room"
+{
+    def Scope "Joints"
+    {
+    }
+
+    over "Geom"
+    {
+        over "floor" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            uniform token physics:approximation = "convexHull"
+        }
+    }
+}
+

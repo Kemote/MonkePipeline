@@ -41,6 +41,9 @@ pipeline.env
 *.usdc
 *.usdz
 
+# the sample scene and its export are part of the repo
+!samples/**
+
 # Claude Code project files
 .claude/
 

@@ -1,0 +1,125 @@
+#usda 1.0
+(
+    customLayerData = {
+        string userName = "Name Surname"
+    }
+    defaultPrim = "World"
+    framesPerSecond = 30
+    metersPerUnit = 1
+    subLayers = [
+        @./layers/MonkeArmBot_Isaac_Scene_usd_lights_v001.usda@
+    ]
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+
+def Xform "World" (
+    kind = "group"
+)
+{
+    class "__assets"
+    {
+        def Xform "MonkeArmBot" (
+            prepend references = @./assets/MonkeArmBot/MonkeArmBot.usda@
+        )
+        {
+        }
+
+        def Xform "Table" (
+            prepend references = @./assets/Table/Table.usda@
+        )
+        {
+        }
+
+        def Xform "Room" (
+            prepend references = @./assets/Room/Room.usda@
+        )
+        {
+        }
+    }
+
+    def Xform "robots" (
+        kind = "group"
+    )
+    {
+        def Xform "monkeArm_001" (
+            instanceable = false
+            prepend references = </World/__assets/MonkeArmBot>
+        )
+        {
+            float3 xformOp:rotateXYZ = (0, -0, 32.596485)
+            float3 xformOp:scale = (1, 1, 1)
+            double3 xformOp:translate = (0.11493939161300659, -0.46782100200653076, 0.880357027053833)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Xform "monkeArm_002" (
+            instanceable = false
+            prepend references = </World/__assets/MonkeArmBot>
+        )
+        {
+            float3 xformOp:rotateXYZ = (0, -0, -105.850945)
+            float3 xformOp:scale = (1, 1, 1)
+            double3 xformOp:translate = (0.033007025718688965, 0.36482131481170654, 0.880357027053833)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def Xform "monkeArm_003" (
+            instanceable = false
+            prepend references = </World/__assets/MonkeArmBot>
+        )
+        {
+            float3 xformOp:rotateXYZ = (0, -0, 116.73029)
+            float3 xformOp:scale = (0.99999994, 0.99999994, 1)
+            double3 xformOp:translate = (-0.16284918785095215, 0.09941580891609192, 0.8803569078445435)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+    }
+
+    def Xform "environment" (
+        kind = "group"
+    )
+    {
+        def Xform "props" (
+            kind = "group"
+        )
+        {
+            def Xform "table" (
+                kind = "group"
+            )
+            {
+                def Xform "Empty_003" (
+                    instanceable = false
+                    prepend references = </World/__assets/Table>
+                )
+                {
+                    float3 xformOp:rotateXYZ = (0, -0, 4.7908554)
+                    float3 xformOp:scale = (1, 1, 1)
+                    double3 xformOp:translate = (-0.05458386614918709, -0.054177526384592056, 4.76837158203125e-7)
+                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                }
+            }
+        }
+
+        def Xform "room" (
+            kind = "group"
+        )
+        {
+            def Xform "Room" (
+                instanceable = false
+                prepend references = </World/__assets/Room>
+            )
+            {
+                float3 xformOp:rotateXYZ = (0, -0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            }
+        }
+    }
+
+    def PhysicsScene "physicsScene"
+    {
+    }
+}
+

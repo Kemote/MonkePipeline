@@ -1,0 +1,30 @@
+#usda 1.0
+(
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def "Table"
+{
+    def Scope "Joints"
+    {
+    }
+
+    over "Geom"
+    {
+        over "wood_table" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            uniform token physics:approximation = "convexHull"
+        }
+
+        over "steel_frame" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            uniform token physics:approximation = "convexHull"
+        }
+    }
+}
+

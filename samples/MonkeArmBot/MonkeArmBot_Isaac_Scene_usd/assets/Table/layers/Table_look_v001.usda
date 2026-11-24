@@ -1,0 +1,95 @@
+#usda 1.0
+(
+    framesPerSecond = 30
+    metersPerUnit = 1
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+
+def "Table"
+{
+    def Scope "Looks"
+    {
+        def Material "wood_table"
+        {
+            token outputs:surface.connect = </Table/Looks/wood_table/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor.connect = </Table/Looks/wood_table/plywood_diff_4k_jpg_Texture.outputs:rgb>
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 0
+                normal3f inputs:normal.connect = </Table/Looks/wood_table/plywood_nor_gl_4k_jpg_Texture.outputs:rgb>
+                float inputs:opacity = 1
+                float inputs:roughness.connect = </Table/Looks/wood_table/plywood_rough_4k_jpg_Texture.outputs:a>
+                token outputs:surface
+            }
+
+            def Shader "plywood_diff_4k_jpg_Texture"
+            {
+                uniform token info:id = "UsdUVTexture"
+                asset inputs:file = @../textures/plywood_diff_4k.jpg@
+                token inputs:sourceColorSpace = "sRGB"
+                float2 inputs:st.connect = </Table/Looks/wood_table/uvReader_st.outputs:result>
+                token inputs:wrapS = "repeat"
+                token inputs:wrapT = "repeat"
+                float3 outputs:rgb
+            }
+
+            def Shader "uvReader_st"
+            {
+                uniform token info:id = "UsdPrimvarReader_float2"
+                string inputs:varname = "st"
+                float2 outputs:result
+            }
+
+            def Shader "plywood_rough_4k_jpg_Texture"
+            {
+                uniform token info:id = "UsdUVTexture"
+                asset inputs:file = @../textures/plywood_rough_4k.jpg@
+                token inputs:sourceColorSpace = "raw"
+                float2 inputs:st.connect = </Table/Looks/wood_table/uvReader_st.outputs:result>
+                token inputs:wrapS = "repeat"
+                token inputs:wrapT = "repeat"
+                float outputs:a
+            }
+
+            def Shader "plywood_nor_gl_4k_jpg_Texture"
+            {
+                uniform token info:id = "UsdUVTexture"
+                float4 inputs:bias = (-1, -1, -1, 0)
+                asset inputs:file = @../textures/plywood_nor_gl_4k.jpg@
+                float4 inputs:scale = (2, 2, 2, 1)
+                token inputs:sourceColorSpace = "raw"
+                float2 inputs:st.connect = </Table/Looks/wood_table/uvReader_st.outputs:result>
+                token inputs:wrapS = "repeat"
+                token inputs:wrapT = "repeat"
+                float3 outputs:rgb
+            }
+        }
+
+        def Material "blackMetal"
+        {
+            token outputs:surface.connect = </Table/Looks/blackMetal/PreviewSurface.outputs:surface>
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                float inputs:clearcoat = 0
+                float inputs:clearcoatRoughness = 0.03
+                color3f inputs:diffuseColor = (0.03389604, 0.03204587, 0.030322842)
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:ior = 1.5
+                float inputs:metallic = 1
+                float inputs:opacity = 1
+                float inputs:roughness = 0.40563965
+                token outputs:surface
+            }
+        }
+    }
+}
+

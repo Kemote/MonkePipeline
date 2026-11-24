@@ -1,0 +1,383 @@
+#usda 1.0
+(
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def "MonkeArmBot" (
+    prepend apiSchemas = ["PhysicsArticulationRootAPI", "PhysxArticulationAPI"]
+)
+{
+    custom bool physxArticulation:enabledSelfCollisions = 0
+
+    def Scope "Joints"
+    {
+        def PhysicsRevoluteJoint "st3020_1" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/base_link>
+            rel physics:body1 = </MonkeArmBot/Geom/link_1>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (-3.5576484e-9, -0.000055526383, 0.09359741)
+            point3f physics:localPos1 = (-3.5576484e-9, -0.000055526383, 0.09359741)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+            float physics:lowerLimit = -126
+            float physics:upperLimit = 132
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsRevoluteJoint "st3020_2" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/link_1>
+            rel physics:body1 = </MonkeArmBot/Geom/link_2>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (0.0027317293, 0.044389512, 0.14190066)
+            point3f physics:localPos1 = (0.0027317293, 0.044389512, 0.14190066)
+            quatf physics:localRot0 = (0.70710677, 0, -0.70710677, 0)
+            quatf physics:localRot1 = (0.70710677, 0, -0.70710677, 0)
+            float physics:lowerLimit = -118.200005
+            float physics:upperLimit = 82.8
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsRevoluteJoint "st3020_3" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/link_2>
+            rel physics:body1 = </MonkeArmBot/Geom/link_3>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (-0.0012426851, 0.04444399, 0.26182866)
+            point3f physics:localPos1 = (-0.0012426851, 0.04444399, 0.26182866)
+            quatf physics:localRot0 = (0.70710677, 0, -0.70710677, 0)
+            quatf physics:localRot1 = (0.70710677, 0, -0.70710677, 0)
+            float physics:lowerLimit = -91
+            float physics:upperLimit = 73.4
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsRevoluteJoint "st3020_4" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/link_3>
+            rel physics:body1 = </MonkeArmBot/Geom/link_4>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (0.0014559384, 0.1882166, 0.26393747)
+            point3f physics:localPos1 = (0.0014559384, 0.1882166, 0.26393747)
+            quatf physics:localRot0 = (0.50000006, -0.5, -0.5, -0.5)
+            quatf physics:localRot1 = (0.50000006, -0.5, -0.5, -0.5)
+            float physics:lowerLimit = -178.90001
+            float physics:upperLimit = 350
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsRevoluteJoint "st3020_5" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/link_4>
+            rel physics:body1 = </MonkeArmBot/Geom/tool_0>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (0.01000271, 0.22941378, 0.2638154)
+            point3f physics:localPos1 = (0.01000271, 0.22941378, 0.2638154)
+            quatf physics:localRot0 = (0.70710677, 0, -0.70710677, 0)
+            quatf physics:localRot1 = (0.70710677, 0, -0.70710677, 0)
+            float physics:lowerLimit = -76
+            float physics:upperLimit = 133
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsRevoluteJoint "st3020_6" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI"]
+        )
+        {
+            float drive:angular:physics:damping = 0.04
+            float drive:angular:physics:maxForce = 2.45166
+            float drive:angular:physics:stiffness = 0.7
+            uniform token drive:angular:physics:type = "force"
+            uniform token physics:axis = "Z"
+            rel physics:body0 = </MonkeArmBot/Geom/tool_0>
+            rel physics:body1 = </MonkeArmBot/Geom/tool_0_rotator>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (0.00096961856, 0.31088188, 0.26394033)
+            point3f physics:localPos1 = (0.00096961856, 0.31088188, 0.26394033)
+            quatf physics:localRot0 = (0.70710677, -0.70710677, -1.5700924e-16, -4.67924e-24)
+            quatf physics:localRot1 = (0.70710677, -0.70710677, -1.5700924e-16, -4.67924e-24)
+            float physics:lowerLimit = -22
+            float physics:upperLimit = 48
+            custom float physxJoint:armature = 0.01
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 360
+        }
+
+        def PhysicsPrismaticJoint "st3020_grip_l" (
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysxJointAPI"]
+        )
+        {
+            float drive:linear:physics:damping = 6484.3574
+            float drive:linear:physics:maxForce = 130.40746
+            float drive:linear:physics:stiffness = 113476.25
+            uniform token drive:linear:physics:type = "force"
+            uniform token physics:axis = "X"
+            rel physics:body0 = </MonkeArmBot/Geom/tool_0>
+            rel physics:body1 = </MonkeArmBot/Geom/tool_0_grip_l>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (-0.022199437, 0.32844785, 0.2639587)
+            point3f physics:localPos1 = (-0.022199437, 0.32844785, 0.2639587)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+            float physics:lowerLimit = 0
+            float physics:upperLimit = 0.023000002
+            custom float physxJoint:armature = 28.293346
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 0.11812388
+        }
+
+        def PhysicsPrismaticJoint "st3020_grip_r" (
+            prepend apiSchemas = ["PhysicsDriveAPI:linear", "PhysxJointAPI"]
+        )
+        {
+            float drive:linear:physics:damping = 6484.3574
+            float drive:linear:physics:maxForce = 130.40746
+            float drive:linear:physics:stiffness = 113476.25
+            uniform token drive:linear:physics:type = "force"
+            uniform token physics:axis = "X"
+            rel physics:body0 = </MonkeArmBot/Geom/tool_0>
+            rel physics:body1 = </MonkeArmBot/Geom/tool_0_grip_r>
+            bool physics:collisionEnabled = 0
+            bool physics:jointEnabled = 1
+            point3f physics:localPos0 = (0.024052233, 0.32844785, 0.2639587)
+            point3f physics:localPos1 = (0.024052233, 0.32844785, 0.2639587)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+            float physics:lowerLimit = -0.023000002
+            float physics:upperLimit = 0
+            custom float physxJoint:armature = 28.293346
+            custom float physxJoint:jointFriction = 0.05
+            custom float physxJoint:maxJointVelocity = 0.11812388
+        }
+
+        def PhysicsFixedJoint "root_joint"
+        {
+            rel physics:body0 = </MonkeArmBot>
+            rel physics:body1 = </MonkeArmBot/Geom/base_link>
+            point3f physics:localPos0 = (0, 0, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+    }
+
+    over "Geom"
+    {
+        over Xform "base_link" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 810000.1
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions"
+            {
+                over "base_link_collisions" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "link_1" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.17400001
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_001"
+            {
+                over "link_1__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "link_2" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.125
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_002"
+            {
+                over "link_2__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "link_3" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.19500001
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_003"
+            {
+                over "link_3__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "link_4" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.120000005
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_004"
+            {
+                over "link_4__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "tool_0" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.15400001
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_005"
+            {
+                over "tool_0__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "tool_0_rotator" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.014
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_006"
+            {
+                over "tool_0_rotator__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "tool_0_grip_l" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.030000001
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_007"
+            {
+                over "tool_0_grip_l__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+
+        over Xform "tool_0_grip_r" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+        )
+        {
+            float physics:mass = 0.030000001
+            bool physics:rigidBodyEnabled = 1
+
+            over "collisions_008"
+            {
+                over "tool_0_grip_r__COLLISION" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexDecomposition"
+                }
+            }
+        }
+    }
+}
+

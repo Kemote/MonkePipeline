@@ -1,0 +1,23 @@
+#usda 1.0
+(
+    customLayerData = {
+        string userName = "Name Surname"
+    }
+    defaultPrim = "Table"
+    framesPerSecond = 30
+    metersPerUnit = 1
+    subLayers = [
+        @./layers/Table_geom_v001.usda@,
+        @./layers/Table_look_v001.usda@,
+        @./layers/Table_physics_v001.usda@
+    ]
+    timeCodesPerSecond = 30
+    upAxis = "Z"
+)
+
+over "Table" (
+    kind = "component"
+)
+{
+}
+

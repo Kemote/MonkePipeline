@@ -1,0 +1,47 @@
+#usda 1.0
+(
+    customLayerData = {
+        string userName = "Name Surname"
+    }
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "World" (
+    kind = "group"
+)
+{
+    def Xform "lights" (
+        kind = "group"
+    )
+    {
+        def DistantLight "Sun"
+        {
+            float inputs:angle = 2.5
+            color3f inputs:color = (1, 1, 1)
+            float inputs:exposure = 10
+            float inputs:intensity = 2.5
+            bool inputs:normalize = 1
+            float3 xformOp:rotateXYZ = (0, -0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            double3 xformOp:translate = (-0.35437801480293274, 1.1598296165466309, 2.015296220779419)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+
+        def RectLight "Sun_001"
+        {
+            color3f inputs:color = (1, 1, 1)
+            float inputs:exposure = 10
+            float inputs:height = 0.905
+            float inputs:intensity = 4.774648
+            bool inputs:normalize = 1
+            float inputs:width = 0.905
+            float3 xformOp:rotateXYZ = (33.90506, -0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            double3 xformOp:translate = (0.5002191066741943, -0.7429516911506653, 1.6802177429199219)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+        }
+    }
+}
+
