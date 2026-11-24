@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import bpy
 import logging
 
@@ -15,7 +16,7 @@ from exporter.collectors.collector_assets import AssetsCollector
 from exporter.collectors.collector_world import LightsCollector, WorldCollector
 from exporter.monke_logging import configure_logging, get_logger
 from proxy_generator.app import ProxyGenerator
-from PySide6.QtCore import QLocale, Signal, Slot, QObject, Qt
+from PySide6.QtCore import QEventLoop, QLocale, Signal, Slot, QObject, Qt
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import (
     QPlainTextEdit,
@@ -37,6 +38,7 @@ from PySide6.QtWidgets import (
 
 STYLE_SHEET_PATH = Path(__file__).resolve().parents[2] / "style" / "blender_dark_style.qss"
 PUMP_INTERVAL = 0.02  # seconds between Qt event passes
+LOG_REPAINT_INTERVAL = 0.2  # seconds between log panel repaints during an export, ~4 ms each
 current_dialog = None
 configure_logging()
 logger = get_logger(__name__)
@@ -102,6 +104,7 @@ class MonkeUsdExportDialog(QDialog):
         self.log_display.setMinimumWidth(500)
         self.log_display.setDisabled(True)
         logging_layout.addWidget(self.log_display)
+        self._last_log_repaint = 0.0
         self.log_handler = QtLogHandler()
         self.log_handler.log_emitted.connect(self.append_log)
         formatter = logging.Formatter('%(asctime)s - [%(levelname)s] - %(message)s', '%H:%M:%S')
@@ -134,13 +137,13 @@ class MonkeUsdExportDialog(QDialog):
         self._refresh_lights_check()
 
         # buttons row
-        export_button = QPushButton("Export")
-        export_button.setDefault(True)
+        self.export_button = QPushButton("Export")
+        self.export_button.setDefault(True)
         cancel_button = QPushButton("Cancel")
-        export_button.clicked.connect(self._export)
+        self.export_button.clicked.connect(self._export)
         cancel_button.clicked.connect(self.reject)
         button_row = QHBoxLayout()
-        button_row.addWidget(export_button)
+        button_row.addWidget(self.export_button)
         button_row.addWidget(cancel_button)
         options_layout.addLayout(button_row)
 
@@ -397,6 +400,17 @@ class MonkeUsdExportDialog(QDialog):
         return True
 
     def _export(self):
+        # the export runs on Blender's main thread (bpy isn't thread-safe), so the button is
+        # disabled while it runs and the log panel repaints from append_log
+        self.export_button.setEnabled(False)
+        try:
+            self._run_export()
+        except Exception:
+            logger.exception("Export failed")
+        finally:
+            self.export_button.setEnabled(True)
+
+    def _run_export(self):
         self._refresh_output_dir()
         if not self.output_dir_edit.text().strip():
             if not self._ensure_blend_saved():
@@ -491,6 +505,13 @@ class MonkeUsdExportDialog(QDialog):
     @Slot(str)
     def append_log(self, text: str):
         self.log_display.appendPlainText(text)
+        # Qt only repaints when its events run, and during an export Blender's main thread is busy
+        # exporting, so without this every line shows up at the end. User input is left queued,
+        # so clicks can't start a second export inside this one
+        now = time.monotonic()
+        if now - self._last_log_repaint >= LOG_REPAINT_INTERVAL:
+            self._last_log_repaint = now
+            QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
 
 def _pump_qt_events():
